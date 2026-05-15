@@ -30,9 +30,9 @@
 | TASK-224 | ✅ | Namespace管理画面動作テスト | TASK-208 |
 | TASK-225 | ✅ | インデックス管理画面動作テスト | TASK-214 |
 | TASK-226 | ✅ | モニタリング画面動作テスト | TASK-221 |
-| TASK-227 | ⏳ | Chrome・Firefox・Edge互換性テスト | TASK-224,TASK-225,TASK-226 |
-| TASK-228 | ⏳ | 管理UIユーザーガイド作成 | TASK-227 |
-| TASK-229 | ⏳ | デモ環境構築とセットアップ手順書作成 | TASK-227 |
+| TASK-227 | ✅ | Chrome・Firefox・Edge互換性テスト | TASK-224,TASK-225,TASK-226 |
+| TASK-228 | ✅ | 管理UIユーザーガイド作成 | TASK-227 |
+| TASK-229 | ✅ | デモ環境構築とセットアップ手順書作成 | TASK-227 |
 
 ## タスク詳細
 

@@ -1,0 +1,34 @@
+# Demo environment for Searchable.
+#
+# Usage:
+#   docker compose up --build
+#   # Wait for "Started SearchableUiApplication" then open http://localhost:8080
+#   ./docker/seed.sh http://localhost:8080   # populate sample namespace + docs
+
+services:
+  searchable:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: searchable:demo
+    ports:
+      - "8080:8080"
+    volumes:
+      - searchable-data:/data
+      - ./docker/demo-data:/demo-data:ro
+    environment:
+      SEARCHABLE_DATA_DIRECTORY: /data
+      SEARCHABLE_PERSISTENCE_URL: "jdbc:h2:/data/metadata;MODE=PostgreSQL"
+      SEARCHABLE_INDEX_DIRECTORY: /data/indexes
+      SEARCHABLE_GLOBAL_DEFAULT_ARCHITECTURE: HYBRID
+      SEARCHABLE_GLOBAL_DEFAULT_SEARCH_STRATEGY: PARALLEL
+    healthcheck:
+      test: ["CMD-SHELL",
+             "java -jar /app/searchable-ui.jar --help >/dev/null 2>&1 || curl -fsS http://localhost:8080/api/v1/namespaces || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  searchable-data:
