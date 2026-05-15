@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/base :: head('Upload Document')}"></head>
+<body>
+
+<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+<main class="container-fluid py-4">
+  <h1 class="h3 mb-4">Upload Document</h1>
+
+  <div th:if="${#lists.isEmpty(namespaces)}" class="alert alert-warning">
+    Namespace が登録されていません。<a th:href="@{/namespaces/new}">先に Namespace を作成</a>してください。
+  </div>
+
+  <form th:unless="${#lists.isEmpty(namespaces)}" method="post"
+        th:action="@{/documents/upload}" enctype="multipart/form-data">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="namespaceId" class="form-label">Namespace</label>
+        <select id="namespaceId" name="namespaceId" class="form-select" required>
+          <option th:each="ns : ${namespaces}" th:value="${ns.id()}"
+                  th:text="${ns.id()} + ' (' + ${ns.name()} + ')'"></option>
+        </select>
+      </div>
+      <div class="col-md-12">
+        <label for="file" class="form-label">File</label>
+        <input id="file" type="file" name="file" class="form-control" required>
+        <small class="form-text text-muted">
+          対応形式: .txt, .md, .markdown, .adoc, .asciidoc, .html, .htm,
+          .xhtml, .pdf（最大64MB）
+        </small>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <button type="submit" class="btn btn-primary">Upload</button>
+      <a class="btn btn-outline-secondary" th:href="@{/indexes}">Cancel</a>
+    </div>
+  </form>
+</main>
+
+<footer th:replace="~{layouts/base :: footer}"></footer>
+<th:block th:replace="~{layouts/base :: scripts}"></th:block>
+</body>
+</html>
