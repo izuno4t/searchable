@@ -17,6 +17,8 @@ public final class LuceneFields {
     public static final String CONTENT = "content";
     public static final String METADATA_JSON = "metadataJson";
     public static final String INDEXED_AT_EPOCH = "indexedAtEpoch";
+    /** KNN vector field name. */
+    public static final String VECTOR = "vector";
 
     static {
         final FieldType type = new FieldType();

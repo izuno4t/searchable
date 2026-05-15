@@ -6,9 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.searchable.core.domain.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.KnnFloatVectorField;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.VectorSimilarityFunction;
 
 import java.util.Map;
 import java.util.Objects;
@@ -28,6 +30,16 @@ public final class LuceneDocumentMapper {
     }
 
     public org.apache.lucene.document.Document toLucene(final Document doc) {
+        return toLucene(doc, null);
+    }
+
+    /**
+     * Build a Lucene document, optionally with a KNN vector field.
+     *
+     * @param doc    domain document
+     * @param vector L2-normalized embedding vector, or {@code null} to skip
+     */
+    public org.apache.lucene.document.Document toLucene(final Document doc, final float[] vector) {
         Objects.requireNonNull(doc, "doc must not be null");
         final org.apache.lucene.document.Document lucene = new org.apache.lucene.document.Document();
         lucene.add(new StringField(LuceneFields.ID, doc.id(), Field.Store.YES));
@@ -41,6 +53,10 @@ public final class LuceneDocumentMapper {
             final long epoch = doc.indexedAt().toEpochMilli();
             lucene.add(new NumericDocValuesField(LuceneFields.INDEXED_AT_EPOCH, epoch));
             lucene.add(new StoredField(LuceneFields.INDEXED_AT_EPOCH, epoch));
+        }
+        if (vector != null) {
+            lucene.add(new KnnFloatVectorField(LuceneFields.VECTOR, vector,
+                VectorSimilarityFunction.DOT_PRODUCT));
         }
         return lucene;
     }

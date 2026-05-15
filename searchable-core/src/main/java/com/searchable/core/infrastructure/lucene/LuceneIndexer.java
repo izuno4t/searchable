@@ -1,6 +1,7 @@
 package com.searchable.core.infrastructure.lucene;
 
 import com.searchable.core.domain.document.Document;
+import com.searchable.core.domain.embedding.EmbeddingProvider;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.slf4j.Logger;
@@ -10,7 +11,10 @@ import java.io.IOException;
 import java.util.Objects;
 
 /**
- * Performs index create / update / delete operations on a namespace's Lucene index.
+ * Performs index create / update / delete operations on a namespace's
+ * Lucene index. When an {@link EmbeddingProvider} is supplied the indexer
+ * additionally embeds the document content and stores the resulting vector
+ * in the KNN vector field.
  */
 public final class LuceneIndexer {
 
@@ -18,14 +22,23 @@ public final class LuceneIndexer {
 
     private final LuceneIndexProvider provider;
     private final LuceneDocumentMapper mapper;
+    private final EmbeddingProvider embeddingProvider;
 
     public LuceneIndexer(final LuceneIndexProvider provider) {
-        this(provider, new LuceneDocumentMapper());
+        this(provider, new LuceneDocumentMapper(), null);
     }
 
-    public LuceneIndexer(final LuceneIndexProvider provider, final LuceneDocumentMapper mapper) {
+    public LuceneIndexer(final LuceneIndexProvider provider,
+                         final EmbeddingProvider embeddingProvider) {
+        this(provider, new LuceneDocumentMapper(), embeddingProvider);
+    }
+
+    public LuceneIndexer(final LuceneIndexProvider provider,
+                         final LuceneDocumentMapper mapper,
+                         final EmbeddingProvider embeddingProvider) {
         this.provider = Objects.requireNonNull(provider, "provider must not be null");
         this.mapper = Objects.requireNonNull(mapper, "mapper must not be null");
+        this.embeddingProvider = embeddingProvider;
     }
 
     /** Insert or replace a single document; visible after the next refresh. */
@@ -35,7 +48,7 @@ public final class LuceneIndexer {
         try {
             final IndexWriter writer = ctx.writer();
             writer.updateDocument(new Term(LuceneFields.ID, document.id()),
-                mapper.toLucene(document));
+                mapper.toLucene(document, embedFor(document)));
             writer.commit();
             ctx.refresh();
         } catch (IOException e) {
@@ -57,7 +70,8 @@ public final class LuceneIndexer {
                     throw new IllegalArgumentException(
                         "Document " + doc.id() + " does not belong to namespace " + namespaceId);
                 }
-                writer.updateDocument(new Term(LuceneFields.ID, doc.id()), mapper.toLucene(doc));
+                writer.updateDocument(new Term(LuceneFields.ID, doc.id()),
+                    mapper.toLucene(doc, embedFor(doc)));
                 count++;
             }
             writer.commit();
@@ -102,5 +116,14 @@ public final class LuceneIndexer {
             throw new IllegalStateException(
                 "Failed to clear namespace " + namespaceId, e);
         }
+    }
+
+    private float[] embedFor(final Document doc) {
+        if (embeddingProvider == null) {
+            return null;
+        }
+        // Embed title + content to maximize signal; users can plug in their own
+        // strategy in future iterations.
+        return embeddingProvider.embed(doc.title() + "\n" + doc.content());
     }
 }

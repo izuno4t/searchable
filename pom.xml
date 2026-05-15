@@ -29,6 +29,7 @@
         <!-- Library versions -->
         <lucene.version>10.2.0</lucene.version>
         <h2.version>2.3.232</h2.version>
+        <onnxruntime.version>1.20.0</onnxruntime.version>
         <slf4j.version>2.0.16</slf4j.version>
         <logback.version>1.5.12</logback.version>
         <jackson.version>2.18.2</jackson.version>
@@ -94,6 +95,13 @@
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
                 <version>${h2.version}</version>
+            </dependency>
+
+            <!-- ONNX Runtime (vector embedding) -->
+            <dependency>
+                <groupId>com.microsoft.onnxruntime</groupId>
+                <artifactId>onnxruntime</artifactId>
+                <version>${onnxruntime.version}</version>
             </dependency>
 
             <!-- Logging -->

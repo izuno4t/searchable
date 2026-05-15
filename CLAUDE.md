@@ -36,3 +36,11 @@ See `docs/` for details:
 - `requirements.md` - Requirements specification
 - `architecture.md` - Architecture design
 - `task-phase1.md` - Phase 1 task list
+
+## Working Rules
+
+- **Do not run `git commit`, `git push`, or any git command that mutates
+  history.** The user owns commits in this repository and these commands
+  are also blocked by the harness permission settings.
+- Stage changes if it helps preview a commit (`git add`, `git status`,
+  `git diff`), but stop there and let the user run the commit.
