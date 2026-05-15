@@ -4,9 +4,9 @@
 
 | ID | ステータス | 概要 | 依存関係 |
 | --- | --- | --- | --- |
-| TASK-201 | ⏳ | Thymeleaf設定と基本レイアウトテンプレート作成 | - |
-| TASK-202 | ⏳ | BootstrapベースのCSSとJSリソース設定 | TASK-201 |
-| TASK-203 | ⏳ | ナビゲーションメニューコンポーネント作成 | TASK-201 |
+| TASK-201 | ✅ | Thymeleaf設定と基本レイアウトテンプレート作成 | - |
+| TASK-202 | ✅ | BootstrapベースのCSSとJSリソース設定 | TASK-201 |
+| TASK-203 | ✅ | ナビゲーションメニューコンポーネント作成 | TASK-201 |
 | TASK-204 | ⏳ | Namespace一覧画面実装 | TASK-203 |
 | TASK-205 | ⏳ | Namespace作成画面実装 | TASK-203 |
 | TASK-206 | ⏳ | Namespace編集画面実装 | TASK-204 |

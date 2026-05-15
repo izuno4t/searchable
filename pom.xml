@@ -20,6 +20,7 @@
         <module>searchable-core</module>
         <module>searchable-api</module>
         <module>searchable-mcp</module>
+        <module>searchable-ui</module>
     </modules>
 
     <properties>
@@ -63,6 +64,11 @@
             <dependency>
                 <groupId>com.searchable</groupId>
                 <artifactId>searchable-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.searchable</groupId>
+                <artifactId>searchable-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

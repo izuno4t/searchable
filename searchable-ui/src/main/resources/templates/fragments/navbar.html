@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<nav th:fragment="navbar"
+     class="navbar navbar-expand-md navbar-dark bg-dark sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" th:href="@{/}">Searchable</a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#mainNav" aria-controls="mainNav"
+            aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link"
+             th:classappend="${activeNav == 'dashboard'} ? 'active'"
+             th:href="@{/}">Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link"
+             th:classappend="${activeNav == 'namespaces'} ? 'active'"
+             th:href="@{/namespaces}">Namespaces</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link"
+             th:classappend="${activeNav == 'indexes'} ? 'active'"
+             th:href="@{/indexes}">Indexes</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link"
+             th:classappend="${activeNav == 'documents'} ? 'active'"
+             th:href="@{/documents/upload}">Upload</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link"
+             th:classappend="${activeNav == 'settings'} ? 'active'"
+             th:href="@{/settings}">Settings</a>
+        </li>
+      </ul>
+
+      <span class="navbar-text small">
+        <a class="link-light" href="/swagger" th:if="${false}">API</a>
+      </span>
+    </div>
+  </div>
+</nav>
+
+</body>
+</html>

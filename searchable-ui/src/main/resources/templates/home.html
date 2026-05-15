@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/base :: head('Dashboard')}"></head>
+<body>
+
+<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+<main class="container-fluid py-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0">Dashboard</h1>
+  </div>
+
+  <p class="text-muted">
+    Searchable admin UI へようこそ。上部のナビゲーションから
+    Namespace やインデックスを管理できます。
+  </p>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card metric-card h-100">
+        <div class="card-body">
+          <div class="metric-label">Namespaces</div>
+          <div class="metric-value">—</div>
+          <small class="text-muted">Batch D で実値を反映予定</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card metric-card h-100">
+        <div class="card-body">
+          <div class="metric-label">Documents</div>
+          <div class="metric-value">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card metric-card h-100">
+        <div class="card-body">
+          <div class="metric-label">Index Size</div>
+          <div class="metric-value">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layouts/base :: footer}"></footer>
+<th:block th:replace="~{layouts/base :: scripts}"></th:block>
+
+</body>
+</html>
