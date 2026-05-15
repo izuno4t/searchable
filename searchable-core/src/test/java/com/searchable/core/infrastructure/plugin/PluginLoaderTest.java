@@ -1,0 +1,65 @@
+package com.searchable.core.infrastructure.plugin;
+
+import com.searchable.plugin.DataSourcePlugin;
+import com.searchable.plugin.PluginContext;
+import com.searchable.plugin.PluginDocument;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class PluginLoaderTest {
+
+    @TempDir Path tempDir;
+
+    @Test
+    void returnsEmptyWhenNoPluginsRegistered() {
+        try (PluginLoader loader = new PluginLoader()) {
+            assertThat(loader.loadDataSourcePlugins()).isEmpty();
+        }
+    }
+
+    @Test
+    void emptyPluginDirectoryIsAccepted() {
+        try (PluginLoader loader = new PluginLoader(tempDir)) {
+            assertThat(loader.loadDataSourcePlugins()).isEmpty();
+        }
+    }
+
+    @Test
+    void nonExistentDirectoryIsAccepted() {
+        try (PluginLoader loader = new PluginLoader(tempDir.resolve("missing"))) {
+            assertThat(loader.loadDataSourcePlugins()).isEmpty();
+        }
+    }
+
+    @Test
+    void findByNameReturnsEmptyWhenAbsent() {
+        try (PluginLoader loader = new PluginLoader()) {
+            final Optional<DataSourcePlugin> found =
+                loader.findByName(DataSourcePlugin.class, "missing");
+            assertThat(found).isEmpty();
+        }
+    }
+
+    /** Marker test ensuring the plugin SPI compiles against the loader. */
+    @Test
+    void inlinePluginCanProduceDocument() {
+        final DataSourcePlugin plugin = new DataSourcePlugin() {
+            @Override public String name() { return "inline"; }
+            @Override public Stream<PluginDocument> fetch(final PluginContext context) {
+                return Stream.of(new PluginDocument("id", "title", "content",
+                    "memory", "test", null, null, null));
+            }
+        };
+
+        final List<PluginDocument> docs = plugin.fetchAll(new PluginContext("ns", null));
+        assertThat(docs).hasSize(1);
+        assertThat(docs.get(0).id()).isEqualTo("id");
+    }
+}

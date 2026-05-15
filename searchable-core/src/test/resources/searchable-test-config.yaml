@@ -1,0 +1,14 @@
+data-directory: ./data
+persistence:
+  type: H2
+  url: "jdbc:h2:./data/metadata;MODE=PostgreSQL"
+  username: sa
+  password: ""
+index:
+  directory: ./data/indexes
+plugins:
+  directory: ./plugins
+global:
+  default-architecture: HYBRID
+  default-search-strategy: PARALLEL
+  default-search-order: FULL_TEXT_FIRST

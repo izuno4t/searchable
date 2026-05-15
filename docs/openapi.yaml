@@ -1,0 +1,428 @@
+openapi: 3.1.0
+info:
+  title: Searchable REST API
+  version: 1.0.0
+  description: |
+    REST API for Searchable, a Japanese-optimized hybrid search library.
+    Phase 1 covers full-text search; vector and MCP endpoints are out of scope.
+  contact:
+    name: NRI Netcom Corporation
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+tags:
+  - name: namespaces
+    description: Namespace lifecycle and configuration
+  - name: index
+    description: Document indexing operations
+  - name: search
+    description: Search execution
+paths:
+  /api/v1/namespaces:
+    get:
+      tags: [namespaces]
+      summary: List all namespaces
+      responses:
+        '200':
+          description: Namespace list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NamespaceListResponse'
+    post:
+      tags: [namespaces]
+      summary: Create a namespace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NamespaceCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NamespaceResponse'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/v1/namespaces/{id}:
+    get:
+      tags: [namespaces]
+      summary: Get a namespace by id
+      parameters:
+        - $ref: '#/components/parameters/NamespaceId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NamespaceResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [namespaces]
+      summary: Update a namespace (name and/or config)
+      parameters:
+        - $ref: '#/components/parameters/NamespaceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NamespaceUpdateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NamespaceResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [namespaces]
+      summary: Delete a namespace and its index
+      parameters:
+        - $ref: '#/components/parameters/NamespaceId'
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/namespaces/{id}/config:
+    put:
+      tags: [namespaces]
+      summary: Update only the namespace configuration
+      parameters:
+        - $ref: '#/components/parameters/NamespaceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NamespaceConfigDto'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NamespaceResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/search:
+    post:
+      tags: [search]
+      summary: Execute a search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/index/documents:
+    post:
+      tags: [index]
+      summary: Index a single document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndexRequest'
+      responses:
+        '201':
+          description: Indexed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexedResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/index/documents/{documentId}:
+    delete:
+      tags: [index]
+      summary: Delete a document
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: namespaceId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/index/batch:
+    post:
+      tags: [index]
+      summary: Index multiple documents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchIndexRequest'
+      responses:
+        '200':
+          description: Batch result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchIndexResponse'
+  /api/v1/index/rebuild:
+    post:
+      tags: [index]
+      summary: Rebuild a namespace index
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [namespaceId]
+              properties:
+                namespaceId:
+                  type: string
+      responses:
+        '200':
+          description: Rebuild scheduled / completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  namespaceId: { type: string }
+                  status: { type: string, example: REBUILT }
+  /api/v1/index/{namespaceId}/metadata:
+    get:
+      tags: [index]
+      summary: Get index metadata
+      parameters:
+        - name: namespaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexMetadataResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  parameters:
+    NamespaceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[a-z0-9][a-z0-9_-]{0,63}$'
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Conflict:
+      description: Conflict (e.g. duplicate id)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+  schemas:
+    ApiError:
+      type: object
+      properties:
+        code: { type: string, example: NOT_FOUND }
+        message: { type: string }
+        details: { type: object }
+        timestamp: { type: string, format: date-time }
+    NamespaceConfigDto:
+      type: object
+      properties:
+        architecture:
+          type: string
+          enum: [FULL_TEXT, VECTOR, HYBRID]
+        searchStrategy:
+          type: string
+          enum: [SEQUENTIAL, PARALLEL]
+        searchOrder:
+          type: string
+          enum: [FULL_TEXT_FIRST, VECTOR_FIRST]
+        customParams:
+          type: object
+          additionalProperties: true
+    NamespaceCreateRequest:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        config:
+          $ref: '#/components/schemas/NamespaceConfigDto'
+    NamespaceUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        config:
+          $ref: '#/components/schemas/NamespaceConfigDto'
+    NamespaceResponse:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        config:
+          $ref: '#/components/schemas/NamespaceConfigDto'
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    NamespaceListResponse:
+      type: object
+      properties:
+        namespaces:
+          type: array
+          items:
+            $ref: '#/components/schemas/NamespaceResponse'
+        total: { type: integer }
+    SearchOptions:
+      type: object
+      properties:
+        highlightEnabled: { type: boolean, default: true }
+        maxResults: { type: integer, default: 10 }
+        offset: { type: integer, default: 0 }
+    SearchRequest:
+      type: object
+      required: [query]
+      properties:
+        query: { type: string }
+        namespaceIds:
+          type: array
+          items: { type: string }
+        searchType:
+          type: string
+          enum: [FULL_TEXT, VECTOR, HYBRID]
+        options:
+          $ref: '#/components/schemas/SearchOptions'
+        filters:
+          type: object
+          additionalProperties: true
+    SearchHit:
+      type: object
+      properties:
+        id: { type: string }
+        namespaceId: { type: string }
+        title: { type: string }
+        content: { type: string }
+        score: { type: number, format: double }
+        highlight:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+        metadata:
+          type: object
+          additionalProperties: true
+    SearchResponse:
+      type: object
+      properties:
+        hits:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchHit'
+        totalHits: { type: integer, format: int64 }
+        maxScore: { type: number, format: double }
+        aggregations:
+          type: object
+          additionalProperties: true
+        took: { type: integer, format: int64, description: 'milliseconds' }
+    DocumentInput:
+      type: object
+      required: [id, title, content]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        content: { type: string }
+        metadata:
+          type: object
+          additionalProperties: true
+    IndexRequest:
+      type: object
+      required: [namespaceId, document]
+      properties:
+        namespaceId: { type: string }
+        document:
+          $ref: '#/components/schemas/DocumentInput'
+    IndexedResponse:
+      type: object
+      properties:
+        id: { type: string }
+        namespaceId: { type: string }
+        indexedAt: { type: string, format: date-time }
+        status: { type: string, example: INDEXED }
+    BatchIndexRequest:
+      type: object
+      required: [namespaceId, documents]
+      properties:
+        namespaceId: { type: string }
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentInput'
+    BatchIndexResponse:
+      type: object
+      properties:
+        total: { type: integer }
+        succeeded: { type: integer }
+        failed: { type: integer }
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              status: { type: string, example: INDEXED }
+              error: { type: string, nullable: true }
+    IndexMetadataResponse:
+      type: object
+      properties:
+        namespaceId: { type: string }
+        documentCount: { type: integer, format: int64 }
+        indexSizeBytes: { type: integer, format: int64 }
+        status:
+          type: string
+          enum: [EMPTY, INDEXING, READY, ERROR]
+        lastUpdated: { type: string, format: date-time }
+        statistics:
+          type: object
+          additionalProperties: true
