@@ -1,5 +1,5 @@
 # Project-specific terminology dictionary for cspell.
-# Add one word per line. Comments begin with '
+# Add one word per line. Comments begin with '#'.
 
 # Brand / product names
 cspell
@@ -7,6 +7,7 @@ Failsafe
 Kuromoji
 Logback
 markdownlint
+Ollama
 Searchable
 Spectral
 Sudachi
@@ -15,6 +16,7 @@ Thymeleaf
 
 # Library / API artifacts
 Checkstyle
+codehaus
 HNSW
 JaCoCo
 JDBC
@@ -23,29 +25,44 @@ Jsoup
 JSR
 Lucene
 ONNX
+onnxruntime
 PDFBox
 postgres
 PostgreSQL
+SARIF
+snakeyaml
 Spotbugs
 SpotBugs
+xerial
 
 # Domain / config terms
 analyzer
 analyzers
 chunker
 chunking
+Dskip
+Dtest
 embedder
 embeddings
+FREQS
+mmap
 multiword
 namespace
 namespaced
 namespaces
+ollama
 PARENTID
+Pcoverage
+Pquality
+Psecurity
+RDBMS
+reindexing
 searchable
 tokenizer
 unrecognised
 upsert
 upserted
+Vectorizer
 
 # Japanese romaji frequently appearing in identifiers
 furigana
@@ -61,6 +78,7 @@ CVE
 CVSS
 CycloneDX
 linting
+MVCC
 mutator
 mutators
 NVD
@@ -76,5 +94,15 @@ hybrid
 multilingual
 opensearch
 picocli
+rerank
 reranker
 reranking
+
+# File formats
+adoc
+
+# Japanese tokenizer dictionaries
+Adic
+
+# Test libraries
+assertj

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/base :: head('Indexes')}"></head>
+<body>
+
+<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+<main class="container-fluid py-4">
+  <h1 class="h3 mb-3">Indexes</h1>
+
+  <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
+  <div th:if="${flashWarning}" class="alert alert-warning" th:text="${flashWarning}"></div>
+
+  <div th:if="${#lists.isEmpty(rows)}" class="alert alert-secondary">
+    Namespace が登録されていません。
+  </div>
+
+  <table th:unless="${#lists.isEmpty(rows)}" class="table table-hover compact bg-white">
+    <thead class="table-light">
+      <tr>
+        <th>Namespace</th>
+        <th>Documents</th>
+        <th>Size</th>
+        <th>Status</th>
+        <th>Last Updated</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="row : ${rows}">
+        <td>
+          <a th:href="@{/indexes/{id}(id=${row.namespace().id()})}"
+             th:text="${row.namespace().id()}">ns</a>
+          <small class="text-muted d-block" th:text="${row.namespace().name()}">name</small>
+        </td>
+        <td th:text="${#numbers.formatDecimal(row.documentCount(), 0, 'COMMA', 0, 'POINT')}">0</td>
+        <td th:text="${#numbers.formatDecimal(row.indexSizeBytes(), 0, 'COMMA', 0, 'POINT')} + ' B'">
+          0 B
+        </td>
+        <td>
+          <span class="status-pill"
+                th:classappend="${#strings.toLowerCase(row.status().name())}"
+                th:text="${row.status()}">READY</span>
+        </td>
+        <td th:if="${row.metadata() != null}"
+            th:text="${#temporals.format(row.metadata().lastUpdated(), 'yyyy-MM-dd HH:mm')}">
+          —
+        </td>
+        <td th:unless="${row.metadata() != null}">—</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-secondary"
+             th:href="@{/indexes/{id}(id=${row.namespace().id()})}">View</a>
+          <form class="d-inline" method="post"
+                th:action="@{/indexes/{id}/rebuild(id=${row.namespace().id()})}"
+                data-confirm="インデックスを再構築します。よろしいですか？">
+            <button class="btn btn-sm btn-outline-warning" type="submit">Rebuild</button>
+          </form>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</main>
+
+<footer th:replace="~{layouts/base :: footer}"></footer>
+<th:block th:replace="~{layouts/base :: scripts}"></th:block>
+</body>
+</html>

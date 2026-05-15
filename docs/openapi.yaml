@@ -34,6 +34,8 @@ paths:
     get:
       tags: [namespaces]
       summary: List all namespaces
+      description: Return every namespace registered in the system.
+      operationId: listNamespaces
       responses:
         '200':
           description: Namespace list
@@ -44,6 +46,8 @@ paths:
     post:
       tags: [namespaces]
       summary: Create a namespace
+      description: Create a namespace and initialize its index metadata.
+      operationId: createNamespace
       requestBody:
         required: true
         content:
@@ -65,6 +69,8 @@ paths:
     get:
       tags: [namespaces]
       summary: Get a namespace by id
+      description: Return the namespace configuration and timestamps for one id.
+      operationId: getNamespace
       parameters:
         - $ref: '#/components/parameters/NamespaceId'
       responses:
@@ -79,6 +85,8 @@ paths:
     put:
       tags: [namespaces]
       summary: Update a namespace (name and/or config)
+      description: Update the namespace name, configuration, or both.
+      operationId: updateNamespace
       parameters:
         - $ref: '#/components/parameters/NamespaceId'
       requestBody:
@@ -99,6 +107,8 @@ paths:
     delete:
       tags: [namespaces]
       summary: Delete a namespace and its index
+      description: Delete the namespace record and associated index data.
+      operationId: deleteNamespace
       parameters:
         - $ref: '#/components/parameters/NamespaceId'
       responses:
@@ -110,6 +120,8 @@ paths:
     put:
       tags: [namespaces]
       summary: Update only the namespace configuration
+      description: Replace only the namespace search configuration.
+      operationId: updateNamespaceConfig
       parameters:
         - $ref: '#/components/parameters/NamespaceId'
       requestBody:
@@ -131,6 +143,8 @@ paths:
     post:
       tags: [search]
       summary: Execute a search
+      description: Execute full-text, vector, or hybrid search across namespaces.
+      operationId: searchDocuments
       requestBody:
         required: true
         content:
@@ -150,6 +164,8 @@ paths:
     post:
       tags: [index]
       summary: Index a single document
+      description: Add or replace one document in the target namespace index.
+      operationId: indexDocument
       requestBody:
         required: true
         content:
@@ -169,6 +185,8 @@ paths:
     delete:
       tags: [index]
       summary: Delete a document
+      description: Delete one indexed document from a namespace.
+      operationId: deleteDocument
       parameters:
         - name: documentId
           in: path
@@ -189,6 +207,8 @@ paths:
     post:
       tags: [index]
       summary: Index multiple documents
+      description: Add or replace multiple documents in one namespace index.
+      operationId: indexBatch
       requestBody:
         required: true
         content:
@@ -206,6 +226,8 @@ paths:
     post:
       tags: [index]
       summary: Rebuild a namespace index
+      description: Clear and rebuild the index for one namespace.
+      operationId: rebuildIndex
       requestBody:
         required: true
         content:
@@ -230,6 +252,8 @@ paths:
     get:
       tags: [index]
       summary: Get index metadata
+      description: Return document count, status, and size metadata for an index.
+      operationId: getIndexMetadata
       parameters:
         - name: namespaceId
           in: path
@@ -249,6 +273,8 @@ paths:
     get:
       tags: [dictionaries]
       summary: List all user dictionaries (global + every namespace)
+      description: Return all configured Kuromoji user dictionaries.
+      operationId: listUserDictionaries
       responses:
         '200':
           description: List
@@ -260,6 +286,8 @@ paths:
     get:
       tags: [dictionaries]
       summary: Get the global user dictionary
+      description: Return the global user dictionary applied to every namespace.
+      operationId: getGlobalUserDictionary
       responses:
         '200':
           description: Dictionary
@@ -272,6 +300,8 @@ paths:
     put:
       tags: [dictionaries]
       summary: Create or replace the global user dictionary
+      description: Create or replace the global Kuromoji user dictionary.
+      operationId: putGlobalUserDictionary
       requestBody:
         required: true
         content:
@@ -290,6 +320,8 @@ paths:
     delete:
       tags: [dictionaries]
       summary: Delete the global user dictionary
+      description: Delete the global Kuromoji user dictionary if it exists.
+      operationId: deleteGlobalUserDictionary
       responses:
         '204':
           description: Deleted
@@ -305,6 +337,8 @@ paths:
     get:
       tags: [dictionaries]
       summary: Get the namespace-scoped user dictionary
+      description: Return the user dictionary configured for one namespace.
+      operationId: getNamespaceUserDictionary
       responses:
         '200':
           description: Dictionary
@@ -317,6 +351,8 @@ paths:
     put:
       tags: [dictionaries]
       summary: Create or replace a namespace-scoped user dictionary
+      description: Create or replace the user dictionary for one namespace.
+      operationId: putNamespaceUserDictionary
       requestBody:
         required: true
         content:
@@ -335,6 +371,8 @@ paths:
     delete:
       tags: [dictionaries]
       summary: Delete a namespace-scoped user dictionary
+      description: Delete the user dictionary configured for one namespace.
+      operationId: deleteNamespaceUserDictionary
       responses:
         '204':
           description: Deleted

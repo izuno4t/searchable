@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/base :: head('Index Detail')}"></head>
+<body>
+
+<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+<main class="container-fluid py-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h1 class="h3 mb-0" th:text="${namespace.id()}">ns</h1>
+      <small class="text-muted" th:text="${namespace.name()}">name</small>
+    </div>
+    <div>
+      <a class="btn btn-outline-secondary" th:href="@{/indexes}">← Back</a>
+      <a class="btn btn-primary"
+         th:href="@{/documents/upload(namespaceId=${namespace.id()})}">Upload</a>
+      <form class="d-inline" method="post"
+            th:action="@{/indexes/{id}/rebuild(id=${namespace.id()})}"
+            data-confirm="インデックスを再構築します。よろしいですか？">
+        <button class="btn btn-outline-warning" type="submit">Rebuild</button>
+      </form>
+    </div>
+  </div>
+
+  <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
+  <div th:if="${flashWarning}" class="alert alert-warning" th:text="${flashWarning}"></div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card metric-card">
+        <div class="card-body">
+          <div class="metric-label">Documents</div>
+          <div class="metric-value" th:text="${metadata.documentCount()}">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card metric-card">
+        <div class="card-body">
+          <div class="metric-label">Size</div>
+          <div class="metric-value"
+               th:text="${#numbers.formatDecimal(metadata.indexSizeBytes() / 1024.0, 0, 'COMMA', 1, 'POINT')} + ' KB'">0 KB</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card metric-card">
+        <div class="card-body">
+          <div class="metric-label">Status</div>
+          <div class="metric-value">
+            <span class="status-pill"
+                  th:classappend="${#strings.toLowerCase(metadata.status().name())}"
+                  th:text="${metadata.status()}">READY</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card metric-card">
+        <div class="card-body">
+          <div class="metric-label">Last Updated</div>
+          <div class="metric-value fs-6"
+               th:text="${#temporals.format(metadata.lastUpdated(), 'yyyy-MM-dd HH:mm:ss')}">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="h5">Documents <small class="text-muted"
+                                   th:text="'(' + ${documents.total()} + ')'"></small></h2>
+
+  <div th:if="${#lists.isEmpty(documents.items())}" class="alert alert-secondary">
+    ドキュメントが登録されていません。Upload ボタンから登録できます。
+  </div>
+
+  <table th:unless="${#lists.isEmpty(documents.items())}"
+         class="table table-hover compact bg-white">
+    <thead class="table-light">
+      <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>Snippet</th>
+        <th>Indexed At</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="doc : ${documents.items()}">
+        <td><code th:text="${doc.id()}">id</code></td>
+        <td th:text="${doc.title()}">title</td>
+        <td class="text-muted small" th:text="${doc.snippet()}">snippet</td>
+        <td th:if="${doc.indexedAt() != null}"
+            th:text="${#temporals.format(doc.indexedAt(), 'yyyy-MM-dd HH:mm')}">—</td>
+        <td th:unless="${doc.indexedAt() != null}">—</td>
+        <td class="text-end">
+          <form method="post"
+                th:action="@{/indexes/{ns}/documents/{id}/delete(ns=${namespace.id()},id=${doc.id()})}"
+                data-confirm="このドキュメントを削除します。よろしいですか？">
+            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <nav th:if="${totalPages > 1}" aria-label="Pagination">
+    <ul class="pagination">
+      <li class="page-item" th:classappend="${page == 0} ? 'disabled'">
+        <a class="page-link"
+           th:href="@{/indexes/{id}(id=${namespace.id()}, page=${page - 1})}">Previous</a>
+      </li>
+      <li class="page-item disabled">
+        <span class="page-link"
+              th:text="'Page ' + ${page + 1} + ' / ' + ${totalPages}">Page</span>
+      </li>
+      <li class="page-item" th:classappend="${page + 1 >= totalPages} ? 'disabled'">
+        <a class="page-link"
+           th:href="@{/indexes/{id}(id=${namespace.id()}, page=${page + 1})}">Next</a>
+      </li>
+    </ul>
+  </nav>
+</main>
+
+<footer th:replace="~{layouts/base :: footer}"></footer>
+<th:block th:replace="~{layouts/base :: scripts}"></th:block>
+</body>
+</html>

@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Japanese-optimized hybrid search library for Java. Provides full-text search (Lucene + Kuromoji/Sudachi) and vector search (ONNX Runtime + multilingual-e5).
+Japanese-optimized hybrid search library for Java.
+Provides full-text search (Lucene + Kuromoji/Sudachi) and vector search
+(ONNX Runtime + multilingual-e5).
 
 **Status**: Phase 1 planning - documentation only, no source code yet
 
