@@ -3,7 +3,7 @@
 ## タスク一覧
 
 | ID | ステータス | 概要 | 依存関係 |
-|----|-----------|------|----------|
+| --- | --- | --- | --- |
 | TASK-201 | ⏳ | Thymeleaf設定と基本レイアウトテンプレート作成 | - |
 | TASK-202 | ⏳ | BootstrapベースのCSSとJSリソース設定 | TASK-201 |
 | TASK-203 | ⏳ | ナビゲーションメニューコンポーネント作成 | TASK-201 |
@@ -37,57 +37,71 @@
 ## タスク詳細
 
 ### TASK-201
+
 - 補足: ヘッダー・フッター・サイドバーの共通レイアウト
 - 成果物: layout.html、application.propertiesのThymeleaf設定
 
 ### TASK-202
+
 - 補足: Bootstrap 5使用、CDN or ローカル配置
 - 成果物: CSS/JSリソースファイル、static/配下
 
 ### TASK-204
+
 - 補足: Namespace ID、名前、設定概要、操作ボタンを表示
 - 成果物: namespace-list.html、NamespaceControllerメソッド
 
 ### TASK-205
+
 - 補足: Namespace ID、名前、検索タイプ選択フォーム
 - 成果物: namespace-create.html、Controllerメソッド
 
 ### TASK-208
+
 - 補足: 検索アーキテクチャ、検索順序等の設定項目
 - 成果物: namespace-config.html、Controllerメソッド
 
 ### TASK-211
+
 - 補足: ファイル選択、Namespace選択、メタデータ入力
 - 成果物: document-upload.html、Controllerメソッド
 
 ### TASK-212
+
 - 補足: MultipartFile処理、ファイルサイズ制限
 - 成果物: FileUploadServiceクラス
 
 ### TASK-214
+
 - 補足: 全文・ベクトルインデックス再構築ボタン
 - 成果物: インデックス更新処理、非同期実行
 
 ### TASK-217
+
 - 補足: カード形式で統計情報を表示
 - 成果物: dashboard.html
 
 ### TASK-218
+
 - 補足: ドキュメント数、インデックスサイズ、最終更新日時取得
 - 成果物: IndexStatisticsServiceクラス
 
 ### TASK-220
+
 - 補足: 検索実行時間を記録、集計処理
 - 成果物: PerformanceMonitoringServiceクラス
 
 ### TASK-221
+
 - 補足: Chart.js使用、平均・最大・最小レスポンス表示
 - 成果物: パフォーマンスグラフ表示機能
 
 ### TASK-227
+
 - 補足: レイアウト崩れ、動作確認、レスポンシブ対応
 - 成果物: ブラウザ互換性テストレポート
 
 ### TASK-229
+
 - 補足: Docker Composeでのデモ環境セットアップ
 - 成果物: docker-compose.yml、デモデータ、手順書

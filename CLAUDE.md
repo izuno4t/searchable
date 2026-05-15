@@ -33,6 +33,6 @@ Java 21, Maven, Apache Lucene, ONNX Runtime, Spring Boot, SLF4J+Logback
 
 See `docs/` for details:
 
-- `REQUIREMENTS.md` - Requirements specification
-- `ARCHITECTURE.md` - Architecture design
-- `TASK-PHASE1.md` - Phase 1 task list
+- `requirements.md` - Requirements specification
+- `architecture.md` - Architecture design
+- `task-phase1.md` - Phase 1 task list

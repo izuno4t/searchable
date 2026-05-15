@@ -213,10 +213,10 @@ To be determined
 
 ## Documentation
 
-- [Requirements Specification](REQUIREMENTS.md)
-- [Architecture Design](ARCHITECTURE.md)
-- [API Specification](API_SPECIFICATION.md)
-- [Project Plan](PROJECT_PLAN.md)
+- [Requirements Specification](docs/requirements.md)
+- [Architecture Design](docs/architecture.md)
+- [API Specification](docs/api-specification.md)
+- [Project Plan](docs/project-plan.md)
 
 ## Contact
 

@@ -16,6 +16,7 @@
 **エンドポイント**: `POST /api/search`
 
 **リクエスト**:
+
 ```json
 {
   "query": "検索クエリ",
@@ -33,6 +34,7 @@
 ```
 
 **レスポンス**:
+
 ```json
 {
   "hits": [
@@ -58,6 +60,7 @@
 ```
 
 **ステータスコード**:
+
 - `200 OK`: 検索成功
 - `400 Bad Request`: リクエスト不正
 - `404 Not Found`: Namespace未存在
@@ -68,13 +71,14 @@
 **エンドポイント**: `GET /api/search/{searchId}`
 
 **レスポンス**:
+
 ```json
 {
   "searchId": "search123",
   "query": "検索クエリ",
   "status": "COMPLETED",
   "result": {
-    "hits": [...],
+    "hits": [],
     "totalHits": 100
   }
 }
@@ -87,6 +91,7 @@
 **エンドポイント**: `GET /api/namespaces`
 
 **レスポンス**:
+
 ```json
 {
   "namespaces": [
@@ -115,6 +120,7 @@
 **エンドポイント**: `POST /api/namespaces`
 
 **リクエスト**:
+
 ```json
 {
   "id": "namespace1",
@@ -128,6 +134,7 @@
 ```
 
 **レスポンス**:
+
 ```json
 {
   "id": "namespace1",
@@ -137,6 +144,7 @@
 ```
 
 **ステータスコード**:
+
 - `201 Created`: 作成成功
 - `400 Bad Request`: リクエスト不正
 - `409 Conflict`: ID重複
@@ -146,12 +154,13 @@
 **エンドポイント**: `GET /api/namespaces/{namespaceId}`
 
 **レスポンス**:
+
 ```json
 {
   "id": "namespace1",
   "name": "プロジェクトA",
-  "config": {...},
-  "indexMetadata": {...},
+  "config": {},
+  "indexMetadata": {},
   "createdAt": "2026-01-10T10:00:00Z",
   "updatedAt": "2026-01-15T10:00:00Z"
 }
@@ -162,6 +171,7 @@
 **エンドポイント**: `PUT /api/namespaces/{namespaceId}`
 
 **リクエスト**:
+
 ```json
 {
   "name": "プロジェクトA（更新）",
@@ -172,6 +182,7 @@
 ```
 
 **レスポンス**:
+
 ```json
 {
   "id": "namespace1",
@@ -185,6 +196,7 @@
 **エンドポイント**: `DELETE /api/namespaces/{namespaceId}`
 
 **ステータスコード**:
+
 - `204 No Content`: 削除成功
 - `404 Not Found`: Namespace未存在
 
@@ -193,6 +205,7 @@
 **エンドポイント**: `GET /api/namespaces/{namespaceId}/config`
 
 **レスポンス**:
+
 ```json
 {
   "architecture": "HYBRID",
@@ -211,6 +224,7 @@
 **エンドポイント**: `PUT /api/namespaces/{namespaceId}/config`
 
 **リクエスト**:
+
 ```json
 {
   "architecture": "FULL_TEXT",
@@ -225,6 +239,7 @@
 **エンドポイント**: `POST /api/index/documents`
 
 **リクエスト**:
+
 ```json
 {
   "namespaceId": "namespace1",
@@ -241,6 +256,7 @@
 ```
 
 **レスポンス**:
+
 ```json
 {
   "id": "doc123",
@@ -251,6 +267,7 @@
 ```
 
 **ステータスコード**:
+
 - `201 Created`: 登録成功
 - `400 Bad Request`: リクエスト不正
 - `404 Not Found`: Namespace未存在
@@ -260,6 +277,7 @@
 **エンドポイント**: `PUT /api/index/documents/{documentId}`
 
 **リクエスト**:
+
 ```json
 {
   "namespaceId": "namespace1",
@@ -273,9 +291,11 @@
 **エンドポイント**: `DELETE /api/index/documents/{documentId}`
 
 **クエリパラメータ**:
+
 - `namespaceId`: Namespace ID（必須）
 
 **ステータスコード**:
+
 - `204 No Content`: 削除成功
 - `404 Not Found`: ドキュメント未存在
 
@@ -284,6 +304,7 @@
 **エンドポイント**: `POST /api/index/batch`
 
 **リクエスト**:
+
 ```json
 {
   "namespaceId": "namespace1",
@@ -303,6 +324,7 @@
 ```
 
 **レスポンス**:
+
 ```json
 {
   "total": 2,
@@ -326,6 +348,7 @@
 **エンドポイント**: `POST /api/index/rebuild`
 
 **リクエスト**:
+
 ```json
 {
   "namespaceId": "namespace1"
@@ -333,6 +356,7 @@
 ```
 
 **レスポンス**:
+
 ```json
 {
   "jobId": "rebuild-job-123",
@@ -348,6 +372,7 @@
 **エンドポイント**: `GET /api/admin/status`
 
 **レスポンス**:
+
 ```json
 {
   "version": "1.0.0",
@@ -364,6 +389,7 @@
 **エンドポイント**: `POST /api/admin/backup`
 
 **リクエスト**:
+
 ```json
 {
   "namespaceId": "namespace1",
@@ -372,6 +398,7 @@
 ```
 
 **レスポンス**:
+
 ```json
 {
   "jobId": "backup-job-123",
@@ -384,6 +411,7 @@
 **エンドポイント**: `POST /api/admin/restore`
 
 **リクエスト**:
+
 ```json
 {
   "namespaceId": "namespace1",
@@ -396,6 +424,7 @@
 **エンドポイント**: `GET /api/admin/metrics`
 
 **レスポンス**:
+
 ```json
 {
   "searchMetrics": {
@@ -424,24 +453,19 @@
 
 ```java
 public interface SearchService {
-    /**
-     * 検索実行（同期）
-     */
+    /** 検索実行（同期） */
     SearchResult search(SearchRequest request);
-    
-    /**
-     * 検索実行（非同期）
-     */
+
+    /** 検索実行（非同期） */
     CompletableFuture<SearchResult> searchAsync(SearchRequest request);
-    
-    /**
-     * 検索履歴取得
-     */
+
+    /** 検索履歴取得 */
     List<SearchHistory> getSearchHistory(String namespaceId);
 }
 ```
 
 **使用例**:
+
 ```java
 SearchService searchService = SearchableLibrary.getSearchService();
 
@@ -459,34 +483,25 @@ SearchResult result = searchService.search(request);
 
 ```java
 public interface NamespaceService {
-    /**
-     * Namespace作成
-     */
+    /** Namespace作成 */
     Namespace createNamespace(NamespaceCreateRequest request);
-    
-    /**
-     * Namespace削除
-     */
+
+    /** Namespace削除 */
     void deleteNamespace(String namespaceId);
-    
-    /**
-     * Namespace取得
-     */
+
+    /** Namespace取得 */
     Namespace getNamespace(String namespaceId);
-    
-    /**
-     * Namespace一覧取得
-     */
+
+    /** Namespace一覧取得 */
     List<Namespace> listNamespaces();
-    
-    /**
-     * 設定更新
-     */
+
+    /** 設定更新 */
     void updateConfig(String namespaceId, NamespaceConfig config);
 }
 ```
 
 **使用例**:
+
 ```java
 NamespaceService namespaceService = SearchableLibrary.getNamespaceService();
 
@@ -506,34 +521,25 @@ Namespace namespace = namespaceService.createNamespace(request);
 
 ```java
 public interface IndexService {
-    /**
-     * ドキュメント登録
-     */
+    /** ドキュメント登録 */
     void indexDocument(String namespaceId, Document document);
-    
-    /**
-     * ドキュメント一括登録
-     */
+
+    /** ドキュメント一括登録 */
     BatchIndexResult indexDocuments(String namespaceId, List<Document> documents);
-    
-    /**
-     * ドキュメント削除
-     */
+
+    /** ドキュメント削除 */
     void deleteDocument(String namespaceId, String documentId);
-    
-    /**
-     * インデックス再構築
-     */
+
+    /** インデックス再構築 */
     void rebuildIndex(String namespaceId);
-    
-    /**
-     * インデックス状態取得
-     */
+
+    /** インデックス状態取得 */
     IndexMetadata getIndexMetadata(String namespaceId);
 }
 ```
 
 **使用例**:
+
 ```java
 IndexService indexService = SearchableLibrary.getIndexService();
 
@@ -630,6 +636,7 @@ library.shutdown();
 **説明**: ドキュメント検索
 
 **パラメータ**:
+
 ```json
 {
   "query": {
@@ -652,6 +659,7 @@ library.shutdown();
 ```
 
 **レスポンス**:
+
 ```json
 {
   "content": [
@@ -711,7 +719,7 @@ java -jar searchable-mcp.jar --mode stdio
 ### 4.2 エラーコード一覧
 
 | Code | HTTPステータス | 説明 |
-|------|----------------|------|
+| --- | --- | --- |
 | `INVALID_REQUEST` | 400 | リクエスト不正 |
 | `NAMESPACE_NOT_FOUND` | 404 | Namespace未存在 |
 | `DOCUMENT_NOT_FOUND` | 404 | ドキュメント未存在 |
@@ -722,9 +730,10 @@ java -jar searchable-mcp.jar --mode stdio
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2026-01-15  
+**Document Version**: 1.0
+**Last Updated**: 2026-01-15
 **Status**: Draft
 
 ## 改訂履歴
-- v1.0 (2026-01-15): 初版作成（REQUIREMENTS.mdから分離）
+
+- v1.0 (2026-01-15): 初版作成（requirements.mdから分離）

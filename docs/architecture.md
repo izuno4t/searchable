@@ -3,27 +3,32 @@
 ## 1. 技術スタック
 
 ### 1.1 コア技術
+
 - **言語**: Java 21
 - **ビルドツール**: Maven
 - **ロギング**: SLF4J + Logback
 
 ### 1.2 検索エンジン（調査・選定が必要）
+
 - **全文検索**: Apache Lucene + 日本語形態素解析器
   - Kuromoji（標準、辞書ベース）
   - Sudachi（高精度、辞書カスタマイズ可能）
-- **ベクトル検索**: 
+- **ベクトル検索**:
   - 埋め込みモデル: Onnx Runtime + 日本語対応多言語モデル
     - 候補: multilingual-e5-small, multilingual-e5-base
     - 候補: paraphrase-multilingual-MiniLM-L12-v2
   - ベクトル検索エンジン: Lucene HNSW等から選定
 
 ### 1.3 データストア（調査・選定が必要）
+
 以下から選定（複数対応も検討）:
+
 - H2 Database
 - SQLite
 - RocksDB
 
 ### 1.4 UI技術
+
 - **管理UI**: Thymeleaf（Java側にバンドル）
 - **検索UI**: React（ライブラリ利用のサンプル実装、将来対応）
 
@@ -33,7 +38,7 @@
 
 ### 2.1 レイヤー構成
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │          Presentation Layer             │
 │  (REST API / Java API / MCP Server)     │
@@ -58,29 +63,37 @@
 ### 2.2 レイヤー詳細
 
 #### 2.2.1 Presentation Layer（プレゼンテーション層）
+
 **責務**: 外部インターフェースの提供
+
 - REST APIコントローラー
 - Java API Facade
 - MCPサーバーエンドポイント
 - 管理UIコントローラー
 
 **技術**:
+
 - Spring Boot (REST API)
 - Thymeleaf (管理UI)
 
 #### 2.2.2 Application Layer（アプリケーション層）
+
 **責務**: ビジネスロジックの調整
+
 - SearchService: 検索処理の調整
 - IndexService: インデックス管理の調整
 - NamespaceService: Namespace管理の調整
 - AdminService: 管理機能の調整
 
 **パターン**:
+
 - Service層パターン
 - DTOパターン
 
 #### 2.2.3 Domain Layer（ドメイン層）
+
 **責務**: コアビジネスロジック
+
 - 検索エンジン
 - ベクトル検索エンジン
 - ハイブリッド検索オーケストレーター
@@ -89,12 +102,15 @@
 - ドキュメントパーサー
 
 **パターン**:
+
 - ドメインモデルパターン
-- Strategyパターン (検索戦略)
-- Factoryパターン (パーサー生成)
+- Strategyパターン（検索戦略）
+- Factoryパターン（パーサー生成）
 
 #### 2.2.4 Infrastructure Layer（インフラストラクチャ層）
+
 **責務**: 技術的基盤の提供
+
 - データベースアクセス
 - ファイルシステムアクセス
 - プラグインローダー
@@ -102,6 +118,7 @@
 - ログ出力
 
 **パターン**:
+
 - Repositoryパターン
 - Pluginパターン
 
@@ -112,7 +129,8 @@
 ### 3.1 検索エンジン
 
 #### 3.1.1 全文検索エンジン
-```
+
+```text
 FullTextSearchEngine
 ├─ LuceneIndexManager
 ├─ QueryBuilder
@@ -124,6 +142,7 @@ FullTextSearchEngine
 ```
 
 **責務**:
+
 - Luceneインデックスの管理
 - クエリの構築と実行
 - 日本語形態素解析とトークン化
@@ -131,7 +150,8 @@ FullTextSearchEngine
 - ハイライト処理（日本語テキスト対応）
 
 #### 3.1.2 ベクトル検索エンジン
-```
+
+```text
 VectorSearchEngine
 ├─ EmbeddingModel (Onnx Runtime)
 │  └─ Japanese-Multilingual Model
@@ -142,13 +162,15 @@ VectorSearchEngine
 ```
 
 **責務**:
+
 - 日本語テキストのベクトル化
 - ベクトルインデックスの管理
 - 類似度計算
 - 検索結果のスコアリング
 
 #### 3.1.3 ハイブリッド検索オーケストレーター
-```
+
+```text
 HybridSearchOrchestrator
 ├─ SequentialSearchStrategy
 ├─ ParallelSearchStrategy
@@ -156,13 +178,14 @@ HybridSearchOrchestrator
 ```
 
 **責務**:
+
 - 検索戦略の選択
 - 複数検索エンジンの調整
 - 検索結果のマージ
 
 ### 3.2 Namespace マネージャー
 
-```
+```text
 NamespaceManager
 ├─ NamespaceRepository
 ├─ NamespaceConfigManager
@@ -170,13 +193,14 @@ NamespaceManager
 ```
 
 **責務**:
+
 - Namespaceの作成・削除・更新
 - 設定の管理（グローバル/個別）
 - インデックスの論理分離
 
 ### 3.3 インデックスマネージャー
 
-```
+```text
 IndexManager
 ├─ DocumentProcessor
 ├─ AsyncIndexUpdater
@@ -185,6 +209,7 @@ IndexManager
 ```
 
 **責務**:
+
 - ドキュメントの登録・更新・削除
 - 非同期インデックス更新
 - インデックスの永続化
@@ -192,7 +217,7 @@ IndexManager
 
 ### 3.4 プラグインローダー
 
-```
+```text
 PluginLoader
 ├─ PluginScanner
 ├─ DynamicClassLoader
@@ -200,6 +225,7 @@ PluginLoader
 ```
 
 **責務**:
+
 - プラグインのスキャンと検出
 - 動的クラスロード
 - プラグインのライフサイクル管理
@@ -210,7 +236,7 @@ PluginLoader
 
 ### 4.1 インデックス登録フロー
 
-```
+```text
 Document Input
     ↓
 [DocumentParser]  ← ファイル形式に応じたパーサー選択
@@ -227,6 +253,7 @@ Document Input
 ```
 
 **ステップ**:
+
 1. ドキュメント受信
 2. ファイル形式判定とパーサー選択
 3. テキスト抽出と解析
@@ -237,7 +264,7 @@ Document Input
 
 ### 4.2 検索フロー
 
-```
+```text
 Search Query
     ↓
 [Namespace Resolver]  ← Namespace特定と設定取得
@@ -260,6 +287,7 @@ Search Query
 ```
 
 **ステップ**:
+
 1. クエリ受信
 2. Namespace解決と設定取得
 3. 検索戦略の選択
@@ -272,7 +300,7 @@ Search Query
 
 ### 4.3 設定管理フロー
 
-```
+```text
 Configuration Request
     ↓
 [Global Config Loader]  ← グローバルデフォルト読み込み
@@ -289,6 +317,7 @@ Effective Configuration
 ## 5. データモデル
 
 ### 5.1 Namespace
+
 ```java
 class Namespace {
     String id;                    // Namespace識別子
@@ -301,6 +330,7 @@ class Namespace {
 ```
 
 ### 5.2 NamespaceConfig
+
 ```java
 class NamespaceConfig {
     SearchArchitecture architecture;  // FULL_TEXT, VECTOR, HYBRID
@@ -313,6 +343,7 @@ class NamespaceConfig {
 ```
 
 ### 5.3 Document
+
 ```java
 class Document {
     String id;                        // ドキュメント識別子
@@ -326,6 +357,7 @@ class Document {
 ```
 
 ### 5.4 SearchRequest
+
 ```java
 class SearchRequest {
     String query;                     // 検索クエリ
@@ -336,6 +368,7 @@ class SearchRequest {
 ```
 
 ### 5.5 SearchResult
+
 ```java
 class SearchResult {
     List<SearchHit> hits;             // 検索結果
@@ -347,6 +380,7 @@ class SearchResult {
 ```
 
 ### 5.6 IndexMetadata
+
 ```java
 class IndexMetadata {
     long documentCount;               // ドキュメント数
@@ -363,7 +397,7 @@ class IndexMetadata {
 
 ### 6.1 Mavenマルチモジュール構成
 
-```
+```text
 searchable/
 ├── pom.xml                          # 親POM
 ├── searchable-core/                 # コアライブラリ
@@ -402,7 +436,7 @@ searchable/
 
 ### 6.2 モジュール依存関係
 
-```
+```text
 searchable-ui
     ↓ depends on
 searchable-api
@@ -418,7 +452,7 @@ searchable-plugins
 
 ### 7.1 組み込みライブラリモード
 
-```
+```text
 User Application
     ↓
 searchable-core.jar ← 組み込み
@@ -428,7 +462,7 @@ File System / DB
 
 ### 7.2 スタンドアロンサーバーモード
 
-```
+```text
 ┌─────────────────────┐
 │   searchable-ui     │ ← 管理UI + REST API
 │   (Spring Boot)     │
@@ -445,7 +479,7 @@ File System / DB
 
 ### 7.3 MCPサーバーモード
 
-```
+```text
 AI Tool (Claude Desktop)
     ↓ MCP Protocol
 ┌─────────────────────┐
@@ -468,30 +502,36 @@ AI Tool (Claude Desktop)
 ### 8.1 採用パターン
 
 #### Strategy Pattern
+
 - **用途**: 検索戦略の切り替え
 - **実装**: SequentialSearchStrategy, ParallelSearchStrategy
 
 #### Factory Pattern
+
 - **用途**: パーサーの生成
 - **実装**: DocumentParserFactory
 
 #### Repository Pattern
+
 - **用途**: データアクセスの抽象化
 - **実装**: NamespaceRepository, IndexRepository
 
 #### Plugin Pattern
+
 - **用途**: 機能の動的拡張
 - **実装**: DataSourcePlugin
 
 #### Facade Pattern
+
 - **用途**: Java APIの単純化
-- **実装**: SearchableLibrary (メインAPI)
+- **実装**: SearchableLibrary（メインAPI）
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2026-01-15  
+**Document Version**: 1.0
+**Last Updated**: 2026-01-15
 **Status**: Draft
 
 ## 改訂履歴
-- v1.0 (2026-01-15): 初版作成（REQUIREMENTS.mdから分離）
+
+- v1.0 (2026-01-15): 初版作成（requirements.mdから分離）

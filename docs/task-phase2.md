@@ -3,7 +3,7 @@
 ## タスク一覧
 
 | ID | ステータス | 概要 | 依存関係 |
-|----|-----------|------|----------|
+| --- | --- | --- | --- |
 | TASK-101 | ⏳ | Onnx Runtime Javaライブラリ統合 | - |
 | TASK-102 | ⏳ | 軽量埋め込みモデル組み込みと初期化処理作成 | TASK-101 |
 | TASK-103 | ⏳ | テキストベクトル化処理実装 | TASK-102 |
@@ -34,45 +34,56 @@
 ## タスク詳細
 
 ### TASK-101
+
 - 補足: pom.xmlへの依存関係追加とネイティブライブラリ配置
 - 成果物: Onnx Runtime統合設定
 
 ### TASK-102
+
 - 補足: 日本語対応多言語埋め込みモデル（multilingual-e5-small等）をリソースに含める
 - 成果物: EmbeddingModelクラス
 
 ### TASK-103
+
 - 補足: 日本語テキスト前処理とトークン化含む
 - 成果物: TextVectorizerクラス
 
 ### TASK-104
+
 - 補足: KnnVectorFieldとHnswGraphBuilderの設定
 - 成果物: VectorIndexManagerクラス
 
 ### TASK-107
+
 - 補足: Apache PDFBox使用
 - 成果物: PdfParserクラス
 
 ### TASK-108
+
 - 補足: Jsoup使用
 - 成果物: HtmlParserクラス
 
 ### TASK-109
+
 - 補足: 全文検索→ベクトル検索、またはその逆順
 - 成果物: SequentialHybridSearchクラス
 
 ### TASK-110
+
 - 補足: ExecutorServiceで並列実行
 - 成果物: ParallelHybridSearchクラス
 
 ### TASK-117
+
 - 補足: MCPプロトコル実装（SSE/stdio対応）
 - 成果物: MCPサーバー基盤
 
 ### TASK-118
+
 - 補足: search_documentsツール実装
 - 成果物: DocumentSearchToolクラス
 
 ### TASK-123
+
 - 補足: 10万件で500ms以内のレスポンスを確認
 - 成果物: 性能測定レポート

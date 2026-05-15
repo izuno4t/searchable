@@ -3,7 +3,7 @@
 ## タスク一覧
 
 | ID | ステータス | 概要 | 依存関係 |
-|----|-----------|------|----------|
+| --- | --- | --- | --- |
 | TASK-001 | ⏳ | 全文検索エンジン選定調査とPoC実施 | - |
 | TASK-002 | ⏳ | 軽量DB選定調査とベンチマーク実施 | - |
 | TASK-003 | ⏳ | 性能目標検証用テストデータ作成と測定 | - |
@@ -45,44 +45,54 @@
 ## タスク詳細
 
 ### TASK-001
+
 - 補足: Apache Lucene + 日本語形態素解析器（Kuromoji vs Sudachi）の比較検証
 - 成果物: 選定レポート、簡易PoCコード（日本語サンプルデータで検証）
 - 期限: Phase 1開始前1週間
 
 ### TASK-002
+
 - 補足: H2, SQLite, RocksDBの性能・機能比較
 - 成果物: 選定レポート、ベンチマーク結果
 - 期限: Phase 1開始前3日
 
 ### TASK-003
+
 - 補足: 100,000件規模のテストデータで500ms以内を確認
 - 成果物: 性能測定レポート、テストデータ
 - 期限: Phase 1開始前
 
 ### TASK-004
+
 - 補足: マルチモジュール構成（core, api, plugins）
 - 成果物: pom.xml、ディレクトリ構造
 
 ### TASK-005
+
 - 補足: Namespace, Document, SearchRequest, SearchResult等
 - 成果物: ドメインモデルクラス群
 
 ### TASK-010
+
 - 補足: LuceneのDirectoryとIndexWriterの初期化
 - 成果物: IndexManager基盤クラス
 
 ### TASK-016
+
 - 補足: DataSourcePluginインターフェース定義
 - 成果物: プラグインAPIインターフェース
 
 ### TASK-019
+
 - 補足: YAML形式の設定ファイル対応
 - 成果物: ConfigLoader実装
 
 ### TASK-025
+
 - 補足: Spring Boot組み込みTomcatで起動
 - 成果物: REST APIサーバー基盤
 
 ### TASK-034
+
 - 補足: 10万件で500ms以内のレスポンスを確認
 - 成果物: 性能測定レポート
