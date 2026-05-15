@@ -15,6 +15,7 @@ public class SearchableProperties {
     private Index index = new Index();
     private Plugins plugins = new Plugins();
     private Global global = new Global();
+    private Embedding embedding = new Embedding();
 
     public Path getDataDirectory() { return dataDirectory; }
     public void setDataDirectory(final Path v) { this.dataDirectory = v; }
@@ -26,6 +27,8 @@ public class SearchableProperties {
     public void setPlugins(final Plugins v) { this.plugins = v; }
     public Global getGlobal() { return global; }
     public void setGlobal(final Global v) { this.global = v; }
+    public Embedding getEmbedding() { return embedding; }
+    public void setEmbedding(final Embedding v) { this.embedding = v; }
 
     /** Persistence DB connection settings. */
     public static class Persistence {
@@ -58,6 +61,31 @@ public class SearchableProperties {
 
         public Path getDirectory() { return directory; }
         public void setDirectory(final Path v) { this.directory = v; }
+    }
+
+    /** Vector embedding settings. */
+    public static class Embedding {
+        /** Embedding provider: {@code hash} (default, deterministic) or {@code onnx}. */
+        private String provider = "hash";
+        /** Output vector dimension. Must be a multiple of 8 for the hash provider. */
+        private int dimension = 384;
+        /** Path to an ONNX model file (required when {@code provider=onnx}). */
+        private Path modelPath;
+        /** Identifier for diagnostics (e.g. {@code multilingual-e5-small}). */
+        private String modelId = "hash:384";
+        /** Maximum sequence length for the ONNX tokenizer. */
+        private int maxSequenceLength = 512;
+
+        public String getProvider() { return provider; }
+        public void setProvider(final String v) { this.provider = v; }
+        public int getDimension() { return dimension; }
+        public void setDimension(final int v) { this.dimension = v; }
+        public Path getModelPath() { return modelPath; }
+        public void setModelPath(final Path v) { this.modelPath = v; }
+        public String getModelId() { return modelId; }
+        public void setModelId(final String v) { this.modelId = v; }
+        public int getMaxSequenceLength() { return maxSequenceLength; }
+        public void setMaxSequenceLength(final int v) { this.maxSequenceLength = v; }
     }
 
     /** Default search behavior for namespaces. */

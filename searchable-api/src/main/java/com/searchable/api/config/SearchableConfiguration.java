@@ -4,16 +4,19 @@ import com.searchable.core.application.IndexService;
 import com.searchable.core.application.NamespaceService;
 import com.searchable.core.application.SearchService;
 import com.searchable.core.application.config.GlobalConfig;
+import com.searchable.core.domain.embedding.EmbeddingProvider;
 import com.searchable.core.domain.index.IndexMetadataRepository;
 import com.searchable.core.domain.namespace.NamespaceRepository;
 import com.searchable.core.domain.search.SearchOrder;
 import com.searchable.core.domain.search.SearchStrategy;
 import com.searchable.core.domain.search.SearchType;
+import com.searchable.core.infrastructure.embedding.HashEmbeddingProvider;
 import com.searchable.core.infrastructure.lucene.AnalyzerFactory;
 import com.searchable.core.infrastructure.lucene.IndexLayout;
 import com.searchable.core.infrastructure.lucene.LuceneFullTextSearcher;
 import com.searchable.core.infrastructure.lucene.LuceneIndexProvider;
 import com.searchable.core.infrastructure.lucene.LuceneIndexer;
+import com.searchable.core.infrastructure.lucene.LuceneVectorSearcher;
 import com.searchable.core.infrastructure.persistence.DataSourceFactory;
 import com.searchable.core.infrastructure.persistence.PersistenceConfig;
 import com.searchable.core.infrastructure.persistence.SchemaInitializer;
@@ -26,6 +29,7 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
 import java.time.Clock;
+import java.util.Locale;
 
 /**
  * Wires the core services as Spring beans.
@@ -72,14 +76,34 @@ public class SearchableConfiguration {
             AnalyzerFactory.japanese());
     }
 
+    @Bean(destroyMethod = "close")
+    public EmbeddingProvider embeddingProvider(final SearchableProperties props) {
+        final SearchableProperties.Embedding e = props.getEmbedding();
+        return switch (e.getProvider().toLowerCase(Locale.ROOT)) {
+            case "hash" -> new HashEmbeddingProvider(e.getDimension());
+            // 'onnx' provider requires an externally configured Tokenizer bean and
+            // is intentionally not auto-wired here. Override this bean in a
+            // user-supplied configuration to enable it.
+            default -> throw new IllegalArgumentException(
+                "Unsupported embedding provider: " + e.getProvider());
+        };
+    }
+
     @Bean
-    public LuceneIndexer luceneIndexer(final LuceneIndexProvider provider) {
-        return new LuceneIndexer(provider);
+    public LuceneIndexer luceneIndexer(final LuceneIndexProvider provider,
+                                       final EmbeddingProvider embeddingProvider) {
+        return new LuceneIndexer(provider, embeddingProvider);
     }
 
     @Bean
     public LuceneFullTextSearcher luceneFullTextSearcher(final LuceneIndexProvider provider) {
         return new LuceneFullTextSearcher(provider);
+    }
+
+    @Bean
+    public LuceneVectorSearcher luceneVectorSearcher(final LuceneIndexProvider provider,
+                                                     final EmbeddingProvider embeddingProvider) {
+        return new LuceneVectorSearcher(provider, embeddingProvider);
     }
 
     @Bean(destroyMethod = "close")

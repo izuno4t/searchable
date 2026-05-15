@@ -10,14 +10,14 @@
 | TASK-104 | ✅ | Lucene HNSWベクトルインデックス初期化 | - |
 | TASK-105 | ✅ | ベクトルインデックス作成・更新処理実装 | TASK-103,TASK-104 |
 | TASK-106 | ✅ | ベクトル検索クエリ処理実装 | TASK-104 |
-| TASK-107 | ⏳ | PDFパーサー実装 | - |
-| TASK-108 | ⏳ | HTMLパーサー実装 | - |
+| TASK-107 | ✅ | PDFパーサー実装 | - |
+| TASK-108 | ✅ | HTMLパーサー実装 | - |
 | TASK-109 | ⏳ | シーケンシャルハイブリッド検索実装 | TASK-106 |
 | TASK-110 | ⏳ | パラレルハイブリッド検索実装 | TASK-106 |
 | TASK-111 | ⏳ | 検索結果マージ処理実装 | TASK-109,TASK-110 |
 | TASK-112 | ⏳ | SearchServiceにベクトル検索API追加 | TASK-106 |
 | TASK-113 | ⏳ | SearchServiceにハイブリッド検索API追加 | TASK-111 |
-| TASK-114 | ⏳ | IndexServiceにベクトルインデックス更新機能追加 | TASK-105,TASK-107,TASK-108 |
+| TASK-114 | ✅ | IndexServiceにベクトルインデックス更新機能追加 | TASK-105,TASK-107,TASK-108 |
 | TASK-115 | ⏳ | ベクトル検索エンドポイント実装 | TASK-112 |
 | TASK-116 | ⏳ | ハイブリッド検索エンドポイント実装 | TASK-113 |
 | TASK-117 | ⏳ | MCPサーバー基盤作成 | - |

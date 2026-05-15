@@ -12,19 +12,22 @@ import java.util.Optional;
 /**
  * Dispatches to the appropriate {@link DocumentParser} based on file extension.
  *
- * <p>Built-in parsers (Plain Text, Markdown, AsciiDoc) are registered by
- * {@link #defaults()}; additional parsers can be added via {@link #register}.
+ * <p>Built-in parsers (Plain Text, Markdown, AsciiDoc, HTML, PDF) are
+ * registered by {@link #defaults()}; additional parsers can be added via
+ * {@link #register}.
  */
 public final class ParserRegistry {
 
     private final Map<String, DocumentParser> byExtension = new HashMap<>();
 
-    /** Registry pre-populated with the parsers required for Phase 1. */
+    /** Registry pre-populated with the parsers shipped by the library. */
     public static ParserRegistry defaults() {
         final ParserRegistry registry = new ParserRegistry();
         registry.register(new PlainTextParser());
         registry.register(new MarkdownParser());
         registry.register(new AsciiDocParser());
+        registry.register(new HtmlParser());
+        registry.register(new PdfParser());
         return registry;
     }
 

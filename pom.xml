@@ -30,6 +30,8 @@
         <lucene.version>10.2.0</lucene.version>
         <h2.version>2.3.232</h2.version>
         <onnxruntime.version>1.20.0</onnxruntime.version>
+        <pdfbox.version>3.0.3</pdfbox.version>
+        <jsoup.version>1.18.3</jsoup.version>
         <slf4j.version>2.0.16</slf4j.version>
         <logback.version>1.5.12</logback.version>
         <jackson.version>2.18.2</jackson.version>
@@ -102,6 +104,18 @@
                 <groupId>com.microsoft.onnxruntime</groupId>
                 <artifactId>onnxruntime</artifactId>
                 <version>${onnxruntime.version}</version>
+            </dependency>
+
+            <!-- Document parsers (PDF / HTML) -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>${jsoup.version}</version>
             </dependency>
 
             <!-- Logging -->
