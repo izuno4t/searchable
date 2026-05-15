@@ -45,25 +45,25 @@
 | TASK-039 | ✅ | UserDictionaryResolver（global+namespace マージ） | TASK-038 |
 | TASK-040 | ✅ | FileUserDictionaryRepository 実装 | TASK-038 |
 | TASK-041 | ✅ | UserDictionaryAnalyzerFactory（Kuromoji 連携） | TASK-039 |
-| TASK-042 | ⏳ | JdbcUserDictionaryRepository + スキーマ追加 | TASK-038,TASK-007 |
-| TASK-043 | ⏳ | ストレージ切替プロパティ（searchable.dictionary.storage） | TASK-040,TASK-042 |
-| TASK-044 | ⏳ | SearchableConfiguration 配線 + AnalyzerFactory 差し替え | TASK-041,TASK-043 |
-| TASK-045 | ⏳ | 辞書 REST エンドポイント実装（GET/PUT/DELETE by scope） | TASK-044 |
-| TASK-046 | ⏳ | OpenAPI 仕様書更新（辞書エンドポイント） | TASK-045 |
-| TASK-047 | ⏳ | AnalyzerFactory 統合テスト（カスタム単語が分かち書きされる） | TASK-044 |
-| TASK-048 | ⏳ | 辞書 REST 統合テスト | TASK-045 |
-| TASK-049 | ⏳ | 既存検索パイプラインへの性能・互換影響評価 | TASK-044 |
-| TASK-050 | ⏳ | ユーザー辞書利用ガイド作成 | TASK-044 |
+| TASK-042 | ✅ | JdbcUserDictionaryRepository + スキーマ追加 | TASK-038,TASK-007 |
+| TASK-043 | ✅ | ストレージ切替プロパティ（searchable.dictionary.storage） | TASK-040,TASK-042 |
+| TASK-044 | ✅ | SearchableConfiguration 配線 + AnalyzerFactory 差し替え | TASK-041,TASK-043 |
+| TASK-045 | ✅ | 辞書 REST エンドポイント実装（GET/PUT/DELETE by scope） | TASK-044 |
+| TASK-046 | ✅ | OpenAPI 仕様書更新（辞書エンドポイント） | TASK-045 |
+| TASK-047 | ✅ | AnalyzerFactory 統合テスト（カスタム単語が分かち書きされる） | TASK-044 |
+| TASK-048 | ✅ | 辞書 REST 統合テスト | TASK-045 |
+| TASK-049 | ✅ | 既存検索パイプラインへの性能・互換影響評価 | TASK-044 |
+| TASK-050 | ✅ | ユーザー辞書利用ガイド作成 | TASK-044 |
 | TASK-051 | ✅ | ChunkingStrategy ドメイン抽象 + Chunk 型定義 | TASK-005 |
 | TASK-052 | ✅ | WholeDocument / FixedSize チャンキング戦略実装 | TASK-051 |
-| TASK-053 | ⏳ | Sentence / Paragraph チャンキング戦略実装 | TASK-051 |
-| TASK-054 | ⏳ | ParsedDocument 拡張（セクション情報の付与） | TASK-013-015 |
-| TASK-055 | ⏳ | SectionChunkingStrategy（見出し単位） | TASK-051,TASK-054 |
-| TASK-056 | ⏳ | LuceneIndexer をチャンク前提に変更（sub-doc + parentId） | TASK-052 |
-| TASK-057 | ⏳ | 検索: 親集約オプション + sub-doc 直接ヒット | TASK-056 |
-| TASK-058 | ⏳ | チャンキング設定切替（global + Namespace 上書き） | TASK-056 |
-| TASK-059 | ⏳ | チャンキング統合テスト + 性能影響評価 | TASK-056-058 |
-| TASK-060 | ⏳ | チャンキング利用ガイド作成 | TASK-058 |
+| TASK-053 | ✅ | Sentence / Paragraph チャンキング戦略実装 | TASK-051 |
+| TASK-054 | ✅ | ParsedDocument 拡張（セクション情報の付与） | TASK-013-015 |
+| TASK-055 | ✅ | SectionChunkingStrategy（見出し単位） | TASK-051,TASK-054 |
+| TASK-056 | ✅ | LuceneIndexer をチャンク前提に変更（sub-doc + parentId） | TASK-052 |
+| TASK-057 | ✅ | 検索: 親集約オプション + sub-doc 直接ヒット | TASK-056 |
+| TASK-058 | ✅ | チャンキング設定切替（global + Namespace 上書き） | TASK-056 |
+| TASK-059 | ✅ | チャンキング統合テスト + 性能影響評価 | TASK-056-058 |
+| TASK-060 | ✅ | チャンキング利用ガイド作成 | TASK-058 |
 
 ## タスク詳細
 

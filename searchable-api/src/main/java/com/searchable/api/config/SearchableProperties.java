@@ -16,6 +16,8 @@ public class SearchableProperties {
     private Plugins plugins = new Plugins();
     private Global global = new Global();
     private Embedding embedding = new Embedding();
+    private Dictionary dictionary = new Dictionary();
+    private Chunking chunking = new Chunking();
 
     public Path getDataDirectory() { return dataDirectory; }
     public void setDataDirectory(final Path v) { this.dataDirectory = v; }
@@ -29,6 +31,10 @@ public class SearchableProperties {
     public void setGlobal(final Global v) { this.global = v; }
     public Embedding getEmbedding() { return embedding; }
     public void setEmbedding(final Embedding v) { this.embedding = v; }
+    public Dictionary getDictionary() { return dictionary; }
+    public void setDictionary(final Dictionary v) { this.dictionary = v; }
+    public Chunking getChunking() { return chunking; }
+    public void setChunking(final Chunking v) { this.chunking = v; }
 
     /** Persistence DB connection settings. */
     public static class Persistence {
@@ -86,6 +92,40 @@ public class SearchableProperties {
         public void setModelId(final String v) { this.modelId = v; }
         public int getMaxSequenceLength() { return maxSequenceLength; }
         public void setMaxSequenceLength(final int v) { this.maxSequenceLength = v; }
+    }
+
+    /** Chunking strategy for embedding/indexing. */
+    public static class Chunking {
+        /** Strategy name: {@code whole} (default), {@code fixed}, {@code sentence}, {@code paragraph}, {@code section}. */
+        private String strategy = "whole";
+        /** Chunk size (chars). Used by {@code fixed} strategy. */
+        private int chunkSize = 512;
+        /** Overlap between consecutive chunks. Used by {@code fixed} strategy. */
+        private int overlap = 64;
+        /** Target chunk size (chars) used by {@code sentence} strategy. */
+        private int sentenceTargetSize = 400;
+
+        public String getStrategy() { return strategy; }
+        public void setStrategy(final String v) { this.strategy = v; }
+        public int getChunkSize() { return chunkSize; }
+        public void setChunkSize(final int v) { this.chunkSize = v; }
+        public int getOverlap() { return overlap; }
+        public void setOverlap(final int v) { this.overlap = v; }
+        public int getSentenceTargetSize() { return sentenceTargetSize; }
+        public void setSentenceTargetSize(final int v) { this.sentenceTargetSize = v; }
+    }
+
+    /** User dictionary (custom tokenization) settings. */
+    public static class Dictionary {
+        /** Storage backend: {@code file} (default) or {@code db}. */
+        private String storage = "file";
+        /** Root directory for file-backed storage. */
+        private Path directory = Path.of("./data/dictionaries");
+
+        public String getStorage() { return storage; }
+        public void setStorage(final String v) { this.storage = v; }
+        public Path getDirectory() { return directory; }
+        public void setDirectory(final Path v) { this.directory = v; }
     }
 
     /** Default search behavior for namespaces. */

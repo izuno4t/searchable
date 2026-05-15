@@ -27,6 +27,8 @@ tags:
     description: Document indexing operations
   - name: search
     description: Search execution
+  - name: dictionaries
+    description: Kuromoji user dictionaries (global + namespace-scoped)
 paths:
   /api/v1/namespaces:
     get:
@@ -243,6 +245,101 @@ paths:
                 $ref: '#/components/schemas/IndexMetadataResponse'
         '404':
           $ref: '#/components/responses/NotFound'
+  /api/v1/dictionaries:
+    get:
+      tags: [dictionaries]
+      summary: List all user dictionaries (global + every namespace)
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDictionaryListResponse'
+  /api/v1/dictionaries/global:
+    get:
+      tags: [dictionaries]
+      summary: Get the global user dictionary
+      responses:
+        '200':
+          description: Dictionary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDictionaryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [dictionaries]
+      summary: Create or replace the global user dictionary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDictionaryUpsertRequest'
+      responses:
+        '200':
+          description: Stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDictionaryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    delete:
+      tags: [dictionaries]
+      summary: Delete the global user dictionary
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/dictionaries/namespaces/{namespaceId}:
+    parameters:
+      - name: namespaceId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [dictionaries]
+      summary: Get the namespace-scoped user dictionary
+      responses:
+        '200':
+          description: Dictionary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDictionaryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [dictionaries]
+      summary: Create or replace a namespace-scoped user dictionary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDictionaryUpsertRequest'
+      responses:
+        '200':
+          description: Stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDictionaryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    delete:
+      tags: [dictionaries]
+      summary: Delete a namespace-scoped user dictionary
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
 components:
   parameters:
     NamespaceId:
@@ -439,3 +536,41 @@ components:
         statistics:
           type: object
           additionalProperties: true
+    DictionaryEntry:
+      type: object
+      required: [surface, segmentation, reading, pos]
+      properties:
+        surface: { type: string, description: 表層形 }
+        segmentation: { type: string, description: 分かち書きされた単語列（空白区切り） }
+        reading: { type: string, description: 読み（カタカナ） }
+        pos: { type: string, description: 品詞ラベル }
+    UserDictionaryUpsertRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/DictionaryEntry'
+    UserDictionaryResponse:
+      type: object
+      properties:
+        scope:
+          type: string
+          description: |
+            Scope identifier — `GLOBAL` or `NAMESPACE:<namespaceId>`
+        name: { type: string }
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/DictionaryEntry'
+        updatedAt: { type: string, format: date-time }
+    UserDictionaryListResponse:
+      type: object
+      properties:
+        dictionaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDictionaryResponse'
+        total: { type: integer }

@@ -71,7 +71,8 @@ public final class DocumentBrowser {
                                       final String namespaceId,
                                       final ScoreDoc scoreDoc) throws IOException {
         final Document doc = searcher.storedFields().document(scoreDoc.doc);
-        final String id = doc.get(LuceneFields.ID);
+        final String parentId = doc.get(LuceneFields.PARENT_ID);
+        final String id = parentId != null ? parentId : doc.get(LuceneFields.ID);
         final String title = doc.get(LuceneFields.TITLE);
         final String content = doc.get(LuceneFields.CONTENT);
         final String indexedAtRaw = doc.get(LuceneFields.INDEXED_AT_EPOCH);

@@ -2,10 +2,13 @@ package com.searchable.core.infrastructure.parser;
 
 import com.searchable.core.domain.parser.DocumentParser;
 import com.searchable.core.domain.parser.ParsedDocument;
+import com.searchable.core.domain.parser.ParsedDocument.Section;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -18,6 +21,8 @@ import java.util.regex.Pattern;
  */
 public final class MarkdownParser implements DocumentParser {
 
+    private static final Pattern HEADING_LINE = Pattern.compile("^(#{1,6})\\s+(.+?)\\s*#*\\s*$",
+        Pattern.MULTILINE);
     private static final Pattern ATX_TITLE = Pattern.compile("^#\\s+(.+?)\\s*#*\\s*$");
     private static final Pattern SETEXT_TITLE = Pattern.compile("^(.+)$\\R^=+\\s*$",
         Pattern.MULTILINE);
@@ -49,7 +54,35 @@ public final class MarkdownParser implements DocumentParser {
         Objects.requireNonNull(source, "source must not be null");
         final String title = extractTitle(source, fallbackTitle);
         final String content = stripMarkdown(source);
-        return new ParsedDocument(title, content, Map.of("format", "markdown"));
+        final List<Section> sections = extractSections(source);
+        return new ParsedDocument(title, content,
+            Map.of("format", "markdown"), sections);
+    }
+
+    private List<Section> extractSections(final String source) {
+        final Matcher matcher = HEADING_LINE.matcher(source);
+        final List<int[]> positions = new ArrayList<>();
+        final List<String> headings = new ArrayList<>();
+        final List<Integer> levels = new ArrayList<>();
+        while (matcher.find()) {
+            positions.add(new int[]{matcher.start(), matcher.end()});
+            levels.add(matcher.group(1).length());
+            headings.add(matcher.group(2).trim());
+        }
+        if (positions.isEmpty()) {
+            return List.of();
+        }
+        final List<Section> sections = new ArrayList<>();
+        for (int i = 0; i < positions.size(); i++) {
+            final int bodyStart = positions.get(i)[1];
+            final int bodyEnd = i + 1 < positions.size()
+                ? positions.get(i + 1)[0]
+                : source.length();
+            final String body = source.substring(bodyStart, bodyEnd).trim();
+            final String cleanBody = stripMarkdown(body);
+            sections.add(new Section(levels.get(i), headings.get(i), cleanBody));
+        }
+        return sections;
     }
 
     private String extractTitle(final String source, final String fallbackTitle) {

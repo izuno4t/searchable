@@ -89,7 +89,8 @@ public final class LuceneVectorSearcher {
             final ScoreDoc scoreDoc = hits.scoreDocs[i];
             final org.apache.lucene.document.Document doc =
                 searcher.storedFields().document(scoreDoc.doc);
-            final String id = doc.get(LuceneFields.ID);
+            final String parentId = doc.get(LuceneFields.PARENT_ID);
+            final String id = parentId != null ? parentId : doc.get(LuceneFields.ID);
             final String title = doc.get(LuceneFields.TITLE);
             final String content = doc.get(LuceneFields.CONTENT);
             final Map<String, Object> metadata = mapper.deserializeMetadata(

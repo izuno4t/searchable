@@ -8,15 +8,27 @@ import com.searchable.core.application.SearchPerformanceMonitor;
 import com.searchable.core.application.SearchService;
 import com.searchable.core.application.config.GlobalConfig;
 import com.searchable.core.application.config.GlobalConfigProvider;
+import com.searchable.core.domain.chunking.ChunkingStrategy;
+import com.searchable.core.domain.dictionary.UserDictionaryRepository;
+import com.searchable.core.domain.dictionary.UserDictionaryResolver;
 import com.searchable.core.domain.embedding.EmbeddingProvider;
 import com.searchable.core.domain.index.IndexMetadataRepository;
 import com.searchable.core.domain.namespace.NamespaceRepository;
 import com.searchable.core.domain.search.SearchOrder;
 import com.searchable.core.domain.search.SearchStrategy;
 import com.searchable.core.domain.search.SearchType;
+import com.searchable.core.infrastructure.chunking.FixedSizeChunkingStrategy;
+import com.searchable.core.infrastructure.chunking.ParagraphChunkingStrategy;
+import com.searchable.core.infrastructure.chunking.SectionChunkingStrategy;
+import com.searchable.core.infrastructure.chunking.SentenceChunkingStrategy;
+import com.searchable.core.infrastructure.chunking.WholeDocumentChunkingStrategy;
+import com.searchable.core.infrastructure.dictionary.FileUserDictionaryRepository;
+import com.searchable.core.infrastructure.dictionary.JdbcUserDictionaryRepository;
 import com.searchable.core.infrastructure.embedding.HashEmbeddingProvider;
 import com.searchable.core.infrastructure.lucene.AnalyzerFactory;
+import com.searchable.core.infrastructure.lucene.UserDictionaryAnalyzerFactory;
 import com.searchable.core.infrastructure.lucene.IndexLayout;
+import com.searchable.core.infrastructure.lucene.LuceneDocumentMapper;
 import com.searchable.core.infrastructure.lucene.LuceneFullTextSearcher;
 import com.searchable.core.infrastructure.lucene.LuceneIndexProvider;
 import com.searchable.core.infrastructure.lucene.LuceneIndexer;
@@ -73,11 +85,36 @@ public class SearchableConfiguration {
         return new JdbcIndexMetadataRepository(dataSource);
     }
 
+    @Bean
+    public UserDictionaryRepository userDictionaryRepository(final SearchableProperties props,
+                                                             final DataSource dataSource,
+                                                             final SchemaInitializer init) {
+        final SearchableProperties.Dictionary d = props.getDictionary();
+        return switch (d.getStorage().toLowerCase(Locale.ROOT)) {
+            case "file" -> new FileUserDictionaryRepository(d.getDirectory());
+            case "db" -> new JdbcUserDictionaryRepository(dataSource);
+            default -> throw new IllegalArgumentException(
+                "Unsupported dictionary storage: " + d.getStorage());
+        };
+    }
+
+    @Bean
+    public UserDictionaryResolver userDictionaryResolver(
+            final UserDictionaryRepository repository) {
+        return new UserDictionaryResolver(repository);
+    }
+
+    @Bean
+    public AnalyzerFactory analyzerFactory(final UserDictionaryResolver resolver) {
+        return new UserDictionaryAnalyzerFactory(resolver);
+    }
+
     @Bean(destroyMethod = "close")
-    public LuceneIndexProvider luceneIndexProvider(final SearchableProperties props) {
+    public LuceneIndexProvider luceneIndexProvider(final SearchableProperties props,
+                                                   final AnalyzerFactory analyzerFactory) {
         return new LuceneIndexProvider(
             new IndexLayout(props.getIndex().getDirectory()),
-            AnalyzerFactory.japanese());
+            analyzerFactory);
     }
 
     @Bean(destroyMethod = "close")
@@ -94,9 +131,25 @@ public class SearchableConfiguration {
     }
 
     @Bean
+    public ChunkingStrategy chunkingStrategy(final SearchableProperties props) {
+        final SearchableProperties.Chunking c = props.getChunking();
+        return switch (c.getStrategy().toLowerCase(Locale.ROOT)) {
+            case "whole" -> new WholeDocumentChunkingStrategy();
+            case "fixed" -> new FixedSizeChunkingStrategy(c.getChunkSize(), c.getOverlap());
+            case "sentence" -> new SentenceChunkingStrategy(c.getSentenceTargetSize());
+            case "paragraph" -> new ParagraphChunkingStrategy();
+            case "section" -> new SectionChunkingStrategy();
+            default -> throw new IllegalArgumentException(
+                "Unsupported chunking strategy: " + c.getStrategy());
+        };
+    }
+
+    @Bean
     public LuceneIndexer luceneIndexer(final LuceneIndexProvider provider,
-                                       final EmbeddingProvider embeddingProvider) {
-        return new LuceneIndexer(provider, embeddingProvider);
+                                       final EmbeddingProvider embeddingProvider,
+                                       final ChunkingStrategy chunkingStrategy) {
+        return new LuceneIndexer(provider, new LuceneDocumentMapper(),
+            embeddingProvider, chunkingStrategy);
     }
 
     @Bean

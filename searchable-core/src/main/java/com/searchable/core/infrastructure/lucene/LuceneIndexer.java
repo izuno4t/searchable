@@ -1,20 +1,27 @@
 package com.searchable.core.infrastructure.lucene;
 
+import com.searchable.core.domain.chunking.Chunk;
+import com.searchable.core.domain.chunking.ChunkingStrategy;
 import com.searchable.core.domain.document.Document;
 import com.searchable.core.domain.embedding.EmbeddingProvider;
+import com.searchable.core.infrastructure.chunking.WholeDocumentChunkingStrategy;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 
 /**
- * Performs index create / update / delete operations on a namespace's
- * Lucene index. When an {@link EmbeddingProvider} is supplied the indexer
- * additionally embeds the document content and stores the resulting vector
- * in the KNN vector field.
+ * Indexes domain documents into Lucene.
+ *
+ * <p>Documents are first passed through a {@link ChunkingStrategy} (defaulting
+ * to {@link WholeDocumentChunkingStrategy} for backward compatibility); each
+ * resulting {@link Chunk} is stored as its own Lucene sub-document keyed by
+ * {@link LuceneFields#PARENT_ID}. When an {@link EmbeddingProvider} is
+ * supplied the chunk text is embedded and stored in the KNN vector field.
  */
 public final class LuceneIndexer {
 
@@ -23,22 +30,33 @@ public final class LuceneIndexer {
     private final LuceneIndexProvider provider;
     private final LuceneDocumentMapper mapper;
     private final EmbeddingProvider embeddingProvider;
+    private final ChunkingStrategy chunkingStrategy;
 
     public LuceneIndexer(final LuceneIndexProvider provider) {
-        this(provider, new LuceneDocumentMapper(), null);
+        this(provider, new LuceneDocumentMapper(), null, new WholeDocumentChunkingStrategy());
     }
 
     public LuceneIndexer(final LuceneIndexProvider provider,
                          final EmbeddingProvider embeddingProvider) {
-        this(provider, new LuceneDocumentMapper(), embeddingProvider);
+        this(provider, new LuceneDocumentMapper(), embeddingProvider,
+            new WholeDocumentChunkingStrategy());
     }
 
     public LuceneIndexer(final LuceneIndexProvider provider,
                          final LuceneDocumentMapper mapper,
                          final EmbeddingProvider embeddingProvider) {
+        this(provider, mapper, embeddingProvider, new WholeDocumentChunkingStrategy());
+    }
+
+    public LuceneIndexer(final LuceneIndexProvider provider,
+                         final LuceneDocumentMapper mapper,
+                         final EmbeddingProvider embeddingProvider,
+                         final ChunkingStrategy chunkingStrategy) {
         this.provider = Objects.requireNonNull(provider, "provider must not be null");
         this.mapper = Objects.requireNonNull(mapper, "mapper must not be null");
         this.embeddingProvider = embeddingProvider;
+        this.chunkingStrategy = Objects.requireNonNull(chunkingStrategy,
+            "chunkingStrategy must not be null");
     }
 
     /** Insert or replace a single document; visible after the next refresh. */
@@ -47,8 +65,7 @@ public final class LuceneIndexer {
         final LuceneIndexContext ctx = provider.getOrCreate(document.namespaceId());
         try {
             final IndexWriter writer = ctx.writer();
-            writer.updateDocument(new Term(LuceneFields.ID, document.id()),
-                mapper.toLucene(document, embedFor(document)));
+            writeChunks(writer, document);
             writer.commit();
             ctx.refresh();
         } catch (IOException e) {
@@ -70,8 +87,7 @@ public final class LuceneIndexer {
                     throw new IllegalArgumentException(
                         "Document " + doc.id() + " does not belong to namespace " + namespaceId);
                 }
-                writer.updateDocument(new Term(LuceneFields.ID, doc.id()),
-                    mapper.toLucene(doc, embedFor(doc)));
+                writeChunks(writer, doc);
                 count++;
             }
             writer.commit();
@@ -83,7 +99,7 @@ public final class LuceneIndexer {
         }
     }
 
-    /** Delete a single document; returns whether anything matched. */
+    /** Delete a single document and all its chunks; returns whether anything matched. */
     public boolean delete(final String namespaceId, final String documentId) {
         Objects.requireNonNull(namespaceId, "namespaceId must not be null");
         Objects.requireNonNull(documentId, "documentId must not be null");
@@ -94,7 +110,7 @@ public final class LuceneIndexer {
         try {
             final IndexWriter writer = ctx.writer();
             final long before = ctx.documentCount();
-            writer.deleteDocuments(new Term(LuceneFields.ID, documentId));
+            writer.deleteDocuments(new Term(LuceneFields.PARENT_ID, documentId));
             writer.commit();
             ctx.refresh();
             return ctx.documentCount() < before;
@@ -118,12 +134,14 @@ public final class LuceneIndexer {
         }
     }
 
-    private float[] embedFor(final Document doc) {
-        if (embeddingProvider == null) {
-            return null;
+    private void writeChunks(final IndexWriter writer, final Document doc) throws IOException {
+        final List<Chunk> chunks = chunkingStrategy.chunk(doc);
+        // Replace any prior chunks for this parent document.
+        writer.deleteDocuments(new Term(LuceneFields.PARENT_ID, doc.id()));
+        for (final Chunk chunk : chunks) {
+            final float[] vector = embeddingProvider != null
+                ? embeddingProvider.embed(chunk.text()) : null;
+            writer.addDocument(mapper.toLucene(doc, chunk, vector));
         }
-        // Embed title + content to maximize signal; users can plug in their own
-        // strategy in future iterations.
-        return embeddingProvider.embed(doc.title() + "\n" + doc.content());
     }
 }

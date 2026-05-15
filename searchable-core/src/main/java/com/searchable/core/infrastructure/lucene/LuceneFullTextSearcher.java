@@ -102,7 +102,10 @@ public final class LuceneFullTextSearcher {
             final ScoreDoc scoreDoc = hits.scoreDocs[i];
             final org.apache.lucene.document.Document doc =
                 searcher.storedFields().document(scoreDoc.doc);
-            final String id = doc.get(LuceneFields.ID);
+            // PARENT_ID is the domain document id (same across all chunks);
+            // fall back to chunk-level ID for indexes written before chunking.
+            final String parentId = doc.get(LuceneFields.PARENT_ID);
+            final String id = parentId != null ? parentId : doc.get(LuceneFields.ID);
             final String title = doc.get(LuceneFields.TITLE);
             final String content = doc.get(LuceneFields.CONTENT);
             final Map<String, Object> metadata = mapper.deserializeMetadata(
