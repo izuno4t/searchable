@@ -19,6 +19,7 @@
         <module>searchable-plugins</module>
         <module>searchable-core</module>
         <module>searchable-api</module>
+        <module>searchable-mcp</module>
     </modules>
 
     <properties>
