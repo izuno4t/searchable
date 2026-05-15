@@ -1,0 +1,24 @@
+# Spectral configuration for the Searchable OpenAPI specification.
+#
+# Run:
+#   npx -y @stoplight/spectral-cli lint searchable-api/src/main/resources/openapi.yaml
+#
+# Extends the official OpenAPI rule set with project-specific tweaks.
+extends:
+  - "spectral:oas"
+
+rules:
+  # OpenAPI 3.1 doesn't require an example for every schema during early phases.
+  oas3-valid-media-example: warn
+  oas3-valid-schema-example: warn
+  # Operation ids are required for codegen consumers.
+  operation-operationId: error
+  operation-operationId-unique: error
+  operation-tags: error
+  # Discourage trailing slashes in paths.
+  path-keys-no-trailing-slash: error
+  # Component schema names should be PascalCase.
+  oas3-schema: error
+
+formats:
+  - oas3

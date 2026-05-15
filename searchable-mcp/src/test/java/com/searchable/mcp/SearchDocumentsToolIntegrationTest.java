@@ -7,32 +7,24 @@ import com.searchable.core.application.NamespaceService;
 import com.searchable.core.application.SearchService;
 import com.searchable.core.application.config.GlobalConfig;
 import com.searchable.core.domain.document.Document;
-import com.searchable.core.domain.embedding.EmbeddingProvider;
-import com.searchable.core.infrastructure.embedding.HashEmbeddingProvider;
-import com.searchable.core.infrastructure.lucene.AnalyzerFactory;
-import com.searchable.core.infrastructure.lucene.IndexLayout;
 import com.searchable.core.infrastructure.lucene.LuceneFullTextSearcher;
-import com.searchable.core.infrastructure.lucene.LuceneIndexProvider;
 import com.searchable.core.infrastructure.lucene.LuceneIndexer;
 import com.searchable.core.infrastructure.lucene.LuceneVectorSearcher;
-import com.searchable.core.infrastructure.persistence.DataSourceFactory;
-import com.searchable.core.infrastructure.persistence.PersistenceConfig;
-import com.searchable.core.infrastructure.persistence.SchemaInitializer;
 import com.searchable.core.infrastructure.persistence.jdbc.JdbcIndexMetadataRepository;
 import com.searchable.core.infrastructure.persistence.jdbc.JdbcNamespaceRepository;
 import com.searchable.mcp.tool.SearchDocumentsTool;
+import com.searchable.testkit.db.H2DatabaseFixture;
+import com.searchable.testkit.embedding.FakeEmbeddingProvider;
+import com.searchable.testkit.lucene.LuceneIndexFixture;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import javax.sql.DataSource;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.Statement;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -44,27 +36,26 @@ class SearchDocumentsToolIntegrationTest {
 
     @TempDir Path tempDir;
 
-    private DataSource dataSource;
-    private LuceneIndexProvider provider;
+    private H2DatabaseFixture db;
+    private LuceneIndexFixture index;
+    private FakeEmbeddingProvider embedding;
     private HybridSearchOrchestrator hybrid;
     private McpServer server;
 
     @BeforeEach
     void setUp() {
-        final PersistenceConfig pc = new PersistenceConfig("H2",
-            "jdbc:h2:" + tempDir.resolve("db") + ";MODE=PostgreSQL", "sa", "");
-        dataSource = DataSourceFactory.create(pc);
-        new SchemaInitializer(dataSource).initialize();
-        provider = new LuceneIndexProvider(
-            new IndexLayout(tempDir.resolve("idx")), AnalyzerFactory.japanese());
-        final EmbeddingProvider embedding = new HashEmbeddingProvider(128);
-        final JdbcNamespaceRepository nsRepo = new JdbcNamespaceRepository(dataSource);
+        db = H2DatabaseFixture.fileBacked(tempDir);
+        index = LuceneIndexFixture.create(tempDir.resolve("idx"));
+        embedding = new FakeEmbeddingProvider(128);
+
+        final JdbcNamespaceRepository nsRepo = new JdbcNamespaceRepository(db.dataSource());
         final NamespaceService nsService = new NamespaceService(nsRepo,
-            new JdbcIndexMetadataRepository(dataSource), provider, GlobalConfig.defaults(),
+            new JdbcIndexMetadataRepository(db.dataSource()), index.provider(),
+            GlobalConfig.defaults(),
             Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC));
-        final LuceneIndexer indexer = new LuceneIndexer(provider, embedding);
-        final LuceneFullTextSearcher ft = new LuceneFullTextSearcher(provider);
-        final LuceneVectorSearcher vec = new LuceneVectorSearcher(provider, embedding);
+        final LuceneIndexer indexer = new LuceneIndexer(index.provider(), embedding);
+        final LuceneFullTextSearcher ft = new LuceneFullTextSearcher(index.provider());
+        final LuceneVectorSearcher vec = new LuceneVectorSearcher(index.provider(), embedding);
         hybrid = new HybridSearchOrchestrator(ft, vec);
         final SearchService searchService = new SearchService(nsRepo, ft, vec, hybrid);
 
@@ -81,12 +72,11 @@ class SearchDocumentsToolIntegrationTest {
     }
 
     @AfterEach
-    void tearDown() throws Exception {
+    void tearDown() {
         hybrid.close();
-        provider.close();
-        try (Connection c = dataSource.getConnection(); Statement s = c.createStatement()) {
-            s.execute("SHUTDOWN");
-        }
+        index.close();
+        embedding.close();
+        db.close();
     }
 
     @Test

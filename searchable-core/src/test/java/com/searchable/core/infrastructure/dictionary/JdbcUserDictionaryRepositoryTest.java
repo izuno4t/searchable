@@ -3,18 +3,11 @@ package com.searchable.core.infrastructure.dictionary;
 import com.searchable.core.domain.dictionary.DictionaryScope;
 import com.searchable.core.domain.dictionary.UserDictionary;
 import com.searchable.core.domain.dictionary.UserDictionaryEntry;
-import com.searchable.core.infrastructure.persistence.DataSourceFactory;
-import com.searchable.core.infrastructure.persistence.PersistenceConfig;
-import com.searchable.core.infrastructure.persistence.SchemaInitializer;
+import com.searchable.core.testing.H2TestDatabase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
-import javax.sql.DataSource;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.Statement;
 import java.time.Instant;
 import java.util.List;
 
@@ -24,24 +17,18 @@ class JdbcUserDictionaryRepositoryTest {
 
     private static final Instant T0 = Instant.parse("2026-01-01T00:00:00Z");
 
-    @TempDir Path tempDir;
-
-    private DataSource dataSource;
+    private H2TestDatabase db;
     private JdbcUserDictionaryRepository repository;
 
     @BeforeEach
     void setUp() {
-        final String url = "jdbc:h2:" + tempDir.resolve("dict") + ";MODE=PostgreSQL";
-        dataSource = DataSourceFactory.create(new PersistenceConfig("H2", url, "sa", ""));
-        new SchemaInitializer(dataSource).initialize();
-        repository = new JdbcUserDictionaryRepository(dataSource);
+        db = H2TestDatabase.open();
+        repository = new JdbcUserDictionaryRepository(db.dataSource());
     }
 
     @AfterEach
-    void tearDown() throws Exception {
-        try (Connection c = dataSource.getConnection(); Statement s = c.createStatement()) {
-            s.execute("SHUTDOWN");
-        }
+    void tearDown() {
+        db.close();
     }
 
     private UserDictionaryEntry entry(final String surface) {

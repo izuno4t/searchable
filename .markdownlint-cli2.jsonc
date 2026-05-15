@@ -1,9 +1,26 @@
+// markdownlint-cli2 configuration for Searchable docs.
+// Run: npx -y markdownlint-cli2 "**/*.md" "#node_modules" "#target"
 {
   "config": {
     "MD013": {
+      "line_length": 100,
       "code_blocks": false,
-      "tables": false
+      "tables": false,
+      "headings": false
     },
-    "MD024": false
-  }
+    // Duplicate headings are common in structured docs (Examples,
+    // Parameters, Returns, FAQ) so keep MD024 disabled.
+    "MD024": false,
+    // Inline HTML is allowed sparingly for diagrams and details/summary.
+    "MD033": false,
+    // Some templates use fenced blocks without a language because the
+    // surrounding prose names the tool.
+    "MD040": false
+  },
+  "ignores": [
+    "node_modules/",
+    "target/",
+    "**/target/**",
+    "**/build/**"
+  ]
 }

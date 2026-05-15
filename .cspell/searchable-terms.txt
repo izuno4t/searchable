@@ -1,0 +1,79 @@
+# Project-specific terminology dictionary for cspell.
+# Add one word per line. Comments begin with '#'.
+
+# Brand / product names
+Searchable
+Kuromoji
+Sudachi
+Thymeleaf
+Logback
+Failsafe
+Spectral
+markdownlint
+cspell
+testcontainers
+
+# Library / API artifacts
+Lucene
+HNSW
+JaCoCo
+SpotBugs
+Checkstyle
+Spotbugs
+PostgreSQL
+postgres
+JDBC
+JSR
+ONNX
+PDFBox
+Jsoup
+JsonRpc
+
+# Domain / config terms
+namespace
+namespaces
+namespaced
+searchable
+embeddings
+embedder
+tokenizer
+analyzer
+analyzers
+chunking
+chunker
+multiword
+upsert
+upserted
+PARENTID
+unrecognised
+
+# Japanese romaji frequently appearing in identifiers
+kuromoji
+sudachi
+katakana
+hiragana
+furigana
+yomigana
+romaji
+
+# CI/CD jargon
+SBOM
+CVSS
+CVE
+NVD
+CycloneDX
+PIT
+mutator
+mutators
+Spotbug
+linting
+
+# Generic technical vocabulary not in standard dictionaries
+multilingual
+deduplicate
+deduplication
+reranker
+reranking
+opensearch
+elastic
+hybrid

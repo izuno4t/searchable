@@ -1,0 +1,52 @@
+{
+  "name": "Searchable Dev Container",
+  "image": "mcr.microsoft.com/devcontainers/java:21-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "21",
+      "installMaven": "true",
+      "mavenVersion": "3.9.9"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": true
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "vscjava.vscode-maven",
+        "redhat.vscode-yaml",
+        "DavidAnson.vscode-markdownlint",
+        "streetsidesoftware.code-spell-checker",
+        "stoplight.spectral",
+        "esbenp.prettier-vscode",
+        "github.vscode-github-actions"
+      ],
+      "settings": {
+        "java.configuration.updateBuildConfiguration": "automatic",
+        "java.compile.nullAnalysis.mode": "automatic",
+        "files.eol": "\n",
+        "files.encoding": "utf8",
+        "files.insertFinalNewline": true,
+        "files.trimTrailingWhitespace": true
+      }
+    }
+  },
+  "remoteEnv": {
+    "MAVEN_OPTS": "-Xmx2g -Dfile.encoding=UTF-8",
+    "JAVA_TOOL_OPTIONS": "-Dfile.encoding=UTF-8"
+  },
+  "postCreateCommand": "mvn -B -DskipTests dependency:go-offline",
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": {
+      "label": "Searchable UI",
+      "onAutoForward": "notify"
+    }
+  }
+}

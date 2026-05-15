@@ -305,7 +305,3 @@ To be determined.
 - [Setup Guide](docs/setup-guide.md)
 - [Research Reports](docs/research/)
 - [OpenAPI](docs/openapi.yaml)
-
-## Contact
-
-Project maintained by NRI Netcom Corporation.

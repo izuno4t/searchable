@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!--
+      Place individual CVE suppressions here once triaged. Each entry MUST
+      include a notes element documenting the rationale (date, owner, and
+      mitigation plan).
+    -->
+</suppressions>

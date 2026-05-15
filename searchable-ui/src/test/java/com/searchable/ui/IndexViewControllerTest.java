@@ -1,12 +1,12 @@
 package com.searchable.ui;
 
 import org.junit.jupiter.api.BeforeEach;
+
+import com.searchable.testkit.spring.SearchableSpringBootTest;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -18,9 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@DirtiesContext
+@SearchableSpringBootTest
 @TestPropertySource(properties = {
     "searchable.data-directory=./build/ui-idx-test",
     "searchable.persistence.url=jdbc:h2:mem:ui-idx-it;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",

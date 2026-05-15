@@ -1,0 +1,38 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "language": "en,ja",
+  "dictionaryDefinitions": [
+    {
+      "name": "searchable-terms",
+      "path": "./.cspell/searchable-terms.txt",
+      "addWords": true
+    }
+  ],
+  "dictionaries": [
+    "searchable-terms",
+    "softwareTerms",
+    "java",
+    "spring",
+    "lucene"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    "target/**",
+    "**/target/**",
+    "build/**",
+    "**/build/**",
+    ".git/**",
+    "**/*.class",
+    "**/*.jar",
+    "**/*.lock",
+    "**/*.svg",
+    "**/*.pdf",
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.gif",
+    "**/*.ico"
+  ],
+  "useGitignore": true,
+  "allowCompoundWords": true
+}
