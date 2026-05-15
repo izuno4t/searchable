@@ -3,8 +3,36 @@ name: CI
 on:
   push:
     branches: [main]
+    paths:
+      - ".cspell/**"
+      - ".github/workflows/ci.yml"
+      - ".markdownlint*"
+      - ".mvn/**"
+      - ".spectral.yaml"
+      - "*.md"
+      - "config/**"
+      - "docs/**"
+      - "mvnw"
+      - "mvnw.cmd"
+      - "pom.xml"
+      - "searchable-*/pom.xml"
+      - "searchable-*/src/**"
   pull_request:
     branches: [main]
+    paths:
+      - ".cspell/**"
+      - ".github/workflows/ci.yml"
+      - ".markdownlint*"
+      - ".mvn/**"
+      - ".spectral.yaml"
+      - "*.md"
+      - "config/**"
+      - "docs/**"
+      - "mvnw"
+      - "mvnw.cmd"
+      - "pom.xml"
+      - "searchable-*/pom.xml"
+      - "searchable-*/src/**"
 
 permissions:
   contents: read
