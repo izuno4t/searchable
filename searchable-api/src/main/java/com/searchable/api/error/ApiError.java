@@ -1,4 +1,4 @@
-package com.searchable.api.dto;
+package com.searchable.api.error;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

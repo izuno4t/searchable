@@ -1,6 +1,11 @@
 package com.searchable.api.controller;
 
-import com.searchable.api.dto.IndexDtos;
+import com.searchable.api.controller.payload.BatchIndexResult;
+import com.searchable.api.controller.request.BatchIndexRequest;
+import com.searchable.api.controller.request.IndexDocumentRequest;
+import com.searchable.api.controller.response.BatchIndexResponse;
+import com.searchable.api.controller.response.IndexMetadataResponse;
+import com.searchable.api.controller.response.IndexedDocumentResponse;
 import com.searchable.core.application.IndexService;
 import com.searchable.core.domain.document.Document;
 import jakarta.validation.Valid;
@@ -35,22 +40,22 @@ public class IndexController {
 
     @PostMapping("/documents")
     @ResponseStatus(HttpStatus.CREATED)
-    public IndexDtos.IndexedResponse index(@Valid @RequestBody final IndexDtos.IndexRequest req) {
+    public IndexedDocumentResponse index(@Valid @RequestBody final IndexDocumentRequest req) {
         final Document doc = req.document().toDomain(req.namespaceId());
         service.index(doc);
-        return IndexDtos.IndexedResponse.of(req.namespaceId(), doc.id(), clock.instant());
+        return IndexedDocumentResponse.of(req.namespaceId(), doc.id(), clock.instant());
     }
 
     @PostMapping("/batch")
-    public IndexDtos.BatchResponse batch(@Valid @RequestBody final IndexDtos.BatchRequest req) {
+    public BatchIndexResponse batch(@Valid @RequestBody final BatchIndexRequest req) {
         final List<Document> docs = req.documents().stream()
             .map(d -> d.toDomain(req.namespaceId())).toList();
         service.indexBatch(req.namespaceId(), docs);
-        final List<IndexDtos.BatchResult> results = new ArrayList<>();
+        final List<BatchIndexResult> results = new ArrayList<>();
         for (final Document d : docs) {
-            results.add(IndexDtos.BatchResult.ok(d.id()));
+            results.add(BatchIndexResult.ok(d.id()));
         }
-        return new IndexDtos.BatchResponse(docs.size(), docs.size(), 0, results);
+        return new BatchIndexResponse(docs.size(), docs.size(), 0, results);
     }
 
     @DeleteMapping("/documents/{documentId}")
@@ -72,7 +77,7 @@ public class IndexController {
     }
 
     @GetMapping("/{namespaceId}/metadata")
-    public IndexDtos.MetadataResponse metadata(@PathVariable final String namespaceId) {
-        return IndexDtos.MetadataResponse.from(service.getMetadata(namespaceId));
+    public IndexMetadataResponse metadata(@PathVariable final String namespaceId) {
+        return IndexMetadataResponse.from(service.getMetadata(namespaceId));
     }
 }

@@ -1,6 +1,10 @@
 package com.searchable.api.controller;
 
-import com.searchable.api.dto.NamespaceDtos;
+import com.searchable.api.controller.payload.NamespaceConfigPayload;
+import com.searchable.api.controller.request.NamespaceCreateRequest;
+import com.searchable.api.controller.request.NamespaceUpdateRequest;
+import com.searchable.api.controller.response.NamespaceListResponse;
+import com.searchable.api.controller.response.NamespaceResponse;
 import com.searchable.core.application.NamespaceService;
 import com.searchable.core.domain.namespace.Namespace;
 import com.searchable.core.domain.namespace.NamespaceConfigPatch;
@@ -30,27 +34,27 @@ public class NamespaceController {
     }
 
     @GetMapping
-    public NamespaceDtos.ListResponse list() {
-        return NamespaceDtos.ListResponse.from(service.listAll());
+    public NamespaceListResponse list() {
+        return NamespaceListResponse.from(service.listAll());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public NamespaceDtos.Response create(@Valid @RequestBody final NamespaceDtos.CreateRequest req) {
+    public NamespaceResponse create(@Valid @RequestBody final NamespaceCreateRequest req) {
         final NamespaceConfigPatch patch = req.config() == null ? null : req.config().toPatch();
         final Namespace ns = service.create(req.id(), req.name(), patch);
-        return NamespaceDtos.Response.from(ns);
+        return NamespaceResponse.from(ns);
     }
 
     @GetMapping("/{id}")
-    public NamespaceDtos.Response get(@PathVariable final String id) {
-        return NamespaceDtos.Response.from(service.findById(id)
+    public NamespaceResponse get(@PathVariable final String id) {
+        return NamespaceResponse.from(service.findById(id)
             .orElseThrow(() -> new NoSuchElementException("Namespace not found: " + id)));
     }
 
     @PutMapping("/{id}")
-    public NamespaceDtos.Response update(@PathVariable final String id,
-                                         @RequestBody final NamespaceDtos.UpdateRequest req) {
+    public NamespaceResponse update(@PathVariable final String id,
+                                    @RequestBody final NamespaceUpdateRequest req) {
         Namespace ns = service.findById(id)
             .orElseThrow(() -> new NoSuchElementException("Namespace not found: " + id));
         if (req.name() != null && !req.name().isBlank()) {
@@ -59,13 +63,13 @@ public class NamespaceController {
         if (req.config() != null) {
             ns = service.updateConfig(id, req.config().toPatch());
         }
-        return NamespaceDtos.Response.from(ns);
+        return NamespaceResponse.from(ns);
     }
 
     @PutMapping("/{id}/config")
-    public NamespaceDtos.Response updateConfig(@PathVariable final String id,
-                                               @RequestBody final NamespaceDtos.ConfigDto config) {
-        return NamespaceDtos.Response.from(service.updateConfig(id, config.toPatch()));
+    public NamespaceResponse updateConfig(@PathVariable final String id,
+                                          @RequestBody final NamespaceConfigPayload config) {
+        return NamespaceResponse.from(service.updateConfig(id, config.toPatch()));
     }
 
     @DeleteMapping("/{id}")

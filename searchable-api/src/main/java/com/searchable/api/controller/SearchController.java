@@ -1,6 +1,7 @@
 package com.searchable.api.controller;
 
-import com.searchable.api.dto.SearchDtos;
+import com.searchable.api.controller.request.SearchRequest;
+import com.searchable.api.controller.response.SearchResponse;
 import com.searchable.core.application.SearchService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +20,7 @@ public class SearchController {
     }
 
     @PostMapping
-    public SearchDtos.Response search(@Valid @RequestBody final SearchDtos.Request req) {
-        return SearchDtos.Response.from(service.search(req.toDomain()));
+    public SearchResponse search(@Valid @RequestBody final SearchRequest req) {
+        return SearchResponse.from(service.search(req.toDomain()));
     }
 }

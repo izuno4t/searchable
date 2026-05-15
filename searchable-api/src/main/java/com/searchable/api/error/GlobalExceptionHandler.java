@@ -1,6 +1,5 @@
 package com.searchable.api.error;
 
-import com.searchable.api.dto.ApiError;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
