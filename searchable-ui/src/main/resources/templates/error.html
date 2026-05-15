@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/base :: head('Error')}"></head>
+<body>
+
+<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+<main class="container py-5">
+  <div class="text-center">
+    <h1 class="display-1 fw-bold text-muted" th:text="${status} ?: 'Error'">500</h1>
+    <p class="lead" th:text="${error} ?: '予期せぬエラーが発生しました。'">
+      Something went wrong.
+    </p>
+    <p class="text-muted small" th:if="${message}" th:text="${message}"></p>
+    <p class="text-muted small" th:if="${path}">
+      Path: <code th:text="${path}"></code>
+    </p>
+    <a class="btn btn-primary" th:href="@{/}">Dashboard に戻る</a>
+  </div>
+</main>
+
+<footer th:replace="~{layouts/base :: footer}"></footer>
+<th:block th:replace="~{layouts/base :: scripts}"></th:block>
+</body>
+</html>

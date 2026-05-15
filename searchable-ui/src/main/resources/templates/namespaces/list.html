@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/base :: head('Namespaces')}"></head>
+<body>
+
+<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+<main class="container-fluid py-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0">Namespaces</h1>
+    <a class="btn btn-primary" th:href="@{/namespaces/new}">
+      <span>+ New Namespace</span>
+    </a>
+  </div>
+
+  <div th:if="${flashSuccess}" class="alert alert-success"
+       th:text="${flashSuccess}"></div>
+  <div th:if="${flashWarning}" class="alert alert-warning"
+       th:text="${flashWarning}"></div>
+
+  <div th:if="${#lists.isEmpty(namespaces)}" class="alert alert-secondary">
+    Namespace が登録されていません。「+ New Namespace」から作成してください。
+  </div>
+
+  <table th:unless="${#lists.isEmpty(namespaces)}" class="table table-hover compact bg-white">
+    <thead class="table-light">
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Architecture</th>
+        <th>Strategy</th>
+        <th>Created</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="ns : ${namespaces}">
+        <td>
+          <a th:href="@{/namespaces/{id}/edit(id=${ns.id()})}"
+             th:text="${ns.id()}">ns-id</a>
+        </td>
+        <td th:text="${ns.name()}">name</td>
+        <td th:text="${ns.config().architecture()}">FULL_TEXT</td>
+        <td th:text="${ns.config().searchStrategy()}">SEQUENTIAL</td>
+        <td th:text="${#temporals.format(ns.createdAt(), 'yyyy-MM-dd HH:mm')}">2026-01-01</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-secondary"
+             th:href="@{/namespaces/{id}/edit(id=${ns.id()})}">Edit</a>
+          <form class="d-inline" method="post"
+                th:action="@{/namespaces/{id}/delete(id=${ns.id()})}"
+                data-confirm="Namespace を削除します。よろしいですか？">
+            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</main>
+
+<footer th:replace="~{layouts/base :: footer}"></footer>
+<th:block th:replace="~{layouts/base :: scripts}"></th:block>
+</body>
+</html>

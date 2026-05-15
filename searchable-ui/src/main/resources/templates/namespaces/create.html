@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/base :: head('New Namespace')}"></head>
+<body>
+
+<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+<main class="container-fluid py-4">
+  <h1 class="h3 mb-4">New Namespace</h1>
+
+  <form method="post" th:action="@{/namespaces}" th:object="${form}" novalidate>
+    <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger">
+      <ul class="mb-0">
+        <li th:each="err : ${#fields.globalErrors()}" th:text="${err}"></li>
+      </ul>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label" for="id">ID <span class="text-danger">*</span></label>
+        <input id="id" type="text" class="form-control" th:field="*{id}"
+               th:errorclass="is-invalid"
+               pattern="[a-z0-9][a-z0-9_-]{0,63}">
+        <div class="invalid-feedback" th:errors="*{id}"></div>
+        <small class="form-text text-muted">
+          英小文字・数字・ハイフン・アンダースコアのみ（先頭は英数字、64文字以下）
+        </small>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="name">Name <span class="text-danger">*</span></label>
+        <input id="name" type="text" class="form-control" th:field="*{name}"
+               th:errorclass="is-invalid">
+        <div class="invalid-feedback" th:errors="*{name}"></div>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label" for="architecture">Architecture</label>
+        <select id="architecture" class="form-select" th:field="*{architecture}">
+          <option th:value="${null}">(global default)</option>
+          <option th:each="t : ${architectures}" th:value="${t}" th:text="${t}"></option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="searchStrategy">Search Strategy</label>
+        <select id="searchStrategy" class="form-select" th:field="*{searchStrategy}">
+          <option th:value="${null}">(global default)</option>
+          <option th:each="s : ${strategies}" th:value="${s}" th:text="${s}"></option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="searchOrder">Search Order</label>
+        <select id="searchOrder" class="form-select" th:field="*{searchOrder}">
+          <option th:value="${null}">(global default)</option>
+          <option th:each="o : ${orders}" th:value="${o}" th:text="${o}"></option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <button type="submit" class="btn btn-primary">Create</button>
+      <a class="btn btn-outline-secondary" th:href="@{/namespaces}">Cancel</a>
+    </div>
+  </form>
+</main>
+
+<footer th:replace="~{layouts/base :: footer}"></footer>
+<th:block th:replace="~{layouts/base :: scripts}"></th:block>
+</body>
+</html>

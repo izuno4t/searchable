@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/base :: head('Edit Namespace')}"></head>
+<body>
+
+<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+<main class="container-fluid py-4">
+  <h1 class="h3 mb-4">Edit Namespace
+    <small class="text-muted" th:text="${namespace.id()}">id</small>
+  </h1>
+
+  <form method="post" th:action="@{/namespaces/{id}(id=${namespace.id()})}"
+        th:object="${form}" novalidate>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label" for="ns-id">ID</label>
+        <input id="ns-id" type="text" class="form-control"
+               th:value="${namespace.id()}" disabled>
+        <small class="text-muted">ID は変更できません</small>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="name">Name <span class="text-danger">*</span></label>
+        <input id="name" type="text" class="form-control" th:field="*{name}"
+               th:errorclass="is-invalid">
+        <div class="invalid-feedback" th:errors="*{name}"></div>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label" for="architecture">Architecture</label>
+        <select id="architecture" class="form-select" th:field="*{architecture}">
+          <option th:value="${null}">(global default)</option>
+          <option th:each="t : ${architectures}" th:value="${t}" th:text="${t}"></option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="searchStrategy">Search Strategy</label>
+        <select id="searchStrategy" class="form-select" th:field="*{searchStrategy}">
+          <option th:value="${null}">(global default)</option>
+          <option th:each="s : ${strategies}" th:value="${s}" th:text="${s}"></option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="searchOrder">Search Order</label>
+        <select id="searchOrder" class="form-select" th:field="*{searchOrder}">
+          <option th:value="${null}">(global default)</option>
+          <option th:each="o : ${orders}" th:value="${o}" th:text="${o}"></option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mt-4 d-flex justify-content-between">
+      <div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a class="btn btn-outline-secondary" th:href="@{/namespaces}">Cancel</a>
+      </div>
+      <form class="d-inline" method="post"
+            th:action="@{/namespaces/{id}/delete(id=${namespace.id()})}"
+            data-confirm="Namespace を削除します。よろしいですか？">
+        <button class="btn btn-outline-danger" type="submit">Delete</button>
+      </form>
+    </div>
+  </form>
+
+  <hr class="my-4">
+  <p class="text-muted small">
+    Created:
+    <span th:text="${#temporals.format(namespace.createdAt(), 'yyyy-MM-dd HH:mm:ss z')}"></span>
+    &middot; Updated:
+    <span th:text="${#temporals.format(namespace.updatedAt(), 'yyyy-MM-dd HH:mm:ss z')}"></span>
+  </p>
+</main>
+
+<footer th:replace="~{layouts/base :: footer}"></footer>
+<th:block th:replace="~{layouts/base :: scripts}"></th:block>
+</body>
+</html>
