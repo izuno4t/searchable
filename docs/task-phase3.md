@@ -33,6 +33,10 @@
 | TASK-227 | ✅ | Chrome・Firefox・Edge互換性テスト | TASK-224,TASK-225,TASK-226 |
 | TASK-228 | ✅ | 管理UIユーザーガイド作成 | TASK-227 |
 | TASK-229 | ✅ | デモ環境構築とセットアップ手順書作成 | TASK-227 |
+| TASK-230 | ⏳ | 辞書一覧画面実装（global + Namespace 別） | TASK-203,TASK-045 |
+| TASK-231 | ⏳ | 辞書編集画面実装（エントリの CRUD） | TASK-230 |
+| TASK-232 | ⏳ | 辞書エントリのバリデーション（CSV format / 表層形重複） | TASK-231 |
+| TASK-233 | ⏳ | 辞書管理画面の動作テスト | TASK-231 |
 
 ## タスク詳細
 
@@ -105,3 +109,24 @@
 
 - 補足: Docker Composeでのデモ環境セットアップ
 - 成果物: docker-compose.yml、デモデータ、手順書
+
+### TASK-230
+
+- 補足: グローバル辞書 + 各 Namespace 辞書を一覧、件数表示と編集導線
+- 成果物: `dictionaries/list.html`, ViewController
+
+### TASK-231
+
+- 補足: エントリの追加・編集・削除、CSV 直接編集とフォーム編集の両対応
+- 成果物: `dictionaries/edit.html`, 操作 POST ハンドラ
+
+### TASK-232
+
+- 補足: `surface,segmentation,reading,pos` の必須・重複検証、
+  グローバルとの重複も検出して警告表示
+- 成果物: バリデータ + UI フィードバック
+
+### TASK-233
+
+- 補足: 一覧/編集/削除の MockMvc 動作テスト
+- 成果物: `DictionaryViewControllerTest`

@@ -41,6 +41,29 @@
 | TASK-035 | ✅ | README作成 | TASK-004 |
 | TASK-036 | ✅ | セットアップガイド作成 | TASK-028 |
 | TASK-037 | ✅ | REST API仕様書作成（OpenAPI） | TASK-028 |
+| TASK-038 | ✅ | UserDictionary ドメインモデル定義（Entry/Scope/Repository） | TASK-005 |
+| TASK-039 | ✅ | UserDictionaryResolver（global+namespace マージ） | TASK-038 |
+| TASK-040 | ✅ | FileUserDictionaryRepository 実装 | TASK-038 |
+| TASK-041 | ✅ | UserDictionaryAnalyzerFactory（Kuromoji 連携） | TASK-039 |
+| TASK-042 | ⏳ | JdbcUserDictionaryRepository + スキーマ追加 | TASK-038,TASK-007 |
+| TASK-043 | ⏳ | ストレージ切替プロパティ（searchable.dictionary.storage） | TASK-040,TASK-042 |
+| TASK-044 | ⏳ | SearchableConfiguration 配線 + AnalyzerFactory 差し替え | TASK-041,TASK-043 |
+| TASK-045 | ⏳ | 辞書 REST エンドポイント実装（GET/PUT/DELETE by scope） | TASK-044 |
+| TASK-046 | ⏳ | OpenAPI 仕様書更新（辞書エンドポイント） | TASK-045 |
+| TASK-047 | ⏳ | AnalyzerFactory 統合テスト（カスタム単語が分かち書きされる） | TASK-044 |
+| TASK-048 | ⏳ | 辞書 REST 統合テスト | TASK-045 |
+| TASK-049 | ⏳ | 既存検索パイプラインへの性能・互換影響評価 | TASK-044 |
+| TASK-050 | ⏳ | ユーザー辞書利用ガイド作成 | TASK-044 |
+| TASK-051 | ✅ | ChunkingStrategy ドメイン抽象 + Chunk 型定義 | TASK-005 |
+| TASK-052 | ✅ | WholeDocument / FixedSize チャンキング戦略実装 | TASK-051 |
+| TASK-053 | ⏳ | Sentence / Paragraph チャンキング戦略実装 | TASK-051 |
+| TASK-054 | ⏳ | ParsedDocument 拡張（セクション情報の付与） | TASK-013-015 |
+| TASK-055 | ⏳ | SectionChunkingStrategy（見出し単位） | TASK-051,TASK-054 |
+| TASK-056 | ⏳ | LuceneIndexer をチャンク前提に変更（sub-doc + parentId） | TASK-052 |
+| TASK-057 | ⏳ | 検索: 親集約オプション + sub-doc 直接ヒット | TASK-056 |
+| TASK-058 | ⏳ | チャンキング設定切替（global + Namespace 上書き） | TASK-056 |
+| TASK-059 | ⏳ | チャンキング統合テスト + 性能影響評価 | TASK-056-058 |
+| TASK-060 | ⏳ | チャンキング利用ガイド作成 | TASK-058 |
 
 ## タスク詳細
 
@@ -96,3 +119,114 @@
 
 - 補足: 10万件で500ms以内のレスポンスを確認
 - 成果物: 性能測定レポート
+
+### TASK-038
+
+- 補足: `UserDictionaryEntry`（surface/segmentation/reading/pos）、
+  `DictionaryScope`（sealed: Global / Namespace）、
+  `UserDictionary`、`UserDictionaryRepository`
+- 成果物: `searchable-core/.../domain/dictionary/`
+
+### TASK-039
+
+- 補足: グローバル → Namespace の順でエントリをマージ、
+  表層形が重複した場合は Namespace 側を優先（last-wins）
+- 成果物: `UserDictionaryResolver`
+
+### TASK-040
+
+- 補足: CSV ファイルベース。`<root>/global.csv` +
+  `<root>/namespaces/{id}.csv` の階層
+- 成果物: `FileUserDictionaryRepository`
+
+### TASK-041
+
+- 補足: `JapaneseAnalyzer(UserDictionary, mode, stopWords, stopTags)`
+  を経由してカスタム辞書を Kuromoji に渡す
+- 成果物: `UserDictionaryAnalyzerFactory`
+
+### TASK-042
+
+- 補足: H2 テーブル `USER_DICTIONARY`（scope_key PK / name / entries_csv /
+  updated_at）。`schema.sql` 更新
+- 成果物: `JdbcUserDictionaryRepository`
+
+### TASK-043
+
+- 補足: `searchable.dictionary.storage=file|db`（default `file`）
+- 成果物: `SearchableProperties.Dictionary` 追加
+
+### TASK-045
+
+- 補足: `GET /api/v1/dictionaries`（一覧）, `GET/PUT/DELETE
+  /api/v1/dictionaries/{scopeKey}` （scopeKey: `GLOBAL` または `NAMESPACE:id`）
+- 成果物: REST コントローラ + DTO
+
+### TASK-049
+
+- 補足: 既存テスト全件再実行、辞書ありなしでの 10万件検索レイテンシ
+  測定
+- 成果物: 影響評価メモ
+
+### TASK-050
+
+- 補足: CSV フォーマット、スコープ動作、設定方法、API/UI 利用例
+- 成果物: `docs/user-dictionary-guide.md`
+
+### TASK-051
+
+- 補足: `Chunk`（id, parentId, ordinal, text, metadata）と
+  `ChunkingStrategy.chunk(Document)` 抽象を定義
+- 成果物: `core/domain/chunking/`
+
+### TASK-052
+
+- 補足: `WholeDocumentChunkingStrategy`（既定、後方互換）+
+  `FixedSizeChunkingStrategy`（chunkSize, overlap 設定可）
+- 成果物: 各 Strategy + テスト
+
+### TASK-053
+
+- 補足: 日本語の句点 (。!?) を尊重する Sentence 分割 +
+  空行区切り Paragraph 分割
+- 成果物: 各 Strategy + テスト
+
+### TASK-054
+
+- 補足: 既存パーサ（PlainText/Markdown/AsciiDoc/HTML/PDF）が見出し
+  位置情報を `Section` レコードとして返すよう拡張
+- 成果物: `ParsedDocument.sections` 追加、各パーサ更新
+
+### TASK-055
+
+- 補足: `ParsedDocument.sections` を利用したセクション単位チャンキング
+- 成果物: `SectionChunkingStrategy`
+
+### TASK-056
+
+- 補足: 1 ドメイン Document → N 個の Lucene sub-doc に展開。`parentId`
+  と `chunkOrdinal` フィールドを追加、削除は parentId による一括削除
+- 成果物: `LuceneIndexer` / `LuceneFields` 改修
+
+### TASK-057
+
+- 補足: 検索結果で sub-doc が複数返った場合、`groupBy=parent` オプション
+  で親に集約する。既存の単一ベクトル動作も互換維持
+- 成果物: `LuceneFullTextSearcher` / `LuceneVectorSearcher` 改修
+
+### TASK-058
+
+- 補足: `searchable.chunking.strategy=whole|fixed|sentence|paragraph|section`
+  と、サイズ/overlap パラメータ。Namespace 設定で上書き
+- 成果物: `SearchableProperties.Chunking`, `NamespaceConfigPatch` 拡張
+
+### TASK-059
+
+- 補足: 既存テスト互換（WholeDocument 既定）を確認、10万件で
+  FixedSize/Section の性能影響測定
+- 成果物: 性能評価レポート
+
+### TASK-060
+
+- 補足: 戦略選択ガイド、設定方法、トレードオフ
+- 成果物: `docs/chunking-guide.md`
