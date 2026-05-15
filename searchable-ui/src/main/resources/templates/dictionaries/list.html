@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/base :: head('Dictionaries')}"></head>
+<body>
+
+<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+<main class="container-fluid py-4">
+  <h1 class="h3 mb-3">User Dictionaries</h1>
+
+  <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
+  <div th:if="${flashWarning}" class="alert alert-warning" th:text="${flashWarning}"></div>
+
+  <p class="text-muted">
+    Kuromoji の分かち書きにユーザー定義の単語を登録します。
+    Global 辞書 + Namespace 個別辞書はマージされ、
+    同じ表層形は Namespace 側が優先されます。
+  </p>
+
+  <h2 class="h5 mt-4">Global</h2>
+  <table class="table table-hover compact bg-white">
+    <thead class="table-light">
+      <tr><th>Scope</th><th>Name</th><th>Entries</th><th>Updated</th>
+          <th class="text-end">Actions</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>GLOBAL</code></td>
+        <td th:text="${globalDict != null ? globalDict.name() : '(未設定)'}">—</td>
+        <td th:text="${globalDict != null ? globalDict.entries().size() : 0}">0</td>
+        <td th:text="${globalDict != null
+              ? #temporals.format(globalDict.updatedAt(), 'yyyy-MM-dd HH:mm') : '—'}">—</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-secondary"
+             th:href="@{/dictionaries/global/edit}">Edit</a>
+          <form class="d-inline" method="post" th:action="@{/dictionaries/global/delete}"
+                th:if="${globalDict != null}"
+                data-confirm="Global 辞書を削除します。よろしいですか？">
+            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="h5 mt-4">Namespaces</h2>
+  <p th:if="${#lists.isEmpty(namespaces)}" class="text-muted">
+    Namespace が登録されていません。
+  </p>
+  <table th:unless="${#lists.isEmpty(namespaces)}"
+         class="table table-hover compact bg-white">
+    <thead class="table-light">
+      <tr><th>Namespace</th><th>Name</th><th>Entries</th><th>Updated</th>
+          <th class="text-end">Actions</th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="ns : ${namespaces}"
+          th:with="dict=${dictionariesByNamespace.get(ns.id())}">
+        <td><code th:text="${ns.id()}">ns</code></td>
+        <td th:text="${dict != null ? dict.name() : '(未設定)'}">—</td>
+        <td th:text="${dict != null ? dict.entries().size() : 0}">0</td>
+        <td th:text="${dict != null
+              ? #temporals.format(dict.updatedAt(), 'yyyy-MM-dd HH:mm') : '—'}">—</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-secondary"
+             th:href="@{/dictionaries/namespaces/{id}/edit(id=${ns.id()})}">Edit</a>
+          <form class="d-inline" method="post"
+                th:action="@{/dictionaries/namespaces/{id}/delete(id=${ns.id()})}"
+                th:if="${dict != null}"
+                data-confirm="この Namespace の辞書を削除します。よろしいですか？">
+            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</main>
+
+<footer th:replace="~{layouts/base :: footer}"></footer>
+<th:block th:replace="~{layouts/base :: scripts}"></th:block>
+</body>
+</html>

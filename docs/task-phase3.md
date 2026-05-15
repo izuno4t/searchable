@@ -33,10 +33,10 @@
 | TASK-227 | ✅ | Chrome・Firefox・Edge互換性テスト | TASK-224,TASK-225,TASK-226 |
 | TASK-228 | ✅ | 管理UIユーザーガイド作成 | TASK-227 |
 | TASK-229 | ✅ | デモ環境構築とセットアップ手順書作成 | TASK-227 |
-| TASK-230 | ⏳ | 辞書一覧画面実装（global + Namespace 別） | TASK-203,TASK-045 |
-| TASK-231 | ⏳ | 辞書編集画面実装（エントリの CRUD） | TASK-230 |
-| TASK-232 | ⏳ | 辞書エントリのバリデーション（CSV format / 表層形重複） | TASK-231 |
-| TASK-233 | ⏳ | 辞書管理画面の動作テスト | TASK-231 |
+| TASK-230 | ✅ | 辞書一覧画面実装（global + Namespace 別） | TASK-203,TASK-045 |
+| TASK-231 | ✅ | 辞書編集画面実装（エントリの CRUD） | TASK-230 |
+| TASK-232 | ✅ | 辞書エントリのバリデーション（CSV format / 表層形重複） | TASK-231 |
+| TASK-233 | ✅ | 辞書管理画面の動作テスト | TASK-231 |
 
 ## タスク詳細
 

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/base :: head('Edit Dictionary')}"></head>
+<body>
+
+<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+<main class="container-fluid py-4">
+  <h1 class="h3 mb-3" th:text="${pageTitle}">Edit Dictionary</h1>
+
+  <form method="post" th:action="@{${postAction}}" th:object="${form}" novalidate>
+    <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger">
+      <ul class="mb-0">
+        <li th:each="err : ${#fields.globalErrors()}" th:text="${err}"></li>
+      </ul>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="name">Name <span class="text-danger">*</span></label>
+      <input id="name" type="text" class="form-control" th:field="*{name}"
+             th:errorclass="is-invalid">
+      <div class="invalid-feedback" th:errors="*{name}"></div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="entriesCsv">Entries (CSV)</label>
+      <textarea id="entriesCsv" class="form-control font-monospace"
+                th:field="*{entriesCsv}" th:errorclass="is-invalid"
+                rows="14"></textarea>
+      <div class="invalid-feedback" th:errors="*{entriesCsv}"></div>
+      <small class="form-text text-muted d-block mt-2">
+        各行に Kuromoji のユーザー辞書フォーマットで1エントリ記述。<br>
+        <code th:text="${csvHelp['format']}">format</code><br>
+        例: <code th:text="${csvHelp['example']}">example</code><br>
+        空行と <code>#</code> で始まる行はコメントとして無視。
+      </small>
+    </div>
+
+    <div class="mt-4 d-flex justify-content-between">
+      <div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a class="btn btn-outline-secondary" th:href="@{/dictionaries}">Cancel</a>
+      </div>
+      <form class="d-inline" method="post" th:action="@{${deleteAction}}"
+            data-confirm="この辞書を削除します。よろしいですか？">
+        <button class="btn btn-outline-danger" type="submit">Delete</button>
+      </form>
+    </div>
+  </form>
+</main>
+
+<footer th:replace="~{layouts/base :: footer}"></footer>
+<th:block th:replace="~{layouts/base :: scripts}"></th:block>
+</body>
+</html>

@@ -37,6 +37,11 @@
         </li>
         <li class="nav-item">
           <a class="nav-link"
+             th:classappend="${activeNav == 'dictionaries'} ? 'active'"
+             th:href="@{/dictionaries}">Dictionaries</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link"
              th:classappend="${activeNav == 'settings'} ? 'active'"
              th:href="@{/settings}">Settings</a>
         </li>
