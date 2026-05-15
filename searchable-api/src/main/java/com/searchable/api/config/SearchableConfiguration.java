@@ -1,5 +1,6 @@
 package com.searchable.api.config;
 
+import com.searchable.core.application.HybridSearchOrchestrator;
 import com.searchable.core.application.IndexService;
 import com.searchable.core.application.NamespaceService;
 import com.searchable.core.application.SearchService;
@@ -139,9 +140,18 @@ public class SearchableConfiguration {
         return new IndexService(nr, imr, provider, indexer, clock);
     }
 
+    @Bean(destroyMethod = "close")
+    public HybridSearchOrchestrator hybridSearchOrchestrator(
+            final LuceneFullTextSearcher fullText,
+            final LuceneVectorSearcher vector) {
+        return new HybridSearchOrchestrator(fullText, vector);
+    }
+
     @Bean
     public SearchService searchService(final NamespaceRepository nr,
-                                       final LuceneFullTextSearcher searcher) {
-        return new SearchService(nr, searcher);
+                                       final LuceneFullTextSearcher fullText,
+                                       final LuceneVectorSearcher vector,
+                                       final HybridSearchOrchestrator hybrid) {
+        return new SearchService(nr, fullText, vector, hybrid);
     }
 }

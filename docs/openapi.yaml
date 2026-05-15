@@ -1,10 +1,20 @@
 openapi: 3.1.0
 info:
   title: Searchable REST API
-  version: 1.0.0
+  version: 1.1.0
   description: |
     REST API for Searchable, a Japanese-optimized hybrid search library.
-    Phase 1 covers full-text search; vector and MCP endpoints are out of scope.
+
+    The `searchType` field on `POST /api/v1/search` selects the engine:
+
+    * `FULL_TEXT` — Apache Lucene + Kuromoji morphological analysis (BM25)
+    * `VECTOR` — Lucene HNSW kNN search over embeddings
+    * `HYBRID` — combination, controlled per-namespace by `searchStrategy`
+      (`SEQUENTIAL` — intersection of both engines re-ranked by the
+      secondary engine; `PARALLEL` — Reciprocal Rank Fusion)
+
+    When `searchType` is omitted, the namespace's configured
+    `architecture` is used.
   contact:
     name: NRI Netcom Corporation
 servers:
@@ -331,6 +341,9 @@ components:
           items: { type: string }
         searchType:
           type: string
+          description: |
+            Engine selector. Defaults to the namespace's configured
+            architecture when omitted.
           enum: [FULL_TEXT, VECTOR, HYBRID]
         options:
           $ref: '#/components/schemas/SearchOptions'
