@@ -2,9 +2,12 @@ package com.searchable.api.config;
 
 import com.searchable.core.application.HybridSearchOrchestrator;
 import com.searchable.core.application.IndexService;
+import com.searchable.core.application.IndexStatisticsService;
 import com.searchable.core.application.NamespaceService;
+import com.searchable.core.application.SearchPerformanceMonitor;
 import com.searchable.core.application.SearchService;
 import com.searchable.core.application.config.GlobalConfig;
+import com.searchable.core.application.config.GlobalConfigProvider;
 import com.searchable.core.domain.embedding.EmbeddingProvider;
 import com.searchable.core.domain.index.IndexMetadataRepository;
 import com.searchable.core.domain.namespace.NamespaceRepository;
@@ -123,12 +126,28 @@ public class SearchableConfiguration {
     }
 
     @Bean
+    public GlobalConfigProvider globalConfigProvider(final GlobalConfig globalConfig) {
+        return new GlobalConfigProvider(globalConfig);
+    }
+
+    @Bean
+    public SearchPerformanceMonitor searchPerformanceMonitor() {
+        return new SearchPerformanceMonitor();
+    }
+
+    @Bean
+    public IndexStatisticsService indexStatisticsService(final NamespaceRepository nr,
+                                                         final IndexMetadataRepository imr) {
+        return new IndexStatisticsService(nr, imr);
+    }
+
+    @Bean
     public NamespaceService namespaceService(final NamespaceRepository nr,
                                              final IndexMetadataRepository imr,
                                              final LuceneIndexProvider provider,
-                                             final GlobalConfig global,
+                                             final GlobalConfigProvider provider2,
                                              final Clock clock) {
-        return new NamespaceService(nr, imr, provider, global, clock);
+        return new NamespaceService(nr, imr, provider, provider2, clock);
     }
 
     @Bean

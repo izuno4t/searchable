@@ -6,38 +6,88 @@
 <nav th:replace="~{fragments/navbar :: navbar}"></nav>
 
 <main class="container-fluid py-4">
-  <div class="d-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0">Dashboard</h1>
-  </div>
+  <h1 class="h3 mb-4">Dashboard</h1>
 
-  <p class="text-muted">
-    Searchable admin UI へようこそ。上部のナビゲーションから
-    Namespace やインデックスを管理できます。
-  </p>
-
-  <div class="row g-3">
-    <div class="col-md-4">
-      <div class="card metric-card h-100">
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card metric-card">
         <div class="card-body">
           <div class="metric-label">Namespaces</div>
-          <div class="metric-value">—</div>
-          <small class="text-muted">Batch D で実値を反映予定</small>
+          <div class="metric-value" th:text="${stats.namespaceCount()}">0</div>
         </div>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="card metric-card h-100">
+    <div class="col-md-3">
+      <div class="card metric-card">
         <div class="card-body">
           <div class="metric-label">Documents</div>
-          <div class="metric-value">—</div>
+          <div class="metric-value"
+               th:text="${#numbers.formatDecimal(stats.documentCount(), 0, 'COMMA', 0, 'POINT')}">0</div>
         </div>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="card metric-card h-100">
+    <div class="col-md-3">
+      <div class="card metric-card">
         <div class="card-body">
           <div class="metric-label">Index Size</div>
-          <div class="metric-value">—</div>
+          <div class="metric-value"
+               th:text="${#numbers.formatDecimal(stats.indexSizeBytes() / 1024.0 / 1024.0, 0, 'COMMA', 2, 'POINT')} + ' MB'">0 MB</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card metric-card">
+        <div class="card-body">
+          <div class="metric-label">Search p95</div>
+          <div class="metric-value"
+               th:text="${perf.count() == 0 ? '—' : perf.p95() + ' ms'}">—</div>
+          <small class="text-muted"
+                 th:text="'samples: ' + ${perf.count()}">samples: 0</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <div class="card">
+        <div class="card-header bg-white">
+          <strong>Search Latency</strong>
+          <small class="text-muted ms-2"
+                 th:if="${perf.count() > 0}"
+                 th:text="'avg ' + ${#numbers.formatDecimal(perf.avg(), 0, 2)} + ' ms / p50 '
+                          + ${perf.p50()} + ' / p99 ' + ${perf.p99()} + ' / max '
+                          + ${perf.max()} + ' ms'"></small>
+        </div>
+        <div class="card-body">
+          <canvas id="perfChart" height="180"></canvas>
+          <p th:if="${perf.count() == 0}" class="text-muted text-center mb-0 py-4">
+            まだ検索が実行されていません。
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card h-100">
+        <div class="card-header bg-white">
+          <strong>Namespaces</strong>
+          <a class="btn btn-sm btn-outline-primary float-end" th:href="@{/namespaces}">
+            Manage
+          </a>
+        </div>
+        <div class="card-body">
+          <p th:if="${#lists.isEmpty(namespaces)}" class="text-muted mb-0">
+            Namespace が登録されていません。
+          </p>
+          <ul class="list-group list-group-flush"
+              th:unless="${#lists.isEmpty(namespaces)}">
+            <li class="list-group-item d-flex justify-content-between"
+                th:each="ns : ${namespaces}">
+              <a th:href="@{/indexes/{id}(id=${ns.id()})}" th:text="${ns.id()}">ns</a>
+              <span class="text-muted small" th:text="${ns.config().architecture()}">FT</span>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
@@ -46,6 +96,34 @@
 
 <footer th:replace="~{layouts/base :: footer}"></footer>
 <th:block th:replace="~{layouts/base :: scripts}"></th:block>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  const labels = /*[[${chartLabels}]]*/ [];
+  const data = /*[[${chartData}]]*/ [];
+  if (labels.length > 0) {
+    new Chart(document.getElementById('perfChart'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Latency (ms)',
+          data: data,
+          fill: true,
+          borderColor: '#0d6efd',
+          backgroundColor: 'rgba(13, 110, 253, 0.1)',
+          tension: 0.2,
+          pointRadius: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true, title: { display: true, text: 'ms' } } },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+  /*]]>*/
+</script>
 </body>
 </html>
