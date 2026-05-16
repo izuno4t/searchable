@@ -201,13 +201,11 @@
   - Namespace管理
   - 設定管理
 
-#### 2.4.2 REST API サンプル / MCP サンプル
+#### 2.4.2 利用パターン別サンプル
 
-サンプルアプリの要件は本要件書には含めず、各サンプルディレクトリ配下の
-要件書を参照する。
-
-- REST WebAPI サンプル: [examples/api/requirements.ja.md](../examples/api/requirements.ja.md)
-- MCP サンプル: [examples/mcp/requirements.ja.md](../examples/mcp/requirements.ja.md)
+代表的な統合パターン (普通の Web アプリ / API 経由 / MCP 経由) ごとに
+サンプルアプリを `examples/` 配下に提供する。一覧と各サンプル要件への
+リンクは [examples/README.md](../examples/README.md) を参照。
 
 ライブラリ本体としては、これらサンプルが必要とする「読込専用モード」や
 「API Key 認証フック」など共通の API/拡張点を提供することのみを規定する。
@@ -254,12 +252,9 @@
   - インデックスサイズ
   - 検索パフォーマンス統計
 
-### 2.6 検索 UI サンプル
+### 2.6 サンプルアプリ
 
-サンプルアプリの要件は本要件書には含めず、サンプルディレクトリ配下の
-要件書を参照する。
-
-- 検索 UI サンプル: [examples/search-ui/requirements.ja.md](../examples/search-ui/requirements.ja.md)
+利用パターン別のサンプルは 2.4.2 を参照(`examples/` 配下に個別配置)。
 
 ### 2.7 プラグイン機構
 

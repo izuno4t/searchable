@@ -404,9 +404,10 @@ class IndexMetadata {
 | ライブラリ | `searchable-ai` | 検索後処理(要約・統合)の AI クライアント抽象。OpenAI / Anthropic / Ollama などを切替可能な API として提供 |
 | 運用ツール | `searchable-cli` | インデックス管理コマンド全般(取込・削除・再構築・バックアップ/リストア・状態確認) |
 | 運用 Web | `searchable-admin` | 設定・運用 Web アプリケーション(Thymeleaf)。Namespace / ユーザー辞書 / ランキング / AI 統合 / バックアップ / モニタリングの設定と操作 |
-| サンプル | `examples/api` | REST WebAPI サンプル(API Key 認証対応、軽度本番利用可) |
-| サンプル | `examples/mcp` | MCP サンプル(API Key 認証対応、軽度本番利用可) |
-| サンプル | `examples/search-ui` | 検索 UI サンプル(React、デバウンス検索・ファセット・ハイライト) |
+| サンプル: Web アプリ | `examples/webapp` | Searchable をライブラリとして組み込んだ Thymeleaf Web アプリ。単一プロセスで書込+検索+UI |
+| サンプル: API サーバー | `examples/api` | REST WebAPI サンプル(API Key 認証対応、軽度本番利用可) |
+| サンプル: API クライアント | `examples/search-ui` | `examples/api` を呼ぶ Vanilla HTML+JS の検索 UI |
+| サンプル: MCP | `examples/mcp` | MCP サンプル(API Key 認証対応、軽度本番利用可) |
 | 開発支援 | `searchable-testkit` | テスト共通基盤。core / plugins / ai / ui / cli を対象としたフィクスチャ・Fake・Testcontainers ヘルパ |
 
 ### 6.2 Mavenマルチモジュール構成
@@ -430,12 +431,15 @@ searchable/
 ├── searchable-admin/                   # 設定・運用 Web(Thymeleaf)
 │   ├── src/main/java/com/searchable/ui/
 │   └── src/main/resources/templates/
+├── examples/webapp/               # Web アプリサンプル(library 組み込み)
+│   └── src/main/java/io/searchable/example/webapp/
 ├── examples/api/                  # REST WebAPI サンプル
-│   └── src/main/java/com/searchable/api/
-├── examples/mcp/                  # MCP サンプル
-│   └── src/main/java/com/searchable/mcp/
-└── examples/search-ui/            # 検索 UI サンプル
-    └── src/main/java/com/searchable/searchui/
+│   └── src/main/java/io/searchable/example/api/
+├── examples/search-ui/            # API クライアント(Vanilla HTML+JS)
+│   ├── index.html
+│   └── src/{js,css}/
+└── examples/mcp/                  # MCP サンプル
+    └── src/main/java/io/searchable/example/mcp/
 ```
 
 ### 6.3 モジュール依存関係
