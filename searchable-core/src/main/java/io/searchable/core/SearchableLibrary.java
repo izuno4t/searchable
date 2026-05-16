@@ -69,9 +69,11 @@ public final class SearchableLibrary implements AutoCloseable {
     private final IndexStatisticsService statisticsService;
     private final DocumentBrowser documentBrowser;
     private final PluginLoader pluginLoader;
+    private final boolean readOnly;
     private final Deque<AutoCloseable> closeables;
 
     private SearchableLibrary(final Builder b) {
+        this.readOnly = b.readOnly;
         this.configuration = b.applicationConfig;
         this.namespaceRepository = b.namespaceRepository;
         this.indexMetadataRepository = b.indexMetadataRepository;
@@ -126,12 +128,28 @@ public final class SearchableLibrary implements AutoCloseable {
         return searchService;
     }
 
+    /**
+     * @throws IllegalStateException when the library was built in read-only mode
+     */
     public IndexService indexService() {
+        if (indexService == null) {
+            throw new IllegalStateException("IndexService is not available in read-only mode");
+        }
         return indexService;
     }
 
+    /**
+     * @throws IllegalStateException when the library was built in read-only mode
+     */
     public NamespaceService namespaceService() {
+        if (namespaceService == null) {
+            throw new IllegalStateException("NamespaceService is not available in read-only mode");
+        }
         return namespaceService;
+    }
+
+    public boolean isReadOnly() {
+        return readOnly;
     }
 
     public IndexStatisticsService indexStatisticsService() {
@@ -186,6 +204,7 @@ public final class SearchableLibrary implements AutoCloseable {
         private ApplicationConfig applicationConfig;
         private DataSource dataSource;
         private boolean initializeSchema = true;
+        private boolean readOnly = false;
         private NamespaceRepository namespaceRepository;
         private IndexMetadataRepository indexMetadataRepository;
         private UserDictionaryRepository dictionaryRepository;
@@ -219,6 +238,18 @@ public final class SearchableLibrary implements AutoCloseable {
 
         public Builder initializeSchema(final boolean enabled) {
             this.initializeSchema = enabled;
+            return this;
+        }
+
+        /**
+         * Enable read-only mode. The metadata database is opened normally
+         * (callers may still need to read namespace metadata), but the
+         * Lucene index provider refuses to create writers, and all write
+         * services ({@link IndexService}, {@link NamespaceService}) reject
+         * mutating calls with {@link IllegalStateException}.
+         */
+        public Builder readOnly(final boolean enabled) {
+            this.readOnly = enabled;
             return this;
         }
 
@@ -272,7 +303,7 @@ public final class SearchableLibrary implements AutoCloseable {
 
             // Persistence (DataSource + repositories).
             if (dataSource == null) {
-                dataSource = DataSourceFactory.create(applicationConfig.persistence());
+                dataSource = DataSourceFactory.create(applicationConfig.persistence(), readOnly);
                 registerCloseable(() -> {
                     if (dataSource instanceof AutoCloseable c) {
                         c.close();
@@ -303,7 +334,8 @@ public final class SearchableLibrary implements AutoCloseable {
             if (indexProvider == null) {
                 indexProvider = new LuceneIndexProvider(
                     new IndexLayout(applicationConfig.index().directory()),
-                    analyzerFactory);
+                    analyzerFactory,
+                    readOnly);
                 registerCloseable(indexProvider);
             }
 
@@ -313,7 +345,7 @@ public final class SearchableLibrary implements AutoCloseable {
                 registerCloseable(embeddingProvider);
             }
 
-            if (indexer == null) {
+            if (indexer == null && !readOnly) {
                 indexer = new LuceneIndexer(indexProvider, embeddingProvider);
             }
 
@@ -328,11 +360,11 @@ public final class SearchableLibrary implements AutoCloseable {
             if (searchService == null) {
                 searchService = new SearchService(namespaceRepository, fullText, vector, hybridOrchestrator);
             }
-            if (indexService == null) {
+            if (indexService == null && !readOnly) {
                 indexService = new IndexService(
                     namespaceRepository, indexMetadataRepository, indexProvider, indexer, clock);
             }
-            if (namespaceService == null) {
+            if (namespaceService == null && !readOnly) {
                 namespaceService = new NamespaceService(
                     namespaceRepository, indexMetadataRepository, indexProvider,
                     globalConfigProvider, clock);
@@ -348,10 +380,11 @@ public final class SearchableLibrary implements AutoCloseable {
                 registerCloseable(pluginLoader);
             }
 
-            log.info("SearchableLibrary initialized (dataDirectory={}, indexDirectory={}, persistence={})",
+            log.info("SearchableLibrary initialized (dataDirectory={}, indexDirectory={}, persistence={}, readOnly={})",
                 applicationConfig.dataDirectory(),
                 applicationConfig.index().directory(),
-                applicationConfig.persistence().type());
+                applicationConfig.persistence().type(),
+                readOnly);
 
             return new SearchableLibrary(this);
         }

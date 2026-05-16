@@ -16,6 +16,10 @@ import java.util.Objects;
  *
  * <p>Must be closed via {@link #close()} when the namespace is no longer
  * active (e.g. on shutdown or namespace deletion).
+ *
+ * <p>In read-only mode the context owns a {@link DirectoryReader} rather
+ * than an {@link IndexWriter}; calls to {@link #writer()} or {@link #refresh()}
+ * fail with {@link IllegalStateException}.
  */
 public final class LuceneIndexContext implements AutoCloseable {
 
@@ -24,6 +28,7 @@ public final class LuceneIndexContext implements AutoCloseable {
     private final Analyzer analyzer;
     private final IndexWriter writer;
     private final SearcherManager searcherManager;
+    private final boolean readOnly;
 
     LuceneIndexContext(final String namespaceId,
                        final Directory directory,
@@ -35,14 +40,42 @@ public final class LuceneIndexContext implements AutoCloseable {
         this.analyzer = Objects.requireNonNull(analyzer);
         this.writer = Objects.requireNonNull(writer);
         this.searcherManager = Objects.requireNonNull(searcherManager);
+        this.readOnly = false;
+    }
+
+    LuceneIndexContext(final String namespaceId,
+                       final Directory directory,
+                       final Analyzer analyzer,
+                       final SearcherManager searcherManager) {
+        this.namespaceId = Objects.requireNonNull(namespaceId);
+        this.directory = Objects.requireNonNull(directory);
+        this.analyzer = Objects.requireNonNull(analyzer);
+        this.writer = null;
+        this.searcherManager = Objects.requireNonNull(searcherManager);
+        this.readOnly = true;
     }
 
     public String namespaceId() { return namespaceId; }
     public Analyzer analyzer() { return analyzer; }
-    public IndexWriter writer() { return writer; }
+
+    public boolean isReadOnly() { return readOnly; }
+
+    public IndexWriter writer() {
+        if (readOnly) {
+            throw new IllegalStateException(
+                "Index for namespace " + namespaceId + " is read-only");
+        }
+        return writer;
+    }
 
     /** Refresh the searcher view to reflect recent writer commits. */
     public void refresh() throws IOException {
+        if (readOnly) {
+            // For DirectoryReader-backed searchers, maybeRefresh re-opens
+            // the reader if the on-disk index has changed.
+            searcherManager.maybeRefresh();
+            return;
+        }
         searcherManager.maybeRefresh();
     }
 
@@ -86,11 +119,13 @@ public final class LuceneIndexContext implements AutoCloseable {
         } catch (IOException e) {
             firstError = e;
         }
-        try {
-            writer.close();
-        } catch (IOException e) {
-            if (firstError == null) {
-                firstError = e;
+        if (writer != null) {
+            try {
+                writer.close();
+            } catch (IOException e) {
+                if (firstError == null) {
+                    firstError = e;
+                }
             }
         }
         try {

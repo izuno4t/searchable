@@ -155,6 +155,38 @@ class SearchServiceTest {
     }
 
     @Test
+    void bm25OverrideChangesScoring() {
+        // BM25's b parameter controls length normalization; with documents of
+        // unequal length the b value visibly changes the ranking score for
+        // the shorter / longer doc.
+        namespaceService.create("ns-bm25", "B", null);
+        indexer.index(doc("ns-bm25", "short", "全文検索", "全文検索"));
+        indexer.index(doc("ns-bm25", "long", "全文検索",
+            "全文検索 補助 補助 補助 補助 補助 補助 補助 補助 補助 補助 補助 補助 補助 補助"));
+
+        final SearchResult defaultScored = searchService.search(SearchRequest.builder()
+            .query("全文検索")
+            .namespaceIds(List.of("ns-bm25"))
+            .build());
+        final SearchResult noLengthNorm = searchService.search(SearchRequest.builder()
+            .query("全文検索")
+            .namespaceIds(List.of("ns-bm25"))
+            .options(new io.searchable.core.domain.search.SearchOptions(
+                true, 200, true, false, null, 0.0))
+            .build());
+
+        final double shortDefault = defaultScored.hits().stream()
+            .filter(h -> h.documentId().equals("short"))
+            .findFirst().orElseThrow().score();
+        final double shortNoNorm = noLengthNorm.hits().stream()
+            .filter(h -> h.documentId().equals("short"))
+            .findFirst().orElseThrow().score();
+        // With b=0.0 the short document loses its length-normalization bonus,
+        // so its score drops compared to the default (b=0.75).
+        assertThat(shortNoNorm).isNotEqualTo(shortDefault);
+    }
+
+    @Test
     void indexWeightScalesScoresDuringCrossNamespaceAggregation() {
         // Two namespaces with identical content: the one with higher
         // indexWeight wins in the merged ranking.

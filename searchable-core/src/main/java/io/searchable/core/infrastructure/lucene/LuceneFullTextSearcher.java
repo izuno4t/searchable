@@ -11,8 +11,12 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.similarities.BM25Similarity;
+import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.QueryScorer;
+import org.apache.lucene.search.highlight.SimpleFragmenter;
+import org.apache.lucene.search.highlight.SimpleHTMLEncoder;
 import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.search.highlight.TokenSources;
 
@@ -53,6 +57,7 @@ public final class LuceneFullTextSearcher {
         IndexSearcher searcher = null;
         try {
             searcher = ctx.acquireSearcher();
+            applyBm25Override(searcher, request);
             final Analyzer analyzer = ctx.analyzer();
             final Query query = parseQuery(analyzer, request.query());
             final int topN = request.pagination().offset() + request.pagination().limit();
@@ -77,6 +82,22 @@ public final class LuceneFullTextSearcher {
         }
     }
 
+    /**
+     * Swap the searcher's {@link Similarity} to a {@link BM25Similarity}
+     * configured with the request-level overrides. When neither parameter
+     * is set, the searcher is left with Lucene's defaults (k1=1.2, b=0.75).
+     */
+    private void applyBm25Override(final IndexSearcher searcher, final SearchRequest request) {
+        final Double k1 = request.options().bm25K1();
+        final Double b = request.options().bm25B();
+        if (k1 == null && b == null) {
+            return;
+        }
+        final float effectiveK1 = k1 != null ? k1.floatValue() : 1.2f;
+        final float effectiveB = b != null ? b.floatValue() : 0.75f;
+        searcher.setSimilarity(new BM25Similarity(effectiveK1, effectiveB));
+    }
+
     private Query parseQuery(final Analyzer analyzer, final String queryText) throws Exception {
         final QueryParser parser = new QueryParser(LuceneFields.CONTENT, analyzer);
         parser.setDefaultOperator(QueryParser.Operator.OR);
@@ -93,11 +114,19 @@ public final class LuceneFullTextSearcher {
         final int offset = request.pagination().offset();
         final int limit = request.pagination().limit();
         final int upper = Math.min(hits.scoreDocs.length, offset + limit);
-        final Highlighter highlighter = request.options().highlightEnabled()
-            ? new Highlighter(new SimpleHTMLFormatter(HL_PRE, HL_POST), new QueryScorer(query))
-            : null;
+        final Highlighter highlighter;
+        if (request.options().highlightEnabled()) {
+            final var formatter = new SimpleHTMLFormatter(HL_PRE, HL_POST);
+            highlighter = request.options().escapeMarkup()
+                ? new Highlighter(formatter, new SimpleHTMLEncoder(), new QueryScorer(query))
+                : new Highlighter(formatter, new QueryScorer(query));
+            highlighter.setTextFragmenter(new SimpleFragmenter(request.options().snippetLength()));
+        } else {
+            highlighter = null;
+        }
 
         final IndexReader reader = searcher.getIndexReader();
+        final boolean lazy = request.options().lazyLoad();
         for (int i = offset; i < upper; i++) {
             final ScoreDoc scoreDoc = hits.scoreDocs[i];
             final org.apache.lucene.document.Document doc =
@@ -107,13 +136,14 @@ public final class LuceneFullTextSearcher {
             final String parentId = doc.get(LuceneFields.PARENT_ID);
             final String id = parentId != null ? parentId : doc.get(LuceneFields.ID);
             final String title = doc.get(LuceneFields.TITLE);
-            final String content = doc.get(LuceneFields.CONTENT);
+            final String content = lazy ? null : doc.get(LuceneFields.CONTENT);
             final Map<String, Object> metadata = mapper.deserializeMetadata(
                 doc.get(LuceneFields.METADATA_JSON));
 
-            final Map<String, List<String>> highlights = highlighter == null
+            final Map<String, List<String>> highlights = (highlighter == null || lazy)
                 ? Map.of()
-                : buildHighlights(highlighter, analyzer, reader, scoreDoc.doc, content);
+                : buildHighlights(highlighter, analyzer, reader, scoreDoc.doc,
+                    doc.get(LuceneFields.CONTENT));
 
             result.add(new SearchHit(id, namespaceId, title, content, scoreDoc.score,
                 highlights, metadata));

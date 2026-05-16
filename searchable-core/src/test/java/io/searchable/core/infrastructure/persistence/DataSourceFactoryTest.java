@@ -65,6 +65,16 @@ class DataSourceFactoryTest {
     }
 
     @Test
+    void readOnlyHintFlowsIntoHikariConfig() {
+        final PersistenceConfig config = new PersistenceConfig(
+            "POSTGRESQL", "jdbc:postgresql://db.example.invalid:5432/x", "u", "p", 4);
+        final com.zaxxer.hikari.HikariConfig hc = DataSourceFactory.buildHikariConfig(
+            config, DataSourceFactory.POSTGRESQL_DRIVER,
+            DataSourceFactory.POSTGRESQL_POOL_NAME, true);
+        assertThat(hc.isReadOnly()).isTrue();
+    }
+
+    @Test
     void persistenceConfigAppliesDefaultPoolSizeWhenZero() {
         final PersistenceConfig cfg = new PersistenceConfig("H2", "jdbc:h2:mem:x", "sa", "", 0);
         assertThat(cfg.maxPoolSize()).isEqualTo(PersistenceConfig.DEFAULT_POOL_SIZE);

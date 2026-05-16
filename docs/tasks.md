@@ -72,17 +72,17 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-046 | ✅ | ハイブリッド検索結果マージ・スコア統合実装 | TASK-044,TASK-045 |
 | TASK-047 | ✅ | ハイブリッド検索のユニットテスト | TASK-044,TASK-045,TASK-046 |
 | TASK-048 | ✅ | ページネーション実装 | TASK-026 |
-| TASK-049 | ⏳ | Sub-results(セクション単位)データモデル定義 | TASK-001 |
+| TASK-049 | ✅ | Sub-results(セクション単位)データモデル定義 | TASK-001 |
 | TASK-050 | ⏳ | Sub-results 検索・スコアリング実装 | TASK-049,TASK-024 |
 | TASK-051 | ⏳ | Sub-results アンカー付き URL 生成実装 | TASK-050 |
 | TASK-052 | ✅ | スニペット自動生成実装(HTML/プレーン両形式) | TASK-025 |
-| TASK-053 | ⏳ | スニペット長設定とマークアップエンコード実装 | TASK-052 |
+| TASK-053 | ✅ | スニペット長設定とマークアップエンコード実装 | TASK-052 |
 | TASK-054 | ⏳ | ファセット集計(値・件数)実装 | TASK-024 |
 | TASK-055 | ⏳ | ファセット複数値フィルタ(AND/OR)と予約キー対応 | TASK-054 |
 | TASK-056 | ⏳ | ファセット指定3方式(インライン/属性値/要素内容)実装 | TASK-055 |
-| TASK-057 | ⏳ | BM25 パラメータ Namespace/リクエスト単位上書き実装 | TASK-024 |
+| TASK-057 | ✅ | BM25 パラメータ Namespace/リクエスト単位上書き実装 | TASK-024 |
 | TASK-058 | ⏳ | metaWeights 適用ロジック実装 | TASK-057 |
-| TASK-059 | ⏳ | 遅延ロード結果(ID+スコア+URL のみ)対応実装 | TASK-048 |
+| TASK-059 | ✅ | 遅延ロード結果(ID+スコア+URL のみ)対応実装 | TASK-048 |
 | TASK-060 | ⏳ | 検索結果整形機能のユニットテスト | TASK-050,TASK-053,TASK-056,TASK-058,TASK-059 |
 | TASK-061 | ✅ | プレーンテキストパーサ実装 | TASK-001 |
 | TASK-062 | ✅ | Markdown パーサ実装 | TASK-001 |
@@ -97,17 +97,17 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-071 | ⏳ | バックアップサービス(スナップショット)実装 | TASK-020,TASK-014 |
 | TASK-072 | ⏳ | リストアサービス実装 | TASK-071 |
 | TASK-073 | ⏳ | 自動バックアップスケジューラ実装 | TASK-071 |
-| TASK-074 | ⏳ | Namespace 単位 write.lock 動作確認テスト | TASK-020 |
-| TASK-075 | ⏳ | 異なる Namespace 並列書込統合テスト | TASK-074 |
-| TASK-076 | ⏳ | SearchableLibrary 読込専用モード(readOnly=true)実装 | TASK-004,TASK-021 |
-| TASK-077 | ⏳ | メタデータ DB 読込専用接続モード対応 | TASK-076 |
+| TASK-074 | ✅ | Namespace 単位 write.lock 動作確認テスト | TASK-020 |
+| TASK-075 | ✅ | 異なる Namespace 並列書込統合テスト | TASK-074 |
+| TASK-076 | ✅ | SearchableLibrary 読込専用モード(readOnly=true)実装 | TASK-004,TASK-021 |
+| TASK-077 | ✅ | メタデータ DB 読込専用接続モード対応 | TASK-076 |
 | TASK-078 | ⏳ | インデックス管理機能のユニットテスト | TASK-069,TASK-071,TASK-072,TASK-076 |
 | TASK-079 | ✅ | DataSourcePlugin SPI 定義 | TASK-001 |
 | TASK-080 | ✅ | プラグインローダ(JAR スキャン・動的クラスロード)実装 | TASK-079 |
 | TASK-081 | ✅ | プラグインライフサイクル管理実装 | TASK-080 |
 | TASK-082 | ✅ | プラグイン機構のユニットテスト | TASK-080,TASK-081 |
 | TASK-083 | ✅ | searchable-core 内蔵 filesystem DataSource プラグイン実装 | TASK-079 |
-| TASK-084 | ⏳ | AiProvider SPI 設計と定義 | TASK-001 |
+| TASK-084 | ✅ | AiProvider SPI 設計と定義 | TASK-001 |
 | TASK-085 | ⏳ | OpenAI プロバイダ実装 | TASK-084 |
 | TASK-086 | ⏳ | Anthropic プロバイダ実装 | TASK-084 |
 | TASK-087 | ⏳ | Ollama プロバイダ実装 | TASK-084 |

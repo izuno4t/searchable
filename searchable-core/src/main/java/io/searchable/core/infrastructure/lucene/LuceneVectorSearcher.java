@@ -85,6 +85,7 @@ public final class LuceneVectorSearcher {
         final int upper = Math.min(hits.scoreDocs.length,
             offset + request.pagination().limit());
 
+        final boolean lazy = request.options().lazyLoad();
         for (int i = offset; i < upper; i++) {
             final ScoreDoc scoreDoc = hits.scoreDocs[i];
             final org.apache.lucene.document.Document doc =
@@ -92,7 +93,7 @@ public final class LuceneVectorSearcher {
             final String parentId = doc.get(LuceneFields.PARENT_ID);
             final String id = parentId != null ? parentId : doc.get(LuceneFields.ID);
             final String title = doc.get(LuceneFields.TITLE);
-            final String content = doc.get(LuceneFields.CONTENT);
+            final String content = lazy ? null : doc.get(LuceneFields.CONTENT);
             final Map<String, Object> metadata = mapper.deserializeMetadata(
                 doc.get(LuceneFields.METADATA_JSON));
 

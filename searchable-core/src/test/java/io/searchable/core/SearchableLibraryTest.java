@@ -99,6 +99,50 @@ class SearchableLibraryTest {
     }
 
     @Test
+    void readOnlyModeAllowsSearchButRejectsWriteServices() {
+        final ApplicationConfig cfg = applicationConfig();
+        // First build a writable library and create one namespace + document
+        // so the read-only library has something to query.
+        try (SearchableLibrary writable = SearchableLibrary.builder()
+                .applicationConfig(cfg)
+                .dataSource(database.dataSource())
+                .initializeSchema(false)
+                .build()) {
+            writable.namespaceService().create("ro_ns", "RO", NamespaceConfigPatch.empty());
+            writable.indexService().index(Document.builder()
+                .id("doc-ro")
+                .namespaceId("ro_ns")
+                .title("read-only doc")
+                .content("これは読み込み専用モードのテストです。")
+                .indexedAt(Instant.now())
+                .build());
+        }
+
+        try (SearchableLibrary readOnly = SearchableLibrary.builder()
+                .applicationConfig(cfg)
+                .dataSource(database.dataSource())
+                .initializeSchema(false)
+                .readOnly(true)
+                .build()) {
+            assertThat(readOnly.isReadOnly()).isTrue();
+            assertThat(readOnly.searchService()).isNotNull();
+
+            final SearchResult result = readOnly.searchService().search(SearchRequest.builder()
+                .query("読み込み")
+                .namespaceIds(java.util.List.of("ro_ns"))
+                .build());
+            assertThat(result.hits()).isNotEmpty();
+
+            assertThatThrownBy(readOnly::indexService)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("read-only");
+            assertThatThrownBy(readOnly::namespaceService)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("read-only");
+        }
+    }
+
+    @Test
     void closeReleasesOwnedResources() {
         final SearchableLibrary library = SearchableLibrary.builder()
             .applicationConfig(applicationConfig())
