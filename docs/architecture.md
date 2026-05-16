@@ -24,7 +24,7 @@
 Lucene インデックスとメタデータ DB はそれぞれ複数バックエンドから
 選択可能(詳細は 7.1 節を参照)。
 
-- **Lucene Directory**: ローカル FS / インメモリ / S3 互換
+- **Lucene Directory**: ローカル FS / インメモリ
 - **メタデータ DB**: H2 (ファイル / インメモリ) / RDB (TCP, 例 PostgreSQL)
 
 ### 1.4 UI技術
@@ -473,9 +473,12 @@ searchable-testkit (test scope) ─────────┘
 
 | バックエンド | 用途 | 備考 |
 | --- | --- | --- |
-| ローカルファイルシステム | 既定、開発・小規模運用 | `FSDirectory` |
-| インメモリ | テスト、超高速の使い捨て | `ByteBuffersDirectory` |
-| オブジェクトストレージ (S3 互換) | 本番、複数プロセス共有運用 | カスタム Directory 実装 |
+| ローカルファイルシステム | 既定、本番・開発共通 | `MMapDirectory` |
+| インメモリ | テスト、開発時クイック確認 | `ByteBuffersDirectory` |
+
+選択は設定値(例: `searchable.storage.backend=filesystem|memory`)で切替。永続性 / DR は
+TASK-071 / TASK-072 の **インデックススナップショット** (S3 等への保存に対応)で確保し、
+ライブインデックス自体をオブジェクトストレージに置く構成は採用しない。
 
 #### メタデータ DB のバックエンド (JDBC 抽象)
 
@@ -508,7 +511,7 @@ Lucene の `IndexWriter` は **Namespace ごとのインデックスディレク
 ```text
             ┌─────────────────────────────────────────────────┐
             │ Storage (バックエンドを選択可)                    │
-            │  - Lucene index: FS / Memory / S3 互換           │
+            │  - Lucene index: FS / Memory                     │
             │  - Metadata DB : H2 file / H2 mem / RDB (TCP)    │
             │  - 元ドキュメント: FS / S3 互換                    │
             └─────────────────────────────────────────────────┘
@@ -519,7 +522,7 @@ Lucene の `IndexWriter` は **Namespace ごとのインデックスディレク
 
 - **開発**: ローカル FS + H2 ファイル
 - **テスト**: インメモリ Directory + H2 インメモリ
-- **本番(複数プロセス共有)**: S3 互換 + PostgreSQL (TCP)
+- **本番**: ローカル FS + PostgreSQL (TCP)、定期スナップショットを S3 等へバックアップ
 
 ### 7.2 組み込みライブラリモード
 
@@ -530,7 +533,7 @@ User Application
     ↓
 searchable-core.jar (組み込み)
     ↓
-Storage (Local FS or S3)
+Storage (Local FS、設定で In-memory に切替可)
 ```
 
 ### 7.3 スタンドアロンサーバーモード(参照分離)
@@ -553,7 +556,7 @@ Storage (Local FS or S3)
          │ writer 1                           │ reader N           │
          ▼                                    ▼                    ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│        Storage (Local FS / S3 互換) — write 1 / read N                  │
+│        Storage (Local FS、共有 FS 推奨) — write 1 / read N              │
 └─────────────────────────────────────────────────────────────────────────┘
 
 (任意) searchable-ai は要約・統合 API を提供。参照側から HTTP 等で呼び出す
@@ -576,7 +579,7 @@ AI Tool (Claude Desktop)
 └──────────┬──────────┘
            ▼
 ┌─────────────────────┐
-│ Storage (FS / S3)   │
+│ Storage (Local FS)  │
 └─────────────────────┘
 ```
 
@@ -619,10 +622,14 @@ AI Tool (Claude Desktop)
 
 ## 改訂履歴
 
+- v2.1 (2026-05-16): Lucene Directory バックエンドの選択肢から
+  S3 互換ストレージを除外(性能要件 500ms p95 と整合せず、永続性は
+  TASK-071/TASK-072 のインデックススナップショットで代替可能と判断)。
+  FS / インメモリの 2 択に整理。
 - v2.0 (2026-05-16): モジュール構成見直し
   (searchable-ai / searchable-cli / examples/search-ui を追加、
   searchable-admin を設定・運用 Web として位置付け再定義)。
   ストレージ抽象を 7.1 節に明文化し、Lucene Directory バックエンド
-  (FS/メモリ/S3) とメタデータ DB バックエンド (H2/RDB-TCP) の選択肢を
+  とメタデータ DB バックエンド (H2/RDB-TCP) の選択肢を
   追加。書込1+参照Nプロセスのデプロイパターンを 7.3 に追加。
 - v1.0 (2026-01-15): 初版作成（requirements.mdから分離）

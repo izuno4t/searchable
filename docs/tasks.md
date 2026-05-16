@@ -28,10 +28,10 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-002 | ✅ | Java API インターフェース(SearchService/IndexService/NamespaceService/AdminService)定義 | TASK-001 |
 | TASK-003 | ✅ | 設定モデル(GlobalConfig/NamespaceConfig/EmbeddingConfig/AIConfig)定義 | TASK-001 |
 | TASK-004 | ✅ | SearchableLibrary ファサードビルダ実装 | TASK-002,TASK-003 |
-| TASK-005 | 🚫 | Lucene Directory バックエンド抽象(DirectoryProvider)定義 | TASK-001 |
-| TASK-006 | ✅ | ファイルシステム Directory バックエンド実装 | TASK-005 |
-| TASK-007 | 🚫 | インメモリ Directory バックエンド(ByteBuffersDirectory)実装 | TASK-005 |
-| TASK-008 | 🚫 | S3 互換 Directory バックエンド実装 | TASK-005 |
+| TASK-005 | 🚫 | Lucene Directory バックエンドの抽象は不要(Lucene 既存の `Directory` で十分、SPI 化のメリットなしと判断) | TASK-001 |
+| TASK-006 | ✅ | ローカルファイルシステム Directory バックエンド実装(`MMapDirectory` 直接使用、`LuceneIndexProvider` 内で生成) | - |
+| TASK-007 | ✅ | インメモリ Directory バックエンド実装(`ByteBuffersDirectory` 直接使用、`LuceneIndexProvider` 内で設定により切替) | TASK-006 |
+| TASK-008 | 🚫 | S3 互換 Directory バックエンドは実装しない(性能要件 500ms p95 と整合せず、永続性は既存バックアップ機能で代替可能) | - |
 | TASK-009 | ✅ | メタデータ DB JDBC 接続抽象(URL ベース)定義 | TASK-001 |
 | TASK-010 | ✅ | H2 (ファイル/インメモリ)バックエンド統合 | TASK-009 |
 | TASK-011 | ✅ | PostgreSQL / TCP RDB バックエンド統合 | TASK-009 |
@@ -179,6 +179,7 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-153 | ✅ | examples/api/api-specification.ja.md と examples/api/openapi.yaml 整備 | TASK-128 |
 | TASK-154 | ✅ | docs/cli-guide.ja.md 整備 | TASK-101 |
 | TASK-155 | ✅ | docs/admin-guide.ja.md 整備 | TASK-113 |
+| TASK-156 | ⏳ | S3 互換ストレージからの DataSource を `searchable-core` に直接実装(`DataSourcePlugin` SPI を介さず、`searchable.datasource.s3.enabled=true` で有効化) | TASK-069 |
 
 ## タスク詳細
 
@@ -187,10 +188,34 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 - 補足: 要件書 5 章のデータモデルに準拠。Document/Chunk は要件 2.1.4 のチャンク化前提
 - 注意: 後続の Java API シグネチャに影響するため、変更は早期に確定する
 
+### TASK-005
+
+- 経緯: 当初は core 内の `DirectoryProvider` 抽象として設計、その後プラグイン SPI(`IndexStorageBackend`)として実装したが、最終的に **不採用**(SPI は本プロジェクトではデータソース層(`DataSourcePlugin`)の拡張ポイントとして使う方針で、Lucene インデックスの I/O 層には適用しない)
+- 判断理由: 提供する Directory バックエンドは FS とメモリの 2 種類のみで、Lucene 既存の `org.apache.lucene.store.Directory` がすでに抽象として機能しているため、追加の SPI 層を載せる実利が薄い
+- 代替方針: `LuceneIndexProvider` 内で設定値(例 `searchable.storage.backend=filesystem|memory`)に応じて `MMapDirectory` / `ByteBuffersDirectory` を直接切替
+
+### TASK-007
+
+- 補足: `LuceneIndexProvider` の Directory 生成箇所(現在 `new MMapDirectory(path)` でハードコード)に、設定で `memory` を選択した場合に `new ByteBuffersDirectory()` を返す分岐を追加する
+- 想定設定: `searchable.storage.backend=memory`(既定値は `filesystem`)
+- 用途: 単体テスト / 統合テストでの使い捨てインデックス、開発時のクイック確認
+- 注意: メモリ Directory はプロセス終了で消失するため、本番用途では使用しない
+
 ### TASK-008
 
-- 補足: Lucene の Directory 抽象に S3 互換ストレージを橋渡しする実装。書込はローカルキャッシュ + アップロード、読込は ETag ベースの遅延ロード等の戦略を選択
-- 注意: S3 へのレイテンシが性能要件(500ms)に影響しないよう留意
+- 経緯: S3 互換 Directory バックエンドは **実装しない** と確定。性能要件(500ms p95)と整合せず、永続性・DR の用途は TASK-071 / TASK-072 の既存バックアップ機能で代替可能と判断
+- 関連: ドキュメント取込元としての S3(TASK-156)は別系統で引き続き有効
+
+### TASK-156
+
+- 補足: S3 互換ストレージに置かれた原文ドキュメント(PDF/Markdown/HTML 等)を取り込むための DataSource を `searchable-core` 内に直接実装する。`DataSourcePlugin` SPI は介さず、専用のサービスクラスとして提供
+- 補足: 設定例
+  - `searchable.datasource.s3.enabled=true` (既定 `false`、未指定時はサービスをロードしない)
+  - `searchable.datasource.s3.bucket`, `searchable.datasource.s3.region`, `searchable.datasource.s3.prefix`
+  - 認証情報は AWS SDK 標準の credential provider chain に委譲
+- 注意: AWS SDK の依存は `searchable-core` の pom に追加する(必要なら `<optional>true</optional>` で利用者の opt-in にする)
+- 注意: 既存の `FilesystemDataSourcePlugin` と異なり、SPI 実装ではなく内部サービスとして配線する設計のため、`PluginLoader` の経路には乗らない
+- 関連: Lucene インデックス側の S3 連携(TASK-008)とは別系統
 
 ### TASK-011
 

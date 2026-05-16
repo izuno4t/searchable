@@ -114,7 +114,9 @@ public class SearchableConfiguration {
                                                    final AnalyzerFactory analyzerFactory) {
         return new LuceneIndexProvider(
             new IndexLayout(props.getIndex().getDirectory()),
-            analyzerFactory);
+            analyzerFactory,
+            false,
+            props.getIndex().getBackend());
     }
 
     @Bean(destroyMethod = "close")

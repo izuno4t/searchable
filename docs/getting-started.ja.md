@@ -26,23 +26,31 @@ cd searchable
 
 ## 3. ビルドする
 
+ライブラリ本体（コアモジュール）をローカル Maven リポジトリにインストールする。
+
 ```bash
-./mvnw -B clean package
+./mvnw -B clean install -DskipTests
 ```
 
-成功すると次の 3 つの JAR が生成される。
+これで `searchable-core` などコア JAR がローカル `~/.m2` に配置され、
+`examples/` のサンプルアプリから依存できるようになる。
 
-- `searchable-plugins/target/searchable-plugins-1.0.0-SNAPSHOT.jar`
-- `searchable-core/target/searchable-core-1.0.0-SNAPSHOT.jar`
-- `searchable-api/target/searchable-api-1.0.0-SNAPSHOT.jar`
-  (Spring Boot fat jar)
+> Maven がインストール済みであれば `mvn -B clean install -DskipTests` でも可。
 
-> Maven がインストール済みであれば `mvn -B clean package` でも可。
+続いて REST API サンプル（Spring Boot）をビルドする。
+
+```bash
+./mvnw -B -pl examples/api -am package
+```
+
+成果物:
+
+- `examples/api/target/api-example-1.0.0-SNAPSHOT.jar` （Spring Boot fat jar）
 
 ## 4. REST API サーバーを起動する
 
 ```bash
-java -jar searchable-api/target/searchable-api-1.0.0-SNAPSHOT.jar
+java -jar examples/api/target/api-example-1.0.0-SNAPSHOT.jar
 ```
 
 ログに `Started SearchableApplication` が出ればポート `8080` で待ち受けている。
@@ -138,7 +146,7 @@ SearchResult result = searchService.search(
 
 ```bash
 ./mvnw -B -pl searchable-core -am test
-./mvnw -B -pl searchable-api -am test
+./mvnw -B -pl examples/api -am test
 ```
 
 ## 8. 次に読むもの
@@ -156,6 +164,6 @@ SearchResult result = searchService.search(
 
 ---
 
-**Document Version**: 1.0
+**Document Version**: 1.1
 **Last Updated**: 2026-05-16
-**Status**: Phase 1
+**Status**: Phases 1–5 complete（モジュール再構成中）

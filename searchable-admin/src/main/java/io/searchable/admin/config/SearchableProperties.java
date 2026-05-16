@@ -56,9 +56,13 @@ public class SearchableProperties {
     /** Lucene index settings. */
     public static class Index {
         private Path directory = Path.of("./data/indexes");
+        private io.searchable.core.infrastructure.lucene.StorageBackend backend
+            = io.searchable.core.infrastructure.lucene.StorageBackend.FILESYSTEM;
 
         public Path getDirectory() { return directory; }
         public void setDirectory(final Path v) { this.directory = v; }
+        public io.searchable.core.infrastructure.lucene.StorageBackend getBackend() { return backend; }
+        public void setBackend(final io.searchable.core.infrastructure.lucene.StorageBackend v) { this.backend = v; }
     }
 
     /** Plugin loader settings. */

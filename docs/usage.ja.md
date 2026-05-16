@@ -93,11 +93,16 @@ result.getHits().forEach(hit ->
 
 ## 3. REST API として使う
 
+REST API サーバーは [`examples/api/`](../examples/api/) にリファレンス実装が
+ある。詳細な起動手順と設定は [examples/api/README.md](../examples/api/README.md)
+を参照。
+
 ### 3.1 基本情報
 
 - Base URL: `http://<host>:8080/api/v1`
 - Content-Type: `application/json`
-- 認証: Phase 1 ではなし。Phase 2 以降で API Key / Bearer Token に対応予定
+- 認証: `searchable.api.key` または `SEARCHABLE_API_KEY` を設定すると
+  `X-API-Key` ヘッダーが必須になる。未設定の場合は認証なしで動作。
 
 ### 3.2 Namespace を作る
 
@@ -181,18 +186,21 @@ curl -X POST http://localhost:8080/api/v1/search \
 
 ## 4. MCP サーバーとして使う
 
+MCP サーバーは [`examples/mcp/`](../examples/mcp/) にリファレンス実装がある。
+完全な手順は [examples/mcp/guide.ja.md](../examples/mcp/guide.ja.md) を参照。
+
 ### 4.1 起動
 
 stdio モード (Claude Desktop など、プロセス起動型クライアント):
 
 ```bash
-java -jar searchable-mcp/target/searchable-mcp-1.0.0-SNAPSHOT.jar --mode stdio
+java -jar examples/mcp/target/mcp-example-1.0.0-SNAPSHOT.jar --mode stdio
 ```
 
 SSE モード (HTTP 経由):
 
 ```bash
-java -jar searchable-mcp/target/searchable-mcp-1.0.0-SNAPSHOT.jar --mode sse --port 8080
+java -jar examples/mcp/target/mcp-example-1.0.0-SNAPSHOT.jar --mode sse --port 8080
 ```
 
 ### 4.2 Claude Desktop からの利用
@@ -206,7 +214,7 @@ java -jar searchable-mcp/target/searchable-mcp-1.0.0-SNAPSHOT.jar --mode sse --p
       "command": "java",
       "args": [
         "-jar",
-        "/path/to/searchable-mcp.jar",
+        "/path/to/mcp-example-1.0.0-SNAPSHOT.jar",
         "--mode",
         "stdio"
       ],
@@ -278,8 +286,9 @@ Namespace のデフォルトを使う場合は省略可。
 searchable.plugins.directory=./plugins
 ```
 
-リファレンス実装は `examples/filesystem-plugin/` を参照。
-独自プラグインは `DataSourcePlugin` インターフェースを実装する。
+プラグイン API は `searchable-plugins` モジュールで定義されている。
+独自プラグインは `DataSourcePlugin` インターフェースを実装する
+（[searchable-plugins/src/main/java/io/searchable/plugin/DataSourcePlugin.java](../searchable-plugins/src/main/java/io/searchable/plugin/DataSourcePlugin.java)）。
 
 ```java
 public interface DataSourcePlugin {
@@ -344,6 +353,6 @@ REST API のエラーは共通フォーマット:
 
 ---
 
-**Document Version**: 1.0
+**Document Version**: 1.1
 **Last Updated**: 2026-05-16
-**Status**: Phase 1
+**Status**: Phases 1–5 complete（モジュール再構成中）

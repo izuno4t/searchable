@@ -355,7 +355,8 @@ public final class SearchableLibrary implements AutoCloseable {
                 indexProvider = new LuceneIndexProvider(
                     new IndexLayout(applicationConfig.index().directory()),
                     analyzerFactory,
-                    readOnly);
+                    readOnly,
+                    applicationConfig.index().backend());
                 registerCloseable(indexProvider);
             }
 
@@ -401,8 +402,9 @@ public final class SearchableLibrary implements AutoCloseable {
                 registerCloseable(pluginLoader);
             }
 
-            log.info("SearchableLibrary initialized (dataDirectory={}, indexDirectory={}, persistence={}, readOnly={})",
+            log.info("SearchableLibrary initialized (dataDirectory={}, indexBackend={}, indexDirectory={}, persistence={}, readOnly={})",
                 applicationConfig.dataDirectory(),
+                applicationConfig.index().backend(),
                 applicationConfig.index().directory(),
                 applicationConfig.persistence().type(),
                 readOnly);
