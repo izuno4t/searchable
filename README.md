@@ -62,9 +62,9 @@ Pick the document that matches what you want to do:
 | [Usage Guide](docs/usage.ja.md) | Day-to-day reference for the Java API, REST API, and MCP server |
 | [Setup Guide](docs/setup-guide.md) | Detailed installation, configuration, and operational tasks |
 | [Architecture](docs/architecture.md) | Design rationale and internal structure |
-| [API Specification](docs/api-specification.md) | Full REST / Java / MCP API specification |
+| [API Specification](examples/api/api-specification.ja.md) | Full REST / Java / MCP API specification |
 | [Requirements](docs/requirements.md) | Functional and non-functional requirements |
-| [OpenAPI](docs/openapi.yaml) | Machine-readable REST API definition |
+| [OpenAPI](examples/api/openapi.yaml) | Machine-readable REST API definition |
 | [Research Reports](docs/research/) | Background investigations behind key technical decisions |
 
 ## License

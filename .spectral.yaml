@@ -1,7 +1,7 @@
 # Spectral configuration for the Searchable OpenAPI specification.
 #
 # Run:
-#   npx -y @stoplight/spectral-cli lint searchable-api/src/main/resources/openapi.yaml
+#   npx -y @stoplight/spectral-cli lint examples/api/openapi.yaml
 #
 # Extends the official OpenAPI rule set with project-specific tweaks.
 extends:

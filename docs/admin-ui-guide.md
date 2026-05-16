@@ -152,7 +152,7 @@ flash メッセージで indexing 結果を表示する。
 ### REST API も使えるか
 
 - 同一ポート(8080)で `/api/v1/*` が利用可能
-- OpenAPI 仕様は `docs/openapi.yaml` 参照
+- OpenAPI 仕様は `examples/api/openapi.yaml` 参照
 
 ## 10. デモ環境
 

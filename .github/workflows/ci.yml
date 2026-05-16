@@ -149,9 +149,9 @@ jobs:
 
       - name: Lint OpenAPI spec
         run: |
-          if [ -f searchable-api/src/main/resources/openapi.yaml ]; then
+          if [ -f examples/api/openapi.yaml ]; then
             npx --yes @stoplight/spectral-cli lint \
-              searchable-api/src/main/resources/openapi.yaml \
+              examples/api/openapi.yaml \
               --ruleset .spectral.yaml
           else
             echo "OpenAPI spec not present; skipping Spectral."

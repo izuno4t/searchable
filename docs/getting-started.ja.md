@@ -146,7 +146,7 @@ SearchResult result = searchService.search(
 - 設定項目・運用手順の全体像: [setup-guide.md](setup-guide.md)
 - Java / REST / MCP の使い方リファレンス: [usage.ja.md](usage.ja.md)
 - 設計思想と内部構造: [architecture.md](architecture.md)
-- AI クライアント (Claude Desktop など) からの利用: [mcp-guide.md](mcp-guide.md)
+- AI クライアント (Claude Desktop など) からの利用: [examples/mcp/guide.ja.md](../examples/mcp/guide.ja.md)
 
 ## 9. 困ったときは
 

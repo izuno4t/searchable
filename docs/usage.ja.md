@@ -2,7 +2,7 @@
 
 Searchable の日常的な使い方をまとめたリファレンス。
 初回セットアップは [getting-started.ja.md](getting-started.ja.md) を、
-全 API の網羅的な仕様は [api-specification.md](api-specification.md) を参照する。
+全 API の網羅的な仕様は [examples/api/api-specification.ja.md](../examples/api/api-specification.ja.md) を参照する。
 
 ## 1. 利用形態の選び方
 
@@ -164,7 +164,7 @@ curl -X POST http://localhost:8080/api/v1/search \
 ```
 
 レスポンスは `hits`, `totalHits`, `maxScore`, `took` を含む。
-個別フィールドの詳細は [api-specification.md](api-specification.md) 参照。
+個別フィールドの詳細は [examples/api/api-specification.ja.md](../examples/api/api-specification.ja.md) 参照。
 
 ### 3.5 主なエンドポイント
 
@@ -219,7 +219,7 @@ java -jar searchable-mcp/target/searchable-mcp-1.0.0-SNAPSHOT.jar --mode sse --p
 ```
 
 提供ツール (`search_documents` など) の詳細は
-[mcp-guide.md](mcp-guide.md) を参照。
+[examples/mcp/guide.ja.md](../examples/mcp/guide.ja.md) を参照。
 
 ## 5. 検索モードの使い分け
 
@@ -335,8 +335,8 @@ REST API のエラーは共通フォーマット:
 
 ## 12. もっと詳しく
 
-- 全 API の網羅: [api-specification.md](api-specification.md)
-- 機械可読定義: [openapi.yaml](openapi.yaml)
+- 全 API の網羅: [examples/api/api-specification.ja.md](../examples/api/api-specification.ja.md)
+- 機械可読定義: [examples/api/openapi.yaml](../examples/api/openapi.yaml)
 - 内部構造: [architecture.md](architecture.md)
 - ベクトル検索の詳細: [vector-search-guide.md](vector-search-guide.md)
 - チャンク分割の挙動: [chunking-guide.md](chunking-guide.md)

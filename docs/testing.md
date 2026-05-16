@@ -48,7 +48,7 @@ npx --yes cspell --no-progress --no-summary \
 
 # OpenAPI
 npx --yes @stoplight/spectral-cli lint \
-  searchable-api/src/main/resources/openapi.yaml --ruleset .spectral.yaml
+  examples/api/openapi.yaml --ruleset .spectral.yaml
 ```
 
 ## searchable-testkit の利用

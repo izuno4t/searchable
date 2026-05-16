@@ -176,7 +176,7 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-150 | ⏳ | docs/usage.ja.md 整備 | TASK-148 |
 | TASK-151 | ⏳ | docs/setup-guide.ja.md 整備 | TASK-148 |
 | TASK-152 | ⏳ | docs/architecture.md 整備 | TASK-148 |
-| TASK-153 | ⏳ | docs/api-specification.md と docs/openapi.yaml 整備 | TASK-128 |
+| TASK-153 | ⏳ | examples/api/api-specification.ja.md と examples/api/openapi.yaml 整備 | TASK-128 |
 | TASK-154 | ⏳ | docs/cli-guide.ja.md 整備 | TASK-101 |
 | TASK-155 | ⏳ | docs/admin-guide.ja.md 整備 | TASK-113 |
 
