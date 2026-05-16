@@ -1,5 +1,6 @@
 package io.searchable.admin.controller;
 
+import io.searchable.admin.config.SearchableProperties;
 import io.searchable.core.application.config.GlobalConfigProvider;
 import io.searchable.core.domain.search.SearchOrder;
 import io.searchable.core.domain.search.SearchStrategy;
@@ -22,9 +23,12 @@ import java.util.List;
 public class SettingsController {
 
     private final GlobalConfigProvider provider;
+    private final SearchableProperties properties;
 
-    public SettingsController(final GlobalConfigProvider provider) {
+    public SettingsController(final GlobalConfigProvider provider,
+                              final SearchableProperties properties) {
         this.provider = provider;
+        this.properties = properties;
     }
 
     @GetMapping
@@ -55,5 +59,8 @@ public class SettingsController {
         model.addAttribute("architectures", List.of(SearchType.values()));
         model.addAttribute("strategies", List.of(SearchStrategy.values()));
         model.addAttribute("orders", List.of(SearchOrder.values()));
+        model.addAttribute("dataDirectory", properties.getDataDirectory());
+        model.addAttribute("indexDirectory", properties.getIndex().getDirectory());
+        model.addAttribute("persistence", properties.getPersistence());
     }
 }

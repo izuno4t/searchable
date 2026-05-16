@@ -73,17 +73,17 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-047 | ✅ | ハイブリッド検索のユニットテスト | TASK-044,TASK-045,TASK-046 |
 | TASK-048 | ✅ | ページネーション実装 | TASK-026 |
 | TASK-049 | ✅ | Sub-results(セクション単位)データモデル定義 | TASK-001 |
-| TASK-050 | 🚧 | Sub-results 検索・スコアリング実装 | TASK-049,TASK-024 |
-| TASK-051 | 🚧 | Sub-results アンカー付き URL 生成実装 | TASK-050 |
+| TASK-050 | ✅ | Sub-results 検索・スコアリング実装 | TASK-049,TASK-024 |
+| TASK-051 | ✅ | Sub-results アンカー付き URL 生成実装 | TASK-050 |
 | TASK-052 | ✅ | スニペット自動生成実装(HTML/プレーン両形式) | TASK-025 |
 | TASK-053 | ✅ | スニペット長設定とマークアップエンコード実装 | TASK-052 |
-| TASK-054 | ⏳ | ファセット集計(値・件数)実装 | TASK-024 |
-| TASK-055 | ⏳ | ファセット複数値フィルタ(AND/OR)と予約キー対応 | TASK-054 |
-| TASK-056 | ⏳ | ファセット指定3方式(インライン/属性値/要素内容)実装 | TASK-055 |
+| TASK-054 | ✅ | ファセット集計(値・件数)実装 | TASK-024 |
+| TASK-055 | ✅ | ファセット複数値フィルタ(AND/OR)と予約キー対応 | TASK-054 |
+| TASK-056 | ✅ | ファセット指定3方式(インライン/属性値/要素内容)実装 | TASK-055 |
 | TASK-057 | ✅ | BM25 パラメータ Namespace/リクエスト単位上書き実装 | TASK-024 |
-| TASK-058 | ⏳ | metaWeights 適用ロジック実装 | TASK-057 |
+| TASK-058 | ✅ | metaWeights 適用ロジック実装 | TASK-057 |
 | TASK-059 | ✅ | 遅延ロード結果(ID+スコア+URL のみ)対応実装 | TASK-048 |
-| TASK-060 | ⏳ | 検索結果整形機能のユニットテスト | TASK-050,TASK-053,TASK-056,TASK-058,TASK-059 |
+| TASK-060 | ✅ | 検索結果整形機能のユニットテスト | TASK-050,TASK-053,TASK-056,TASK-058,TASK-059 |
 | TASK-061 | ✅ | プレーンテキストパーサ実装 | TASK-001 |
 | TASK-062 | ✅ | Markdown パーサ実装 | TASK-001 |
 | TASK-063 | ✅ | AsciiDoc パーサ実装 | TASK-001 |
@@ -101,7 +101,7 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-075 | ✅ | 異なる Namespace 並列書込統合テスト | TASK-074 |
 | TASK-076 | ✅ | SearchableLibrary 読込専用モード(readOnly=true)実装 | TASK-004,TASK-021 |
 | TASK-077 | ✅ | メタデータ DB 読込専用接続モード対応 | TASK-076 |
-| TASK-078 | ⏳ | インデックス管理機能のユニットテスト | TASK-069,TASK-071,TASK-072,TASK-076 |
+| TASK-078 | ✅ | インデックス管理機能のユニットテスト | TASK-069,TASK-071,TASK-072,TASK-076 |
 | TASK-079 | ✅ | DataSourcePlugin SPI 定義 | TASK-001 |
 | TASK-080 | ✅ | プラグインローダ(JAR スキャン・動的クラスロード)実装 | TASK-079 |
 | TASK-081 | ✅ | プラグインライフサイクル管理実装 | TASK-080 |
@@ -115,70 +115,70 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-089 | ⏳ | AI 統合タイムアウト・フォールバック制御実装 | TASK-088 |
 | TASK-090 | ⏳ | AI 統合設定モデルと application.properties 取込 | TASK-088 |
 | TASK-091 | ⏳ | AI 統合ユニットテスト(スタブプロバイダ) | TASK-088,TASK-089 |
-| TASK-092 | ⏳ | picocli ベースの CLI エントリポイント実装 | TASK-004 |
-| TASK-093 | ⏳ | CLI 起動時 DI 結線実装 | TASK-092 |
-| TASK-094 | ⏳ | ingest サブコマンド(単一・バッチ・プラグイン経由)実装 | TASK-093,TASK-069,TASK-080 |
-| TASK-095 | ⏳ | delete サブコマンド実装 | TASK-093 |
-| TASK-096 | ⏳ | rebuild サブコマンド実装 | TASK-093 |
-| TASK-097 | ⏳ | status サブコマンド実装 | TASK-093 |
-| TASK-098 | ⏳ | backup / restore サブコマンド実装 | TASK-093,TASK-072 |
-| TASK-099 | ⏳ | list-plugins サブコマンド実装 | TASK-093,TASK-080 |
-| TASK-100 | ⏳ | 設定検証(ドライラン)サブコマンド実装 | TASK-093 |
-| TASK-101 | ⏳ | CLI 起動シェルスクリプトとヘルプ整備 | TASK-094,TASK-095,TASK-096,TASK-097,TASK-098,TASK-099,TASK-100 |
-| TASK-102 | ⏳ | CLI のユニット・統合テスト | TASK-101 |
+| TASK-092 | ✅ | picocli ベースの CLI エントリポイント実装 | TASK-004 |
+| TASK-093 | ✅ | CLI 起動時 DI 結線実装 | TASK-092 |
+| TASK-094 | ✅ | ingest サブコマンド(単一・バッチ・プラグイン経由)実装 | TASK-093,TASK-069,TASK-080 |
+| TASK-095 | ✅ | delete サブコマンド実装 | TASK-093 |
+| TASK-096 | ✅ | rebuild サブコマンド実装 | TASK-093 |
+| TASK-097 | ✅ | status サブコマンド実装 | TASK-093 |
+| TASK-098 | ✅ | backup / restore サブコマンド実装 | TASK-093,TASK-072 |
+| TASK-099 | ✅ | list-plugins サブコマンド実装 | TASK-093,TASK-080 |
+| TASK-100 | ✅ | 設定検証(ドライラン)サブコマンド実装 | TASK-093 |
+| TASK-101 | ✅ | CLI 起動シェルスクリプトとヘルプ整備 | TASK-094,TASK-095,TASK-096,TASK-097,TASK-098,TASK-099,TASK-100 |
+| TASK-102 | ✅ | CLI のユニット・統合テスト | TASK-101 |
 | TASK-103 | ✅ | Spring Boot + Thymeleaf アプリケーションエントリ(searchable-admin) | TASK-004 |
 | TASK-104 | ✅ | Namespace 管理画面(一覧/作成/編集/削除)実装 | TASK-103,TASK-015 |
-| TASK-105 | ⏳ | ドキュメントパス/インデックスパス設定画面実装 | TASK-104 |
+| TASK-105 | ✅ | ドキュメントパス/インデックスパス設定画面実装 | TASK-104 |
 | TASK-106 | ✅ | インデックス管理画面(状態・更新・再構築・部分削除)実装 | TASK-103,TASK-069,TASK-021 |
 | TASK-107 | ✅ | ユーザー辞書管理画面実装 | TASK-103,TASK-034 |
-| TASK-108 | ⏳ | ランキング設定画面(BM25/metaWeights/indexWeight)実装 | TASK-103,TASK-057,TASK-058,TASK-018 |
+| TASK-108 | ✅ | ランキング設定画面(BM25/metaWeights/indexWeight)実装 | TASK-103,TASK-057,TASK-058,TASK-018 |
 | TASK-109 | ⏳ | AI 統合設定画面(プロバイダ・API キー・モデル)実装 | TASK-103,TASK-090 |
-| TASK-110 | ⏳ | バックアップ設定画面実装 | TASK-103,TASK-073 |
+| TASK-110 | ✅ | バックアップ設定画面実装 | TASK-103,TASK-073 |
 | TASK-111 | ✅ | モニタリングダッシュボード実装 | TASK-103,TASK-021 |
-| TASK-112 | ⏳ | searchable-admin の権限管理設計ドキュメント作成 | TASK-103 |
-| TASK-113 | ⏳ | searchable-admin の統合テスト | TASK-104,TASK-105,TASK-106,TASK-107,TASK-108,TASK-109,TASK-110,TASK-111 |
-| TASK-114 | ⏳ | examples/webapp の Spring Boot エントリ実装 | TASK-004 |
-| TASK-115 | ⏳ | examples/webapp 起動時バッチ取込実装 | TASK-114,TASK-094 |
-| TASK-116 | ⏳ | examples/webapp 検索ページ(Thymeleaf)実装 | TASK-114,TASK-046 |
-| TASK-117 | ⏳ | examples/webapp ドキュメント詳細ページ実装 | TASK-116,TASK-051 |
-| TASK-118 | ⏳ | examples/webapp の統合テスト | TASK-115,TASK-117 |
-| TASK-119 | ⏳ | examples/webapp 利用ガイド整備(README.md) | TASK-118 |
-| TASK-120 | ⏳ | examples/api の Spring Boot エントリ実装 | TASK-004 |
-| TASK-121 | ⏳ | examples/api 検索 API(POST /api/v1/search)実装 | TASK-120,TASK-046,TASK-060 |
-| TASK-122 | ⏳ | examples/api ドキュメント参照 API(GET /documents/{id})実装 | TASK-120,TASK-059 |
-| TASK-123 | ⏳ | examples/api インデックス管理 API 実装 | TASK-120,TASK-069 |
-| TASK-124 | ⏳ | examples/api Namespace 管理 API 実装 | TASK-120,TASK-015 |
-| TASK-125 | ⏳ | examples/api 管理 API(status/metrics/backup/restore)実装 | TASK-120,TASK-072,TASK-073 |
-| TASK-126 | ⏳ | API Key 認証フィルタ実装(設定で有効化) | TASK-120 |
-| TASK-127 | ⏳ | examples/api CORS 設定実装(許可オリジン設定可) | TASK-120 |
-| TASK-128 | ⏳ | OpenAPI 仕様生成と Swagger UI 同梱 | TASK-121,TASK-122,TASK-123,TASK-124,TASK-125 |
-| TASK-129 | ⏳ | examples/api の統合テスト | TASK-121,TASK-122,TASK-123,TASK-124,TASK-125,TASK-126,TASK-127 |
-| TASK-130 | ⏳ | examples/api 利用ガイド整備(README.md) | TASK-128,TASK-129 |
-| TASK-131 | ⏳ | examples/search-ui index.html と検索ボックス実装 | TASK-121 |
-| TASK-132 | ⏳ | examples/search-ui 検索 JS(デバウンス・AbortController)実装 | TASK-131 |
-| TASK-133 | ⏳ | examples/search-ui ファセット UI 実装 | TASK-132,TASK-056 |
-| TASK-134 | ⏳ | examples/search-ui ハイライト・スニペット安全描画実装 | TASK-132,TASK-053 |
-| TASK-135 | ⏳ | examples/search-ui ページネーション実装 | TASK-132,TASK-048 |
-| TASK-136 | ⏳ | examples/search-ui スタイル整備(CSS) | TASK-131 |
-| TASK-137 | ⏳ | examples/search-ui 利用ガイド整備(README.md) | TASK-133,TASK-134,TASK-135,TASK-136 |
-| TASK-138 | ⏳ | examples/mcp サーバーアプリケーションエントリ実装 | TASK-004 |
-| TASK-139 | ⏳ | examples/mcp search_documents ツール実装 | TASK-138,TASK-046 |
-| TASK-140 | ⏳ | examples/mcp get_document ツール実装 | TASK-138,TASK-059 |
-| TASK-141 | ⏳ | examples/mcp stdio モード対応実装 | TASK-139,TASK-140 |
-| TASK-142 | ⏳ | examples/mcp SSE モード対応実装 | TASK-139,TASK-140 |
-| TASK-143 | ⏳ | examples/mcp API Key 認証(SSE)実装 | TASK-142 |
-| TASK-144 | ⏳ | examples/mcp Claude Desktop 設定例とガイド作成 | TASK-141 |
-| TASK-145 | ⏳ | examples/mcp の統合テスト | TASK-141,TASK-142,TASK-143 |
-| TASK-146 | ⏳ | SLF4J + Logback 構造化ログ整備(全モジュール) | TASK-004 |
-| TASK-147 | ⏳ | 検索性能テスト整備(500ms 目標、100k 件、単一 Namespace) | TASK-046 |
-| TASK-148 | ⏳ | プロジェクト README 整備 | TASK-119,TASK-130,TASK-137,TASK-145 |
-| TASK-149 | ⏳ | docs/getting-started.ja.md 整備 | TASK-148 |
-| TASK-150 | ⏳ | docs/usage.ja.md 整備 | TASK-148 |
-| TASK-151 | ⏳ | docs/setup-guide.ja.md 整備 | TASK-148 |
-| TASK-152 | ⏳ | docs/architecture.md 整備 | TASK-148 |
-| TASK-153 | ⏳ | examples/api/api-specification.ja.md と examples/api/openapi.yaml 整備 | TASK-128 |
-| TASK-154 | ⏳ | docs/cli-guide.ja.md 整備 | TASK-101 |
-| TASK-155 | ⏳ | docs/admin-guide.ja.md 整備 | TASK-113 |
+| TASK-112 | ✅ | searchable-admin の権限管理設計ドキュメント作成 | TASK-103 |
+| TASK-113 | ✅ | searchable-admin の統合テスト | TASK-104,TASK-105,TASK-106,TASK-107,TASK-108,TASK-109,TASK-110,TASK-111 |
+| TASK-114 | ✅ | examples/webapp の Spring Boot エントリ実装 | TASK-004 |
+| TASK-115 | ✅ | examples/webapp 起動時バッチ取込実装 | TASK-114,TASK-094 |
+| TASK-116 | ✅ | examples/webapp 検索ページ(Thymeleaf)実装 | TASK-114,TASK-046 |
+| TASK-117 | ✅ | examples/webapp ドキュメント詳細ページ実装 | TASK-116,TASK-051 |
+| TASK-118 | ✅ | examples/webapp の統合テスト | TASK-115,TASK-117 |
+| TASK-119 | ✅ | examples/webapp 利用ガイド整備(README.md) | TASK-118 |
+| TASK-120 | ✅ | examples/api の Spring Boot エントリ実装 | TASK-004 |
+| TASK-121 | ✅ | examples/api 検索 API(POST /api/v1/search)実装 | TASK-120,TASK-046,TASK-060 |
+| TASK-122 | ✅ | examples/api ドキュメント参照 API(GET /documents/{id})実装 | TASK-120,TASK-059 |
+| TASK-123 | ✅ | examples/api インデックス管理 API 実装 | TASK-120,TASK-069 |
+| TASK-124 | ✅ | examples/api Namespace 管理 API 実装 | TASK-120,TASK-015 |
+| TASK-125 | ✅ | examples/api 管理 API(status/metrics/backup/restore)実装 | TASK-120,TASK-072,TASK-073 |
+| TASK-126 | ✅ | API Key 認証フィルタ実装(設定で有効化) | TASK-120 |
+| TASK-127 | ✅ | examples/api CORS 設定実装(許可オリジン設定可) | TASK-120 |
+| TASK-128 | ✅ | OpenAPI 仕様生成と Swagger UI 同梱 | TASK-121,TASK-122,TASK-123,TASK-124,TASK-125 |
+| TASK-129 | ✅ | examples/api の統合テスト | TASK-121,TASK-122,TASK-123,TASK-124,TASK-125,TASK-126,TASK-127 |
+| TASK-130 | ✅ | examples/api 利用ガイド整備(README.md) | TASK-128,TASK-129 |
+| TASK-131 | ✅ | examples/search-ui index.html と検索ボックス実装 | TASK-121 |
+| TASK-132 | ✅ | examples/search-ui 検索 JS(デバウンス・AbortController)実装 | TASK-131 |
+| TASK-133 | ✅ | examples/search-ui ファセット UI 実装 | TASK-132,TASK-056 |
+| TASK-134 | ✅ | examples/search-ui ハイライト・スニペット安全描画実装 | TASK-132,TASK-053 |
+| TASK-135 | ✅ | examples/search-ui ページネーション実装 | TASK-132,TASK-048 |
+| TASK-136 | ✅ | examples/search-ui スタイル整備(CSS) | TASK-131 |
+| TASK-137 | ✅ | examples/search-ui 利用ガイド整備(README.md) | TASK-133,TASK-134,TASK-135,TASK-136 |
+| TASK-138 | ✅ | examples/mcp サーバーアプリケーションエントリ実装 | TASK-004 |
+| TASK-139 | ✅ | examples/mcp search_documents ツール実装 | TASK-138,TASK-046 |
+| TASK-140 | ✅ | examples/mcp get_document ツール実装 | TASK-138,TASK-059 |
+| TASK-141 | ✅ | examples/mcp stdio モード対応実装 | TASK-139,TASK-140 |
+| TASK-142 | ✅ | examples/mcp SSE モード対応実装 | TASK-139,TASK-140 |
+| TASK-143 | ✅ | examples/mcp API Key 認証(SSE)実装 | TASK-142 |
+| TASK-144 | ✅ | examples/mcp Claude Desktop 設定例とガイド作成 | TASK-141 |
+| TASK-145 | ✅ | examples/mcp の統合テスト | TASK-141,TASK-142,TASK-143 |
+| TASK-146 | ✅ | SLF4J + Logback 構造化ログ整備(全モジュール) | TASK-004 |
+| TASK-147 | ✅ | 検索性能テスト整備(500ms 目標、100k 件、単一 Namespace) | TASK-046 |
+| TASK-148 | ✅ | プロジェクト README 整備 | TASK-119,TASK-130,TASK-137,TASK-145 |
+| TASK-149 | ✅ | docs/getting-started.ja.md 整備 | TASK-148 |
+| TASK-150 | ✅ | docs/usage.ja.md 整備 | TASK-148 |
+| TASK-151 | ✅ | docs/setup-guide.ja.md 整備 | TASK-148 |
+| TASK-152 | ✅ | docs/architecture.md 整備 | TASK-148 |
+| TASK-153 | ✅ | examples/api/api-specification.ja.md と examples/api/openapi.yaml 整備 | TASK-128 |
+| TASK-154 | ✅ | docs/cli-guide.ja.md 整備 | TASK-101 |
+| TASK-155 | ✅ | docs/admin-guide.ja.md 整備 | TASK-113 |
 
 ## タスク詳細
 

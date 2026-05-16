@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Default logging configuration for the Searchable CLI.
+
+  - Console output formatted for terminal use (with timestamps and levels).
+  - Library logs (Lucene, Spring) hushed to WARN by default so the
+    CLI output stays focused on the user-facing messages.
+  - Override via the SEARCHABLE_LOG_LEVEL environment variable.
+-->
+<configuration>
+    <property name="LOG_LEVEL" value="${SEARCHABLE_LOG_LEVEL:-INFO}"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level [%logger{36}] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.apache.lucene" level="WARN"/>
+    <logger name="org.h2" level="WARN"/>
+    <logger name="com.zaxxer.hikari" level="WARN"/>
+
+    <logger name="io.searchable" level="${LOG_LEVEL}"/>
+
+    <root level="WARN">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

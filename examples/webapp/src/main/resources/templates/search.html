@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Searchable Webapp</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 960px; margin: 2em auto; padding: 0 1em; }
+        form { display: flex; gap: .5em; margin-bottom: 1.5em; }
+        input[type=search] { flex: 1; padding: .5em; font-size: 1em; }
+        button { padding: .5em 1em; }
+        .hit { padding: .75em 0; border-bottom: 1px solid #eee; }
+        .hit h2 { font-size: 1.1em; margin: 0 0 .25em; }
+        .hit p { margin: .25em 0; color: #444; }
+        .pagination a { margin-right: .5em; }
+        mark { background: #fffd9c; }
+    </style>
+</head>
+<body>
+<h1>Searchable Webapp</h1>
+
+<form method="get" action="/">
+    <input type="search" name="q" th:value="${query}" placeholder="検索クエリを入力" autofocus/>
+    <button type="submit">検索</button>
+</form>
+
+<div th:if="${result != null}">
+    <p>
+        <strong th:text="${result.totalHits}">0</strong> 件ヒット
+        (<span th:text="${result.tookMs}">0</span> ms)
+    </p>
+
+    <div th:each="hit : ${result.hits}" class="hit">
+        <h2>
+            <a th:href="@{'/documents/' + ${hit.namespaceId} + '/' + ${hit.documentId}}"
+               th:text="${hit.title}">title</a>
+        </h2>
+        <p>
+            <span th:text="${hit.namespaceId}">ns</span> /
+            <span th:text="${hit.documentId}">id</span>
+            (score <span th:text="${#numbers.formatDecimal(hit.score, 1, 4)}">0.0</span>)
+        </p>
+        <p th:if="${hit.highlights != null and hit.highlights['content'] != null}"
+           th:utext="${hit.highlights['content'][0]}">snippet</p>
+        <p th:if="${hit.highlights == null or hit.highlights['content'] == null}"
+           th:text="${#strings.abbreviate(hit.content, 200)}">snippet</p>
+    </div>
+
+    <div class="pagination" th:if="${totalPages > 1}">
+        <a th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+           th:href="@{/(q=${query},page=${i})}"
+           th:text="${i + 1}"
+           th:classappend="${i == page} ? 'current' : ''">1</a>
+    </div>
+</div>
+
+<p th:if="${query != null and query != '' and (result == null or #lists.isEmpty(result.hits))}">
+    該当ドキュメントは見つかりませんでした。
+</p>
+</body>
+</html>

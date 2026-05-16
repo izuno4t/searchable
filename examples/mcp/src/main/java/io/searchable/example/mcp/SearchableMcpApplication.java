@@ -63,8 +63,11 @@ public final class SearchableMcpApplication {
                 hybrid);
 
             final ObjectMapper objectMapper = newObjectMapper();
-            final McpServer server = new McpServer(objectMapper,
-                List.of(new SearchDocumentsTool(searchService, objectMapper)));
+            final io.searchable.core.application.DocumentBrowser documentBrowser =
+                new io.searchable.core.application.DocumentBrowser(provider);
+            final McpServer server = new McpServer(objectMapper, List.of(
+                new SearchDocumentsTool(searchService, objectMapper),
+                new io.searchable.example.mcp.tool.GetDocumentTool(documentBrowser, objectMapper)));
 
             log.info("searchable-mcp ready (stdio)");
             server.serve(System.in, System.out);

@@ -212,6 +212,14 @@ public class SearchableConfiguration {
         return new IndexService(nr, imr, provider, indexer, clock);
     }
 
+    @Bean
+    public io.searchable.core.application.BackupService backupService(
+            final LuceneIndexProvider provider,
+            final SearchableProperties props) {
+        return new io.searchable.core.application.BackupService(provider,
+            new IndexLayout(props.getIndex().getDirectory()));
+    }
+
     @Bean(destroyMethod = "close")
     public HybridSearchOrchestrator hybridSearchOrchestrator(
             final LuceneFullTextSearcher fullText,

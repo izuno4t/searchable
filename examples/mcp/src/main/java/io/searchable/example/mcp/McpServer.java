@@ -67,7 +67,7 @@ public final class McpServer {
         log.info("MCP stdio loop ended (EOF)");
     }
 
-    void handleLine(final String line, final PrintWriter out) {
+    public void handleLine(final String line, final PrintWriter out) {
         final JsonRpcMessage.Request req;
         try {
             req = json.readValue(line, JsonRpcMessage.Request.class);

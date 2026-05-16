@@ -1,11 +1,14 @@
 package io.searchable.core.infrastructure.lucene;
 
+import io.searchable.core.application.AnchorUrls;
 import io.searchable.core.domain.search.SearchHit;
 import io.searchable.core.domain.search.SearchRequest;
 import io.searchable.core.domain.search.SearchResult;
+import io.searchable.core.domain.search.SubResult;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -59,7 +62,7 @@ public final class LuceneFullTextSearcher {
             searcher = ctx.acquireSearcher();
             applyBm25Override(searcher, request);
             final Analyzer analyzer = ctx.analyzer();
-            final Query query = parseQuery(analyzer, request.query());
+            final Query query = parseQuery(analyzer, request);
             final int topN = request.pagination().offset() + request.pagination().limit();
             final TopDocs hits = searcher.search(query, Math.max(topN, 1));
 
@@ -98,10 +101,24 @@ public final class LuceneFullTextSearcher {
         searcher.setSimilarity(new BM25Similarity(effectiveK1, effectiveB));
     }
 
-    private Query parseQuery(final Analyzer analyzer, final String queryText) throws Exception {
-        final QueryParser parser = new QueryParser(LuceneFields.CONTENT, analyzer);
+    private Query parseQuery(final Analyzer analyzer, final SearchRequest request) throws Exception {
+        final java.util.Map<String, Double> metaWeights = request.options().metaWeights();
+        final String queryText = QueryParser.escape(request.query());
+        if (metaWeights.isEmpty()) {
+            final QueryParser parser = new QueryParser(LuceneFields.CONTENT, analyzer);
+            parser.setDefaultOperator(QueryParser.Operator.OR);
+            return parser.parse(queryText);
+        }
+        // Multi-field query with per-field boosts (TASK-058).
+        final String[] fields = metaWeights.keySet().toArray(String[]::new);
+        final java.util.Map<String, Float> boosts = new java.util.LinkedHashMap<>();
+        for (final var e : metaWeights.entrySet()) {
+            boosts.put(e.getKey(), e.getValue().floatValue());
+        }
+        final MultiFieldQueryParser parser =
+            new MultiFieldQueryParser(fields, analyzer, boosts);
         parser.setDefaultOperator(QueryParser.Operator.OR);
-        return parser.parse(QueryParser.escape(queryText));
+        return parser.parse(queryText);
     }
 
     private List<SearchHit> collectHits(final IndexSearcher searcher,
@@ -110,10 +127,6 @@ public final class LuceneFullTextSearcher {
                                         final Query query,
                                         final SearchRequest request,
                                         final String namespaceId) throws Exception {
-        final List<SearchHit> result = new ArrayList<>();
-        final int offset = request.pagination().offset();
-        final int limit = request.pagination().limit();
-        final int upper = Math.min(hits.scoreDocs.length, offset + limit);
         final Highlighter highlighter;
         if (request.options().highlightEnabled()) {
             final var formatter = new SimpleHTMLFormatter(HL_PRE, HL_POST);
@@ -127,12 +140,46 @@ public final class LuceneFullTextSearcher {
 
         final IndexReader reader = searcher.getIndexReader();
         final boolean lazy = request.options().lazyLoad();
-        for (int i = offset; i < upper; i++) {
-            final ScoreDoc scoreDoc = hits.scoreDocs[i];
+
+        // Walk every scoreDoc and group chunks by their parent document id.
+        // The first occurrence (highest scoring per Lucene's sort) becomes
+        // the main SearchHit; subsequent chunks for the same parent become
+        // SubResults — implementing TASK-050 (Sub-results search / scoring).
+        final LinkedHashMap<String, SearchHitBuilder> grouped = new LinkedHashMap<>();
+        for (final ScoreDoc scoreDoc : hits.scoreDocs) {
             final org.apache.lucene.document.Document doc =
                 searcher.storedFields().document(scoreDoc.doc);
-            // PARENT_ID is the domain document id (same across all chunks);
-            // fall back to chunk-level ID for indexes written before chunking.
+            final String parentId = doc.get(LuceneFields.PARENT_ID);
+            final String id = parentId != null ? parentId : doc.get(LuceneFields.ID);
+
+            final SearchHitBuilder builder = grouped.computeIfAbsent(id, k -> new SearchHitBuilder());
+            if (builder.first == null) {
+                builder.first = new ChunkRow(doc, scoreDoc.score, scoreDoc.doc);
+            } else {
+                builder.others.add(new ChunkRow(doc, scoreDoc.score, scoreDoc.doc));
+            }
+        }
+
+        // Apply pagination over the deduplicated parent set.
+        final int offset = request.pagination().offset();
+        final int limit = request.pagination().limit();
+        final List<SearchHitBuilder> ordered = new ArrayList<>(grouped.values());
+        final int upper = Math.min(ordered.size(), offset + limit);
+        final List<SearchHit> result = new ArrayList<>();
+        for (int i = offset; i < upper; i++) {
+            result.add(ordered.get(i).build(namespaceId, lazy, highlighter, analyzer, reader));
+        }
+        return result;
+    }
+
+    private final class SearchHitBuilder {
+        ChunkRow first;
+        final List<ChunkRow> others = new ArrayList<>();
+
+        SearchHit build(final String namespaceId, final boolean lazy,
+                        final Highlighter highlighter, final Analyzer analyzer,
+                        final IndexReader reader) throws Exception {
+            final org.apache.lucene.document.Document doc = first.doc;
             final String parentId = doc.get(LuceneFields.PARENT_ID);
             final String id = parentId != null ? parentId : doc.get(LuceneFields.ID);
             final String title = doc.get(LuceneFields.TITLE);
@@ -142,14 +189,34 @@ public final class LuceneFullTextSearcher {
 
             final Map<String, List<String>> highlights = (highlighter == null || lazy)
                 ? Map.of()
-                : buildHighlights(highlighter, analyzer, reader, scoreDoc.doc,
+                : buildHighlights(highlighter, analyzer, reader, first.luceneDocId,
                     doc.get(LuceneFields.CONTENT));
 
-            result.add(new SearchHit(id, namespaceId, title, content, scoreDoc.score,
-                highlights, metadata));
+            final List<SubResult> subResults = new ArrayList<>();
+            for (final ChunkRow row : others) {
+                subResults.add(toSubResult(row, id, metadata));
+            }
+            return new SearchHit(id, namespaceId, title, content,
+                first.score, highlights, metadata, subResults);
         }
-        return result;
     }
+
+    private SubResult toSubResult(final ChunkRow row, final String parentId,
+                                  final Map<String, Object> parentMetadata) {
+        final Map<String, Object> chunkMeta = mapper.deserializeMetadata(
+            row.doc.get(LuceneFields.CHUNK_METADATA_JSON));
+        final int level = chunkMeta.get("level") instanceof Number n ? n.intValue() : 0;
+        final String heading = chunkMeta.get("heading") instanceof String s ? s : "";
+        final String chunkContent = row.doc.get(LuceneFields.CONTENT);
+        final String sectionId = parentId + "#" + row.doc.get(LuceneFields.CHUNK_ORDINAL);
+        final String baseUrl = parentMetadata.get("url") instanceof String u ? u : null;
+        final String anchorUrl = AnchorUrls.anchorFor(baseUrl, heading);
+        return new SubResult(sectionId, parentId, level, heading,
+            chunkContent == null ? "" : chunkContent,
+            row.score, Map.of(), anchorUrl);
+    }
+
+    private record ChunkRow(org.apache.lucene.document.Document doc, double score, int luceneDocId) { }
 
     private Map<String, List<String>> buildHighlights(final Highlighter highlighter,
                                                       final Analyzer analyzer,

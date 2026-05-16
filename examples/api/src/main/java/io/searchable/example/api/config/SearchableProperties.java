@@ -18,6 +18,8 @@ public class SearchableProperties {
     private Embedding embedding = new Embedding();
     private Dictionary dictionary = new Dictionary();
     private Chunking chunking = new Chunking();
+    private Api api = new Api();
+    private Cors cors = new Cors();
 
     public Path getDataDirectory() { return dataDirectory; }
     public void setDataDirectory(final Path v) { this.dataDirectory = v; }
@@ -35,6 +37,10 @@ public class SearchableProperties {
     public void setDictionary(final Dictionary v) { this.dictionary = v; }
     public Chunking getChunking() { return chunking; }
     public void setChunking(final Chunking v) { this.chunking = v; }
+    public Api getApi() { return api; }
+    public void setApi(final Api v) { this.api = v; }
+    public Cors getCors() { return cors; }
+    public void setCors(final Cors v) { this.cors = v; }
 
     /** Persistence DB connection settings. */
     public static class Persistence {
@@ -126,6 +132,44 @@ public class SearchableProperties {
         public void setStorage(final String v) { this.storage = v; }
         public Path getDirectory() { return directory; }
         public void setDirectory(final Path v) { this.directory = v; }
+    }
+
+    /**
+     * API security: when {@code key} is set (also overridable via the
+     * {@code SEARCHABLE_API_KEY} environment variable), every request
+     * must carry a matching {@code X-API-Key} header (TASK-126).
+     */
+    public static class Api {
+        private String key;
+
+        public String getKey() {
+            // Environment variable overrides config file.
+            final String envKey = System.getenv("SEARCHABLE_API_KEY");
+            return envKey != null && !envKey.isBlank() ? envKey : key;
+        }
+        public void setKey(final String v) { this.key = v; }
+        public boolean isEnabled() {
+            final String k = getKey();
+            return k != null && !k.isBlank();
+        }
+    }
+
+    /** CORS configuration for the REST API (TASK-127). */
+    public static class Cors {
+        private java.util.List<String> allowedOrigins = java.util.List.of();
+        private java.util.List<String> allowedMethods =
+            java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS");
+        private java.util.List<String> allowedHeaders = java.util.List.of("*");
+        private boolean allowCredentials = false;
+
+        public java.util.List<String> getAllowedOrigins() { return allowedOrigins; }
+        public void setAllowedOrigins(final java.util.List<String> v) { this.allowedOrigins = v; }
+        public java.util.List<String> getAllowedMethods() { return allowedMethods; }
+        public void setAllowedMethods(final java.util.List<String> v) { this.allowedMethods = v; }
+        public java.util.List<String> getAllowedHeaders() { return allowedHeaders; }
+        public void setAllowedHeaders(final java.util.List<String> v) { this.allowedHeaders = v; }
+        public boolean isAllowCredentials() { return allowCredentials; }
+        public void setAllowCredentials(final boolean v) { this.allowCredentials = v; }
     }
 
     /** Default search behavior for namespaces. */

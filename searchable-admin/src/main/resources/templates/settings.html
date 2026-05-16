@@ -15,6 +15,27 @@
     設定は変更されません。
   </p>
 
+  <!-- TASK-105: storage paths / persistence (read-only) -->
+  <section class="card mb-4">
+    <div class="card-header">Storage paths</div>
+    <div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-sm-4">Data directory</dt>
+        <dd class="col-sm-8"><code th:text="${dataDirectory}"></code></dd>
+        <dt class="col-sm-4">Index directory</dt>
+        <dd class="col-sm-8"><code th:text="${indexDirectory}"></code></dd>
+        <dt class="col-sm-4">Metadata DB</dt>
+        <dd class="col-sm-8">
+          <code th:text="${persistence.type}"></code>
+          <span th:text="${persistence.url}"></span>
+        </dd>
+      </dl>
+      <p class="form-text">
+        パスはアプリケーション起動時に固定されます。変更後は再起動が必要です。
+      </p>
+    </div>
+  </section>
+
   <form method="post" th:action="@{/settings}" th:object="${form}" novalidate>
     <div class="row g-3">
       <div class="col-md-4">

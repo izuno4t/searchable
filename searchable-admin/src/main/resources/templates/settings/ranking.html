@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/base :: head('Ranking settings')}"></head>
+<body>
+
+<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+<main class="container-fluid py-4">
+  <h1 class="h3 mb-4">Ranking settings</h1>
+
+  <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
+
+  <p class="text-muted">
+    指定した Namespace に紐づく <code>indexWeight</code> を更新します。
+    BM25 (k1/b) と <code>metaWeights</code> はリクエスト単位の
+    <code>SearchOptions</code> で指定できます(<a href="/docs/usage.ja.md">usage</a>)。
+  </p>
+
+  <form method="post" th:action="@{/settings/ranking}" th:object="${form}" novalidate>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label" for="namespaceId">Namespace</label>
+        <select id="namespaceId" class="form-select" th:field="*{namespaceId}">
+          <option value="" disabled selected>選択してください</option>
+          <option th:each="ns : ${namespaces}"
+                  th:value="${ns.id}"
+                  th:text="${ns.id} + ' (current indexWeight=' + ${ns.config.indexWeight} + ')'"></option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="indexWeight">indexWeight</label>
+        <input id="indexWeight" class="form-control" type="number"
+               step="0.1" min="0" max="10" th:field="*{indexWeight}"/>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <button type="submit" class="btn btn-primary">Save</button>
+      <a class="btn btn-outline-secondary" th:href="@{/}">Cancel</a>
+    </div>
+  </form>
+</main>
+
+<footer th:replace="~{layouts/base :: footer}"></footer>
+<th:block th:replace="~{layouts/base :: scripts}"></th:block>
+</body>
+</html>

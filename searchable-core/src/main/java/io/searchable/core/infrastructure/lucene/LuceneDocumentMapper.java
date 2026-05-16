@@ -76,6 +76,8 @@ public final class LuceneDocumentMapper {
         lucene.add(new Field(LuceneFields.CONTENT, chunk.text(),
             LuceneFields.ANALYZED_STORED_WITH_VECTORS));
         lucene.add(new StoredField(LuceneFields.METADATA_JSON, serializeMetadata(doc.metadata())));
+        lucene.add(new StoredField(LuceneFields.CHUNK_METADATA_JSON,
+            serializeMetadata(chunk.metadata())));
         if (doc.indexedAt() != null) {
             final long epoch = doc.indexedAt().toEpochMilli();
             lucene.add(new NumericDocValuesField(LuceneFields.INDEXED_AT_EPOCH, epoch));

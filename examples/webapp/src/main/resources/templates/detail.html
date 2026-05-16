@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${document.title}">Document</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2em auto; padding: 0 1em; }
+        nav { margin-bottom: 1em; }
+        pre { white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+<nav><a href="/">&larr; 検索に戻る</a></nav>
+<h1 th:text="${document.title}">Title</h1>
+<p>
+    <strong>Namespace:</strong> <span th:text="${document.namespaceId}"></span><br/>
+    <strong>ID:</strong> <span th:text="${document.id}"></span><br/>
+    <strong>Indexed at:</strong> <span th:text="${document.indexedAt}"></span>
+</p>
+<pre th:text="${document.snippet}">body</pre>
+</body>
+</html>

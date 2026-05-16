@@ -20,6 +20,8 @@ public final class LuceneFields {
     public static final String TITLE = "title";
     public static final String CONTENT = "content";
     public static final String METADATA_JSON = "metadataJson";
+    /** Per-chunk metadata serialized as JSON (heading, level, weight, ...). */
+    public static final String CHUNK_METADATA_JSON = "chunkMetadataJson";
     public static final String INDEXED_AT_EPOCH = "indexedAtEpoch";
     /** KNN vector field name. */
     public static final String VECTOR = "vector";

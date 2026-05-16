@@ -1,5 +1,9 @@
 package io.searchable.core.domain.search;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  * Optional per-request search behavior flags.
  *
@@ -10,21 +14,19 @@ package io.searchable.core.domain.search;
  * @param escapeMarkup     when {@code true}, HTML special characters in the
  *                         original document are escaped in highlighted snippets
  *                         so the inserted {@code <mark>} tags remain the only
- *                         active markup. Set to {@code false} when the caller
- *                         already trusts the indexed content (e.g. internal
- *                         knowledge base) and wants to preserve formatting.
+ *                         active markup.
  * @param lazyLoad         when {@code true}, the search engine returns the
  *                         smallest payload possible (document id, namespace,
  *                         title, score, metadata) and omits the full
  *                         {@code content} field and highlight fragments.
- *                         Callers should fetch the body on demand from
- *                         {@code DocumentBrowser} / the source store.
- * @param bm25K1           BM25 {@code k1} term-frequency saturation override
- *                         ({@code null} keeps the Lucene default of 1.2).
- *                         Per-request overrides take priority over any
- *                         namespace-level value.
- * @param bm25B            BM25 {@code b} length-normalization override
- *                         ({@code null} keeps the Lucene default of 0.75).
+ * @param bm25K1           BM25 {@code k1} term-frequency saturation override.
+ * @param bm25B            BM25 {@code b} length-normalization override.
+ * @param metaWeights      per-Lucene-field score multipliers
+ *                         ({@code field -> boost}). Field names match
+ *                         the names stored in the index, e.g.
+ *                         {@code "title"} or {@code "content"}. Values
+ *                         must be positive. {@code null} or empty means
+ *                         "use the default single-field query".
  */
 public record SearchOptions(
     boolean highlightEnabled,
@@ -32,7 +34,8 @@ public record SearchOptions(
     boolean escapeMarkup,
     boolean lazyLoad,
     Double bm25K1,
-    Double bm25B
+    Double bm25B,
+    Map<String, Double> metaWeights
 ) {
 
     public static final int DEFAULT_SNIPPET_LENGTH = 200;
@@ -49,29 +52,48 @@ public record SearchOptions(
             throw new IllegalArgumentException(
                 "bm25B must be in [0.0, 1.0], was " + bm25B);
         }
+        if (metaWeights == null) {
+            metaWeights = Map.of();
+        } else {
+            for (final Map.Entry<String, Double> e : metaWeights.entrySet()) {
+                final double v = e.getValue();
+                if (Double.isNaN(v) || Double.isInfinite(v) || v <= 0.0) {
+                    throw new IllegalArgumentException(
+                        "metaWeights[" + e.getKey() + "] must be a finite positive number, was " + v);
+                }
+            }
+            metaWeights = Collections.unmodifiableMap(new LinkedHashMap<>(metaWeights));
+        }
     }
 
     /** Backward-compatible constructor matching the original single-arg form. */
     public SearchOptions(final boolean highlightEnabled) {
-        this(highlightEnabled, DEFAULT_SNIPPET_LENGTH, true, false, null, null);
+        this(highlightEnabled, DEFAULT_SNIPPET_LENGTH, true, false, null, null, Map.of());
     }
 
-    /** Backward-compatible constructor without {@code lazyLoad} / BM25 overrides. */
     public SearchOptions(final boolean highlightEnabled,
                          final int snippetLength,
                          final boolean escapeMarkup) {
-        this(highlightEnabled, snippetLength, escapeMarkup, false, null, null);
+        this(highlightEnabled, snippetLength, escapeMarkup, false, null, null, Map.of());
     }
 
-    /** Backward-compatible constructor without BM25 overrides. */
     public SearchOptions(final boolean highlightEnabled,
                          final int snippetLength,
                          final boolean escapeMarkup,
                          final boolean lazyLoad) {
-        this(highlightEnabled, snippetLength, escapeMarkup, lazyLoad, null, null);
+        this(highlightEnabled, snippetLength, escapeMarkup, lazyLoad, null, null, Map.of());
+    }
+
+    public SearchOptions(final boolean highlightEnabled,
+                         final int snippetLength,
+                         final boolean escapeMarkup,
+                         final boolean lazyLoad,
+                         final Double bm25K1,
+                         final Double bm25B) {
+        this(highlightEnabled, snippetLength, escapeMarkup, lazyLoad, bm25K1, bm25B, Map.of());
     }
 
     public static SearchOptions defaults() {
-        return new SearchOptions(true, DEFAULT_SNIPPET_LENGTH, true, false, null, null);
+        return new SearchOptions(true, DEFAULT_SNIPPET_LENGTH, true, false, null, null, Map.of());
     }
 }

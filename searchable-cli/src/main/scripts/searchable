@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Launcher for the Searchable CLI.
+#
+# Usage:
+#   bin/searchable --config /path/to/searchable.yaml <subcommand> [args]
+#
+# Resolution order:
+#   1. SEARCHABLE_HOME (if set) → expects $SEARCHABLE_HOME/lib/* on classpath
+#   2. Co-located ./lib/* (next to this script, the layout produced by
+#      mvn package + maven-dependency-plugin copy-dependencies)
+#   3. Built target tree (./target/classes + ./target/lib/* when invoked
+#      from within a developer checkout)
+set -euo pipefail
+
+self_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+resolve_classpath() {
+  if [[ -n "${SEARCHABLE_HOME:-}" && -d "${SEARCHABLE_HOME}/lib" ]]; then
+    printf '%s' "${SEARCHABLE_HOME}/lib/*"
+    return
+  fi
+  if [[ -d "${self_dir}/lib" ]]; then
+    printf '%s' "${self_dir}/lib/*"
+    return
+  fi
+  local module_root="${self_dir}/.."
+  if [[ -d "${module_root}/target/classes" && -d "${module_root}/target/lib" ]]; then
+    printf '%s' "${module_root}/target/classes:${module_root}/target/lib/*"
+    return
+  fi
+  echo "searchable: cannot locate runtime classpath." >&2
+  echo "Set SEARCHABLE_HOME or run from a built distribution." >&2
+  exit 2
+}
+
+cp="$(resolve_classpath)"
+exec "${JAVA:-java}" ${SEARCHABLE_OPTS:-} -cp "${cp}" io.searchable.cli.SearchableCli "$@"
