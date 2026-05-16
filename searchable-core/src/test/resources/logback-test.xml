@@ -10,7 +10,7 @@
         </encoder>
     </appender>
 
-    <logger name="com.searchable" level="DEBUG"/>
+    <logger name="io.searchable" level="DEBUG"/>
     <logger name="org.apache.lucene" level="WARN"/>
 
     <root level="INFO">

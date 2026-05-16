@@ -5,7 +5,7 @@
              https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.searchable.poc</groupId>
+    <groupId>io.searchable.poc</groupId>
     <artifactId>poc-task-003-search-perf</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>

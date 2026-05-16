@@ -19,13 +19,13 @@
     - 候補: paraphrase-multilingual-MiniLM-L12-v2
   - ベクトル検索エンジン: Lucene HNSW等から選定
 
-### 1.3 データストア（調査・選定が必要）
+### 1.3 ストレージ
 
-以下から選定（複数対応も検討）:
+Lucene インデックスとメタデータ DB はそれぞれ複数バックエンドから
+選択可能(詳細は 7.1 節を参照)。
 
-- H2 Database
-- SQLite
-- RocksDB
+- **Lucene Directory**: ローカル FS / インメモリ / S3 互換
+- **メタデータ DB**: H2 (ファイル / インメモリ) / RDB (TCP, 例 PostgreSQL)
 
 ### 1.4 UI技術
 
@@ -395,103 +395,184 @@ class IndexMetadata {
 
 ## 6. モジュール構成
 
-### 6.1 Mavenマルチモジュール構成
+### 6.1 モジュール一覧と役割
+
+| カテゴリ | モジュール | 役割 |
+| --- | --- | --- |
+| ライブラリ | `searchable-plugins` | プラグイン SPI。データソース等の拡張インターフェース定義 |
+| ライブラリ | `searchable-core` | インデクシング、検索、結果のドキュメント参照を提供するコア |
+| ライブラリ | `searchable-ai` | 検索後処理(要約・統合)の AI クライアント抽象。OpenAI / Anthropic / Ollama などを切替可能な API として提供 |
+| 運用ツール | `searchable-cli` | インデックス管理コマンド全般(取込・削除・再構築・バックアップ/リストア・状態確認) |
+| 運用 Web | `searchable-admin` | 設定・運用 Web アプリケーション(Thymeleaf)。Namespace / ユーザー辞書 / ランキング / AI 統合 / バックアップ / モニタリングの設定と操作 |
+| サンプル | `examples/api` | REST WebAPI サンプル(API Key 認証対応、軽度本番利用可) |
+| サンプル | `examples/mcp` | MCP サンプル(API Key 認証対応、軽度本番利用可) |
+| サンプル | `examples/search-ui` | 検索 UI サンプル(React、デバウンス検索・ファセット・ハイライト) |
+| 開発支援 | `searchable-testkit` | テスト共通基盤。core / plugins / ai / ui / cli を対象としたフィクスチャ・Fake・Testcontainers ヘルパ |
+
+### 6.2 Mavenマルチモジュール構成
 
 ```text
 searchable/
 ├── pom.xml                          # 親POM
+├── searchable-plugins/              # プラグイン SPI
+│   └── src/main/java/com/searchable/plugin/
 ├── searchable-core/                 # コアライブラリ
-│   ├── pom.xml
-│   └── src/
-│       ├── main/java/
-│       │   └── com/searchable/core/
-│       │       ├── domain/          # ドメイン層
-│       │       ├── application/     # アプリケーション層
-│       │       └── infrastructure/  # インフラ層
-│       └── test/java/
-├── searchable-api/                  # REST API
-│   ├── pom.xml
-│   └── src/
-│       └── main/java/
-│           └── com/searchable/api/
-│               └── controller/
-├── searchable-mcp/                  # MCPサーバー
-│   ├── pom.xml
-│   └── src/
-│       └── main/java/
-│           └── com/searchable/mcp/
-├── searchable-ui/                   # 管理UI
-│   ├── pom.xml
-│   └── src/
-│       ├── main/java/
-│       │   └── com/searchable/ui/
-│       └── main/resources/
-│           └── templates/
-└── searchable-plugins/              # プラグインAPI
-    ├── pom.xml
-    └── src/
-        └── main/java/
-            └── com/searchable/plugin/
+│   └── src/main/java/com/searchable/core/
+│       ├── domain/
+│       ├── application/
+│       └── infrastructure/
+├── searchable-ai/                   # AI 要約・統合
+│   └── src/main/java/com/searchable/ai/
+├── searchable-testkit/              # テスト共通基盤(test scope)
+│   └── src/main/java/com/searchable/testkit/
+├── searchable-cli/                  # CLI
+│   └── src/main/java/com/searchable/cli/
+├── searchable-admin/                   # 設定・運用 Web(Thymeleaf)
+│   ├── src/main/java/com/searchable/ui/
+│   └── src/main/resources/templates/
+├── examples/api/                  # REST WebAPI サンプル
+│   └── src/main/java/com/searchable/api/
+├── examples/mcp/                  # MCP サンプル
+│   └── src/main/java/com/searchable/mcp/
+└── examples/search-ui/            # 検索 UI サンプル
+    └── src/main/java/com/searchable/searchui/
 ```
 
-### 6.2 モジュール依存関係
+### 6.3 モジュール依存関係
 
 ```text
-searchable-ui
-    ↓ depends on
-searchable-api
-    ↓ depends on
-searchable-core ← searchable-mcp
-    ↓ depends on
-searchable-plugins
+searchable-admin  ─────────────┐
+examples/api ─────────────┤
+examples/mcp ─────────────┤
+searchable-cli ─────────────┼─▶ searchable-core ─▶ searchable-plugins
+examples/search-ui ───────┤            ▲
+searchable-ai ──────────────┘            │
+                                          │
+searchable-testkit (test scope) ─────────┘
+   ▲
+   └── api / mcp / ui / cli / ai が test scope で依存
 ```
+
+- `searchable-ai` は core と独立しており、利用側 (`examples/api`, `examples/mcp`, `searchable-admin` 等) が必要に応じて依存
+- `examples/search-ui` は HTTP 越しに `examples/api` を呼ぶ前提で、ビルド時の Maven 依存は持たない(または最小)
 
 ---
 
 ## 7. デプロイメント構成
 
-### 7.1 組み込みライブラリモード
+### 7.1 ストレージレイヤー (共通前提)
+
+ドキュメントとインデックスデータは **抽象化されたストレージ** に配置し、
+複数のバックエンドから選択できる。バックエンドは2系統に分かれる。
+
+#### Lucene インデックスのバックエンド (`Directory` 抽象)
+
+| バックエンド | 用途 | 備考 |
+| --- | --- | --- |
+| ローカルファイルシステム | 既定、開発・小規模運用 | `FSDirectory` |
+| インメモリ | テスト、超高速の使い捨て | `ByteBuffersDirectory` |
+| オブジェクトストレージ (S3 互換) | 本番、複数プロセス共有運用 | カスタム Directory 実装 |
+
+#### メタデータ DB のバックエンド (JDBC 抽象)
+
+| バックエンド | 用途 | 接続 |
+| --- | --- | --- |
+| H2 組み込み(ファイル) | 既定、単一プロセス | JDBC ファイル URL |
+| H2 インメモリ | テスト、使い捨て | JDBC `jdbc:h2:mem:` |
+| H2 サーバー / PostgreSQL / MySQL | 複数プロセス共有・本番 | **TCP 経由 JDBC** |
+
+書込は単一プロセス(インデクサー)のみが行い、参照系モジュール
+(`examples/api` / `examples/mcp` / `examples/search-ui` 経由) は
+同じストレージを **読み込み専用** で参照する。これにより1セットの
+インデックスを複数の参照プロセスで共有できる。
+
+#### 書込プロセスの一意性制約
+
+Lucene の `IndexWriter` は **Namespace ごとのインデックスディレクトリ単位** で
+`write.lock` を取得する。したがって書込の単一性も Namespace 単位で成立する。
+
+- **同一 Namespace に対してインデックス更新を行えるプロセスは常に1つだけ**
+- **異なる Namespace なら複数プロセスから並列に更新可能**
+  - 例: Namespace A は `searchable-cli` が、Namespace B は
+    `searchable-admin` が同時に更新できる
+- 同一プロセス内で同一 Namespace への更新要求が複数来た場合は
+  ライブラリ側でシリアライズ(`IndexWriter` のスレッドセーフ保証)
+- 設定・運用 Web を 2 ノード起動して同じ Namespace を更新することは不可
+  (書込ロックの取り合いになる)。Namespace を分けるかリーダー選出を行う
+- 参照系プロセスは何台でも並列起動可(全 Namespace 横断で読込可能)
+
+```text
+            ┌─────────────────────────────────────────────────┐
+            │ Storage (バックエンドを選択可)                    │
+            │  - Lucene index: FS / Memory / S3 互換           │
+            │  - Metadata DB : H2 file / H2 mem / RDB (TCP)    │
+            │  - 元ドキュメント: FS / S3 互換                    │
+            └─────────────────────────────────────────────────┘
+                  ▲ (write 1 / read N)
+```
+
+組み合わせ例:
+
+- **開発**: ローカル FS + H2 ファイル
+- **テスト**: インメモリ Directory + H2 インメモリ
+- **本番(複数プロセス共有)**: S3 互換 + PostgreSQL (TCP)
+
+### 7.2 組み込みライブラリモード
+
+単一プロセスで完結するパターン。書込と参照を同じプロセスが担う。
 
 ```text
 User Application
     ↓
-searchable-core.jar ← 組み込み
+searchable-core.jar (組み込み)
     ↓
-File System / DB
+Storage (Local FS or S3)
 ```
 
-### 7.2 スタンドアロンサーバーモード
+### 7.3 スタンドアロンサーバーモード(参照分離)
+
+書込専用プロセス(`searchable-cli` または `searchable-admin`)と、
+参照専用プロセス(`examples/api` / `examples/mcp` /
+`examples/search-ui`) を分離。ストレージは全プロセスで共有。
 
 ```text
-┌─────────────────────┐
-│   searchable-ui     │ ← 管理UI + REST API
-│   (Spring Boot)     │
-└─────────────────────┘
-         ↓
-┌─────────────────────┐
-│  searchable-core    │
-└─────────────────────┘
-         ↓
-┌─────────────────────┐
-│  File System / DB   │
-└─────────────────────┘
+[書込側]                             [参照側]
+┌──────────────────┐                 ┌──────────────────┐ ┌──────────────────┐
+│ searchable-cli   │                 │ examples/api   │ │ examples/mcp   │
+│ (バッチ取込)      │                 │ (REST sample)    │ │ (MCP sample)     │
+└────────┬─────────┘                 └────────┬─────────┘ └────────┬─────────┘
+         │                                    │                    │
+┌────────▼─────────┐                          │                    │
+│ searchable-admin    │                          │                    │
+│ (設定・運用 Web)  │                          │                    │
+└────────┬─────────┘                          │                    │
+         │ writer 1                           │ reader N           │
+         ▼                                    ▼                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│        Storage (Local FS / S3 互換) — write 1 / read N                  │
+└─────────────────────────────────────────────────────────────────────────┘
+
+(任意) searchable-ai は要約・統合 API を提供。参照側から HTTP 等で呼び出す
 ```
 
-### 7.3 MCPサーバーモード
+### 7.4 MCP サーバーモード
+
+AI クライアント (Claude Desktop 等) から直接読みに来る構成。
+書込は別系統 (CLI / 設定 Web) で行い、MCP は参照のみ。
 
 ```text
 AI Tool (Claude Desktop)
-    ↓ MCP Protocol
+     ↓ MCP Protocol
 ┌─────────────────────┐
-│  searchable-mcp     │
-└─────────────────────┘
-         ↓
+│  examples/mcp     │ ← 参照専用
+└──────────┬──────────┘
+           ▼
 ┌─────────────────────┐
-│  searchable-core    │
-└─────────────────────┘
-         ↓
+│  searchable-core    │ (read-only モード)
+└──────────┬──────────┘
+           ▼
 ┌─────────────────────┐
-│  File System / DB   │
+│ Storage (FS / S3)   │
 └─────────────────────┘
 ```
 
@@ -528,10 +609,16 @@ AI Tool (Claude Desktop)
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2026-01-15
+**Document Version**: 2.0
+**Last Updated**: 2026-05-16
 **Status**: Draft
 
 ## 改訂履歴
 
+- v2.0 (2026-05-16): モジュール構成見直し
+  (searchable-ai / searchable-cli / examples/search-ui を追加、
+  searchable-admin を設定・運用 Web として位置付け再定義)。
+  ストレージ抽象を 7.1 節に明文化し、Lucene Directory バックエンド
+  (FS/メモリ/S3) とメタデータ DB バックエンド (H2/RDB-TCP) の選択肢を
+  追加。書込1+参照Nプロセスのデプロイパターンを 7.3 に追加。
 - v1.0 (2026-01-15): 初版作成（requirements.mdから分離）

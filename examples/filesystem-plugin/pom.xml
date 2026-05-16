@@ -5,7 +5,7 @@
              https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.searchable.examples</groupId>
+    <groupId>io.searchable.example</groupId>
     <artifactId>filesystem-plugin-example</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
@@ -22,7 +22,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.searchable</groupId>
+            <groupId>io.searchable</groupId>
             <artifactId>searchable-plugins</artifactId>
             <version>1.0.0-SNAPSHOT</version>
             <scope>provided</scope>

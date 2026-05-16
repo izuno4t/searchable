@@ -5,7 +5,7 @@
              https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.searchable</groupId>
+    <groupId>io.searchable</groupId>
     <artifactId>searchable-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -18,10 +18,10 @@
     <modules>
         <module>searchable-plugins</module>
         <module>searchable-core</module>
+        <module>searchable-ai</module>
         <module>searchable-testkit</module>
-        <module>searchable-api</module>
-        <module>searchable-mcp</module>
-        <module>searchable-ui</module>
+        <module>searchable-cli</module>
+        <module>searchable-admin</module>
     </modules>
 
     <properties>
@@ -66,22 +66,27 @@
         <dependencies>
             <!-- Sub-modules -->
             <dependency>
-                <groupId>com.searchable</groupId>
+                <groupId>io.searchable</groupId>
                 <artifactId>searchable-plugins</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.searchable</groupId>
+                <groupId>io.searchable</groupId>
                 <artifactId>searchable-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.searchable</groupId>
-                <artifactId>searchable-api</artifactId>
+                <groupId>io.searchable</groupId>
+                <artifactId>searchable-ai</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.searchable</groupId>
+                <groupId>io.searchable</groupId>
+                <artifactId>searchable-cli</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.searchable</groupId>
                 <artifactId>searchable-testkit</artifactId>
                 <version>${project.version}</version>
             </dependency>
