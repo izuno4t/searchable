@@ -4,11 +4,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Entry point for the admin UI deployment. Scans both
- * {@code io.searchable.admin} (templates, view controllers) and
- * {@code io.searchable.api} (REST controllers, core wiring beans).
+ * Entry point for the settings &amp; operations Web application
+ * ({@code searchable-admin}). Scans {@code io.searchable.admin} which
+ * owns the view controllers, forms and Spring configuration that wires
+ * the searchable-core services as Spring beans.
  */
-@SpringBootApplication(scanBasePackages = {"io.searchable.admin", "io.searchable.api"})
+@SpringBootApplication(scanBasePackages = "io.searchable.admin")
 public class SearchableUiApplication {
 
     public static void main(final String[] args) {

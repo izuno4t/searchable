@@ -18,23 +18,29 @@ class PluginLoaderTest {
     @TempDir Path tempDir;
 
     @Test
-    void returnsEmptyWhenNoPluginsRegistered() {
+    void returnsBuiltInFilesystemPluginWhenNoExternalPluginsRegistered() {
         try (PluginLoader loader = new PluginLoader()) {
-            assertThat(loader.loadDataSourcePlugins()).isEmpty();
+            assertThat(loader.loadDataSourcePlugins())
+                .extracting(DataSourcePlugin::name)
+                .containsExactly("filesystem");
         }
     }
 
     @Test
-    void emptyPluginDirectoryIsAccepted() {
+    void emptyPluginDirectoryStillExposesBuiltInPlugins() {
         try (PluginLoader loader = new PluginLoader(tempDir)) {
-            assertThat(loader.loadDataSourcePlugins()).isEmpty();
+            assertThat(loader.loadDataSourcePlugins())
+                .extracting(DataSourcePlugin::name)
+                .containsExactly("filesystem");
         }
     }
 
     @Test
-    void nonExistentDirectoryIsAccepted() {
+    void nonExistentDirectoryStillExposesBuiltInPlugins() {
         try (PluginLoader loader = new PluginLoader(tempDir.resolve("missing"))) {
-            assertThat(loader.loadDataSourcePlugins()).isEmpty();
+            assertThat(loader.loadDataSourcePlugins())
+                .extracting(DataSourcePlugin::name)
+                .containsExactly("filesystem");
         }
     }
 
@@ -44,6 +50,15 @@ class PluginLoaderTest {
             final Optional<DataSourcePlugin> found =
                 loader.findByName(DataSourcePlugin.class, "missing");
             assertThat(found).isEmpty();
+        }
+    }
+
+    @Test
+    void findByNameReturnsBuiltInFilesystem() {
+        try (PluginLoader loader = new PluginLoader()) {
+            final Optional<DataSourcePlugin> found =
+                loader.findByName(DataSourcePlugin.class, "filesystem");
+            assertThat(found).isPresent();
         }
     }
 
