@@ -24,58 +24,58 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 
 | ID | ステータス | 概要 | 依存関係 |
 | --- | --- | --- | --- |
-| TASK-001 | ⏳ | ドメインモデル(Document/Chunk/Namespace/SearchRequest/SearchResult)定義 | - |
-| TASK-002 | ⏳ | Java API インターフェース(SearchService/IndexService/NamespaceService/AdminService)定義 | TASK-001 |
-| TASK-003 | ⏳ | 設定モデル(GlobalConfig/NamespaceConfig/EmbeddingConfig/AIConfig)定義 | TASK-001 |
+| TASK-001 | ✅ | ドメインモデル(Document/Chunk/Namespace/SearchRequest/SearchResult)定義 | - |
+| TASK-002 | ✅ | Java API インターフェース(SearchService/IndexService/NamespaceService/AdminService)定義 | TASK-001 |
+| TASK-003 | ✅ | 設定モデル(GlobalConfig/NamespaceConfig/EmbeddingConfig/AIConfig)定義 | TASK-001 |
 | TASK-004 | ⏳ | SearchableLibrary ファサードビルダ実装 | TASK-002,TASK-003 |
-| TASK-005 | ⏳ | Lucene Directory バックエンド抽象(DirectoryProvider)定義 | TASK-001 |
-| TASK-006 | ⏳ | ファイルシステム Directory バックエンド実装 | TASK-005 |
-| TASK-007 | ⏳ | インメモリ Directory バックエンド(ByteBuffersDirectory)実装 | TASK-005 |
-| TASK-008 | ⏳ | S3 互換 Directory バックエンド実装 | TASK-005 |
+| TASK-005 | 🚫 | Lucene Directory バックエンド抽象(DirectoryProvider)定義 | TASK-001 |
+| TASK-006 | ✅ | ファイルシステム Directory バックエンド実装 | TASK-005 |
+| TASK-007 | 🚫 | インメモリ Directory バックエンド(ByteBuffersDirectory)実装 | TASK-005 |
+| TASK-008 | 🚫 | S3 互換 Directory バックエンド実装 | TASK-005 |
 | TASK-009 | ⏳ | メタデータ DB JDBC 接続抽象(URL ベース)定義 | TASK-001 |
-| TASK-010 | ⏳ | H2 (ファイル/インメモリ)バックエンド統合 | TASK-009 |
+| TASK-010 | ✅ | H2 (ファイル/インメモリ)バックエンド統合 | TASK-009 |
 | TASK-011 | ⏳ | PostgreSQL / TCP RDB バックエンド統合 | TASK-009 |
 | TASK-012 | ⏳ | ストレージ設定スキーマと application.properties 取込 | TASK-006,TASK-007,TASK-008,TASK-010,TASK-011 |
 | TASK-013 | ⏳ | ストレージバックエンドのユニット・統合テスト(Testcontainers) | TASK-012 |
-| TASK-014 | ⏳ | Namespace リポジトリ(JDBC) 実装 | TASK-010 |
-| TASK-015 | ⏳ | NamespaceService CRUD 実装 | TASK-014 |
-| TASK-016 | ⏳ | Namespace 設定マージロジック(グローバル+個別)実装 | TASK-003,TASK-015 |
-| TASK-017 | ⏳ | Namespace 単位インデックスディレクトリ分離実装 | TASK-006,TASK-015 |
+| TASK-014 | ✅ | Namespace リポジトリ(JDBC) 実装 | TASK-010 |
+| TASK-015 | ✅ | NamespaceService CRUD 実装 | TASK-014 |
+| TASK-016 | ✅ | Namespace 設定マージロジック(グローバル+個別)実装 | TASK-003,TASK-015 |
+| TASK-017 | ✅ | Namespace 単位インデックスディレクトリ分離実装 | TASK-006,TASK-015 |
 | TASK-018 | ⏳ | indexWeight 適用ロジック実装 | TASK-016 |
-| TASK-019 | ⏳ | Namespace 管理機能ユニットテスト | TASK-015,TASK-016,TASK-017,TASK-018 |
-| TASK-020 | ⏳ | Lucene IndexWriter ライフサイクル管理(Namespace 単位)実装 | TASK-017 |
-| TASK-021 | ⏳ | Lucene IndexReader / Searcher プロバイダ実装 | TASK-017 |
-| TASK-022 | ⏳ | Kuromoji ベース JapaneseAnalyzer 実装 | TASK-020 |
+| TASK-019 | ✅ | Namespace 管理機能ユニットテスト | TASK-015,TASK-016,TASK-017,TASK-018 |
+| TASK-020 | ✅ | Lucene IndexWriter ライフサイクル管理(Namespace 単位)実装 | TASK-017 |
+| TASK-021 | ✅ | Lucene IndexReader / Searcher プロバイダ実装 | TASK-017 |
+| TASK-022 | ✅ | Kuromoji ベース JapaneseAnalyzer 実装 | TASK-020 |
 | TASK-023 | ⏳ | Sudachi ベース JapaneseAnalyzer 実装(設定で切替) | TASK-020 |
-| TASK-024 | ⏳ | 全文検索クエリビルダ(フィールド指定/ファジー/ワイルドカード)実装 | TASK-021,TASK-022 |
-| TASK-025 | ⏳ | ハイライタ実装(日本語対応・`<mark>` 出力) | TASK-024 |
-| TASK-026 | ⏳ | 全文検索サービスのユニットテスト | TASK-024,TASK-025 |
+| TASK-024 | ✅ | 全文検索クエリビルダ(フィールド指定/ファジー/ワイルドカード)実装 | TASK-021,TASK-022 |
+| TASK-025 | ✅ | ハイライタ実装(日本語対応・`<mark>` 出力) | TASK-024 |
+| TASK-026 | ✅ | 全文検索サービスのユニットテスト | TASK-024,TASK-025 |
 | TASK-027 | ⏳ | 見出し自動ブースト(h1=7.0..h6=2.0)実装 | TASK-024 |
 | TASK-028 | ⏳ | カスタムセクション重み(0.0〜10.0)設定 API 実装 | TASK-027 |
 | TASK-029 | ⏳ | 二次関数スケーリング(weight 2.0→約4倍)実装 | TASK-027 |
 | TASK-030 | ⏳ | コンテンツ重み付けのユニットテスト | TASK-027,TASK-028,TASK-029 |
-| TASK-031 | ⏳ | Kuromoji UserDictionary 形式パーサ実装 | TASK-022 |
-| TASK-032 | ⏳ | ユーザー辞書ファイルストレージ実装 | TASK-031 |
-| TASK-033 | ⏳ | ユーザー辞書 DB ストレージ実装 | TASK-031,TASK-014 |
-| TASK-034 | ⏳ | グローバル+Namespace 個別辞書マージロジック実装 | TASK-032,TASK-033 |
+| TASK-031 | ✅ | Kuromoji UserDictionary 形式パーサ実装 | TASK-022 |
+| TASK-032 | ✅ | ユーザー辞書ファイルストレージ実装 | TASK-031 |
+| TASK-033 | ✅ | ユーザー辞書 DB ストレージ実装 | TASK-031,TASK-014 |
+| TASK-034 | ✅ | グローバル+Namespace 個別辞書マージロジック実装 | TASK-032,TASK-033 |
 | TASK-035 | ⏳ | 辞書変更の新規・再構築時反映処理実装 | TASK-034 |
-| TASK-036 | ⏳ | ユーザー辞書管理機能のユニットテスト | TASK-034,TASK-035 |
-| TASK-037 | ⏳ | ONNX Runtime 組込とモデルローダ実装 | TASK-020 |
-| TASK-038 | ⏳ | 埋め込みモデル選択設定(multilingual-e5 等)実装 | TASK-037 |
-| TASK-039 | ⏳ | テキストベクトル化サービス実装 | TASK-038 |
-| TASK-040 | ⏳ | Lucene HNSW ベクトルインデックス管理実装 | TASK-021,TASK-039 |
-| TASK-041 | ⏳ | ベクトル検索クエリ実行・類似度計算実装 | TASK-040 |
-| TASK-042 | ⏳ | ベクトル検索のユニットテスト | TASK-041 |
-| TASK-043 | ⏳ | ベクトル検索の性能ベンチマーク(500ms 目標) | TASK-041 |
-| TASK-044 | ⏳ | シーケンシャル検索戦略実装(順序設定対応) | TASK-026,TASK-041 |
-| TASK-045 | ⏳ | パラレル検索戦略実装(同時実行マージ) | TASK-026,TASK-041 |
-| TASK-046 | ⏳ | ハイブリッド検索結果マージ・スコア統合実装 | TASK-044,TASK-045 |
-| TASK-047 | ⏳ | ハイブリッド検索のユニットテスト | TASK-044,TASK-045,TASK-046 |
-| TASK-048 | ⏳ | ページネーション実装 | TASK-026 |
+| TASK-036 | ✅ | ユーザー辞書管理機能のユニットテスト | TASK-034,TASK-035 |
+| TASK-037 | ✅ | ONNX Runtime 組込とモデルローダ実装 | TASK-020 |
+| TASK-038 | ✅ | 埋め込みモデル選択設定(multilingual-e5 等)実装 | TASK-037 |
+| TASK-039 | ✅ | テキストベクトル化サービス実装 | TASK-038 |
+| TASK-040 | ✅ | Lucene HNSW ベクトルインデックス管理実装 | TASK-021,TASK-039 |
+| TASK-041 | ✅ | ベクトル検索クエリ実行・類似度計算実装 | TASK-040 |
+| TASK-042 | ✅ | ベクトル検索のユニットテスト | TASK-041 |
+| TASK-043 | ✅ | ベクトル検索の性能ベンチマーク(500ms 目標) | TASK-041 |
+| TASK-044 | ✅ | シーケンシャル検索戦略実装(順序設定対応) | TASK-026,TASK-041 |
+| TASK-045 | ✅ | パラレル検索戦略実装(同時実行マージ) | TASK-026,TASK-041 |
+| TASK-046 | ✅ | ハイブリッド検索結果マージ・スコア統合実装 | TASK-044,TASK-045 |
+| TASK-047 | ✅ | ハイブリッド検索のユニットテスト | TASK-044,TASK-045,TASK-046 |
+| TASK-048 | ✅ | ページネーション実装 | TASK-026 |
 | TASK-049 | ⏳ | Sub-results(セクション単位)データモデル定義 | TASK-001 |
 | TASK-050 | ⏳ | Sub-results 検索・スコアリング実装 | TASK-049,TASK-024 |
 | TASK-051 | ⏳ | Sub-results アンカー付き URL 生成実装 | TASK-050 |
-| TASK-052 | ⏳ | スニペット自動生成実装(HTML/プレーン両形式) | TASK-025 |
+| TASK-052 | ✅ | スニペット自動生成実装(HTML/プレーン両形式) | TASK-025 |
 | TASK-053 | ⏳ | スニペット長設定とマークアップエンコード実装 | TASK-052 |
 | TASK-054 | ⏳ | ファセット集計(値・件数)実装 | TASK-024 |
 | TASK-055 | ⏳ | ファセット複数値フィルタ(AND/OR)と予約キー対応 | TASK-054 |
@@ -84,16 +84,16 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-058 | ⏳ | metaWeights 適用ロジック実装 | TASK-057 |
 | TASK-059 | ⏳ | 遅延ロード結果(ID+スコア+URL のみ)対応実装 | TASK-048 |
 | TASK-060 | ⏳ | 検索結果整形機能のユニットテスト | TASK-050,TASK-053,TASK-056,TASK-058,TASK-059 |
-| TASK-061 | ⏳ | プレーンテキストパーサ実装 | TASK-001 |
-| TASK-062 | ⏳ | Markdown パーサ実装 | TASK-001 |
-| TASK-063 | ⏳ | AsciiDoc パーサ実装 | TASK-001 |
-| TASK-064 | ⏳ | PDF パーサ(PDFBox)実装 | TASK-001 |
-| TASK-065 | ⏳ | HTML パーサ(Jsoup)実装 | TASK-001 |
-| TASK-066 | ⏳ | チャンキング戦略(文/段落/セクション/全体/固定長)実装 | TASK-061,TASK-062,TASK-063,TASK-064,TASK-065 |
+| TASK-061 | ✅ | プレーンテキストパーサ実装 | TASK-001 |
+| TASK-062 | ✅ | Markdown パーサ実装 | TASK-001 |
+| TASK-063 | ✅ | AsciiDoc パーサ実装 | TASK-001 |
+| TASK-064 | ✅ | PDF パーサ(PDFBox)実装 | TASK-001 |
+| TASK-065 | ✅ | HTML パーサ(Jsoup)実装 | TASK-001 |
+| TASK-066 | ✅ | チャンキング戦略(文/段落/セクション/全体/固定長)実装 | TASK-061,TASK-062,TASK-063,TASK-064,TASK-065 |
 | TASK-067 | ⏳ | コンテンツハッシュベース変更検知実装 | TASK-066 |
 | TASK-068 | ⏳ | 非同期インデックス更新キュー実装 | TASK-020 |
-| TASK-069 | ⏳ | バッチ更新 API 実装 | TASK-068,TASK-066 |
-| TASK-070 | ⏳ | 差分更新(再投入による全置換)動作確認とテスト | TASK-069 |
+| TASK-069 | ✅ | バッチ更新 API 実装 | TASK-068,TASK-066 |
+| TASK-070 | ✅ | 差分更新(再投入による全置換)動作確認とテスト | TASK-069 |
 | TASK-071 | ⏳ | バックアップサービス(スナップショット)実装 | TASK-020,TASK-014 |
 | TASK-072 | ⏳ | リストアサービス実装 | TASK-071 |
 | TASK-073 | ⏳ | 自動バックアップスケジューラ実装 | TASK-071 |
@@ -102,11 +102,11 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-076 | ⏳ | SearchableLibrary 読込専用モード(readOnly=true)実装 | TASK-004,TASK-021 |
 | TASK-077 | ⏳ | メタデータ DB 読込専用接続モード対応 | TASK-076 |
 | TASK-078 | ⏳ | インデックス管理機能のユニットテスト | TASK-069,TASK-071,TASK-072,TASK-076 |
-| TASK-079 | ⏳ | DataSourcePlugin SPI 定義 | TASK-001 |
-| TASK-080 | ⏳ | プラグインローダ(JAR スキャン・動的クラスロード)実装 | TASK-079 |
-| TASK-081 | ⏳ | プラグインライフサイクル管理実装 | TASK-080 |
-| TASK-082 | ⏳ | プラグイン機構のユニットテスト | TASK-080,TASK-081 |
-| TASK-083 | ⏳ | examples/filesystem-plugin リファレンス実装 | TASK-079 |
+| TASK-079 | ✅ | DataSourcePlugin SPI 定義 | TASK-001 |
+| TASK-080 | ✅ | プラグインローダ(JAR スキャン・動的クラスロード)実装 | TASK-079 |
+| TASK-081 | ✅ | プラグインライフサイクル管理実装 | TASK-080 |
+| TASK-082 | ✅ | プラグイン機構のユニットテスト | TASK-080,TASK-081 |
+| TASK-083 | ✅ | searchable-core 内蔵 filesystem DataSource プラグイン実装 | TASK-079 |
 | TASK-084 | ⏳ | AiProvider SPI 設計と定義 | TASK-001 |
 | TASK-085 | ⏳ | OpenAI プロバイダ実装 | TASK-084 |
 | TASK-086 | ⏳ | Anthropic プロバイダ実装 | TASK-084 |
@@ -126,15 +126,15 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-100 | ⏳ | 設定検証(ドライラン)サブコマンド実装 | TASK-093 |
 | TASK-101 | ⏳ | CLI 起動シェルスクリプトとヘルプ整備 | TASK-094,TASK-095,TASK-096,TASK-097,TASK-098,TASK-099,TASK-100 |
 | TASK-102 | ⏳ | CLI のユニット・統合テスト | TASK-101 |
-| TASK-103 | ⏳ | Spring Boot + Thymeleaf アプリケーションエントリ(searchable-admin) | TASK-004 |
-| TASK-104 | ⏳ | Namespace 管理画面(一覧/作成/編集/削除)実装 | TASK-103,TASK-015 |
+| TASK-103 | ✅ | Spring Boot + Thymeleaf アプリケーションエントリ(searchable-admin) | TASK-004 |
+| TASK-104 | ✅ | Namespace 管理画面(一覧/作成/編集/削除)実装 | TASK-103,TASK-015 |
 | TASK-105 | ⏳ | ドキュメントパス/インデックスパス設定画面実装 | TASK-104 |
-| TASK-106 | ⏳ | インデックス管理画面(状態・更新・再構築・部分削除)実装 | TASK-103,TASK-069,TASK-021 |
-| TASK-107 | ⏳ | ユーザー辞書管理画面実装 | TASK-103,TASK-034 |
+| TASK-106 | ✅ | インデックス管理画面(状態・更新・再構築・部分削除)実装 | TASK-103,TASK-069,TASK-021 |
+| TASK-107 | ✅ | ユーザー辞書管理画面実装 | TASK-103,TASK-034 |
 | TASK-108 | ⏳ | ランキング設定画面(BM25/metaWeights/indexWeight)実装 | TASK-103,TASK-057,TASK-058,TASK-018 |
 | TASK-109 | ⏳ | AI 統合設定画面(プロバイダ・API キー・モデル)実装 | TASK-103,TASK-090 |
 | TASK-110 | ⏳ | バックアップ設定画面実装 | TASK-103,TASK-073 |
-| TASK-111 | ⏳ | モニタリングダッシュボード実装 | TASK-103,TASK-021 |
+| TASK-111 | ✅ | モニタリングダッシュボード実装 | TASK-103,TASK-021 |
 | TASK-112 | ⏳ | searchable-admin の権限管理設計ドキュメント作成 | TASK-103 |
 | TASK-113 | ⏳ | searchable-admin の統合テスト | TASK-104,TASK-105,TASK-106,TASK-107,TASK-108,TASK-109,TASK-110,TASK-111 |
 | TASK-114 | ⏳ | examples/webapp の Spring Boot エントリ実装 | TASK-004 |

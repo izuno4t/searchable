@@ -1,4 +1,4 @@
-package io.searchable.example.filesystem;
+package io.searchable.core.infrastructure.datasource;
 
 import io.searchable.plugin.DataSourcePlugin;
 import io.searchable.plugin.PluginContext;

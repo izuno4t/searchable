@@ -80,7 +80,6 @@ AI クライアント (Claude Desktop 等) から Searchable の検索機能を
 | [api](api/) | API 経由(サーバー) | `mvn -f examples/api/pom.xml package` |
 | [search-ui](search-ui/) | API 経由(クライアント) | ビルド不要(静的ファイル) |
 | [mcp](mcp/) | MCP 経由 | `mvn -f examples/mcp/pom.xml package` |
-| [filesystem-plugin](filesystem-plugin/) | データソースプラグイン例 | `mvn -f examples/filesystem-plugin/pom.xml package` |
 
 各サンプルをビルドする前に、Searchable 本体をローカル Maven リポジトリに
 インストールしておくこと。
