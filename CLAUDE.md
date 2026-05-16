@@ -46,3 +46,20 @@ See `docs/` for details:
   are also blocked by the harness permission settings.
 - Stage changes if it helps preview a commit (`git add`, `git status`,
   `git diff`), but stop there and let the user run the commit.
+
+## Document Language Conventions
+
+Documents are classified by audience:
+
+- **For users** (利用者向け: README, getting-started, usage, API specs,
+  guides, sample app READMEs, etc.) — provided in both English and
+  Japanese.
+  - `xxx.md` is the **English** version (default)
+  - `xxx.ja.md` is the **Japanese** version
+  - Write English first; the Japanese version is created when explicitly
+    requested as a translation.
+- **For developers / contributors** (作り手向け: requirements specs,
+  architecture design, project plans, task lists, ADRs, internal notes,
+  scratch design memos) — written in **Japanese only**.
+  - File extension is plain `.md` (no `.ja.md` suffix needed because
+    there is no English counterpart).
