@@ -1,38 +1,41 @@
 name: CI
 
+# 大規模リファクタ中のため自動実行を停止。必要時のみ手動実行。
+# リファクタ完了後に push / pull_request トリガーを復元すること。
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".cspell/**"
-      - ".github/workflows/ci.yml"
-      - ".markdownlint*"
-      - ".mvn/**"
-      - ".spectral.yaml"
-      - "*.md"
-      - "config/**"
-      - "docs/**"
-      - "mvnw"
-      - "mvnw.cmd"
-      - "pom.xml"
-      - "searchable-*/pom.xml"
-      - "searchable-*/src/**"
-  pull_request:
-    branches: [main]
-    paths:
-      - ".cspell/**"
-      - ".github/workflows/ci.yml"
-      - ".markdownlint*"
-      - ".mvn/**"
-      - ".spectral.yaml"
-      - "*.md"
-      - "config/**"
-      - "docs/**"
-      - "mvnw"
-      - "mvnw.cmd"
-      - "pom.xml"
-      - "searchable-*/pom.xml"
-      - "searchable-*/src/**"
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - ".cspell/**"
+  #     - ".github/workflows/ci.yml"
+  #     - ".markdownlint*"
+  #     - ".mvn/**"
+  #     - ".spectral.yaml"
+  #     - "*.md"
+  #     - "config/**"
+  #     - "docs/**"
+  #     - "mvnw"
+  #     - "mvnw.cmd"
+  #     - "pom.xml"
+  #     - "searchable-*/pom.xml"
+  #     - "searchable-*/src/**"
+  # pull_request:
+  #   branches: [main]
+  #   paths:
+  #     - ".cspell/**"
+  #     - ".github/workflows/ci.yml"
+  #     - ".markdownlint*"
+  #     - ".mvn/**"
+  #     - ".spectral.yaml"
+  #     - "*.md"
+  #     - "config/**"
+  #     - "docs/**"
+  #     - "mvnw"
+  #     - "mvnw.cmd"
+  #     - "pom.xml"
+  #     - "searchable-*/pom.xml"
+  #     - "searchable-*/src/**"
 
 permissions:
   contents: read
