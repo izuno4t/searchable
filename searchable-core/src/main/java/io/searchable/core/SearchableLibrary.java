@@ -11,10 +11,12 @@ import io.searchable.core.application.config.GlobalConfig;
 import io.searchable.core.application.config.GlobalConfigProvider;
 import io.searchable.core.domain.dictionary.UserDictionaryRepository;
 import io.searchable.core.domain.dictionary.UserDictionaryResolver;
+import io.searchable.core.domain.document.DocumentSourceRepository;
 import io.searchable.core.domain.embedding.EmbeddingProvider;
 import io.searchable.core.domain.index.IndexMetadataRepository;
 import io.searchable.core.domain.namespace.NamespaceRepository;
 import io.searchable.core.infrastructure.dictionary.JdbcUserDictionaryRepository;
+import io.searchable.core.infrastructure.persistence.jdbc.JdbcDocumentSourceRepository;
 import io.searchable.core.infrastructure.embedding.HashEmbeddingProvider;
 import io.searchable.core.infrastructure.lucene.AnalyzerFactory;
 import io.searchable.core.infrastructure.lucene.IndexLayout;
@@ -58,6 +60,7 @@ public final class SearchableLibrary implements AutoCloseable {
     private final NamespaceRepository namespaceRepository;
     private final IndexMetadataRepository indexMetadataRepository;
     private final UserDictionaryRepository dictionaryRepository;
+    private final DocumentSourceRepository documentSourceRepository;
     private final GlobalConfigProvider globalConfigProvider;
     private final EmbeddingProvider embeddingProvider;
     private final LuceneIndexProvider indexProvider;
@@ -78,6 +81,7 @@ public final class SearchableLibrary implements AutoCloseable {
         this.namespaceRepository = b.namespaceRepository;
         this.indexMetadataRepository = b.indexMetadataRepository;
         this.dictionaryRepository = b.dictionaryRepository;
+        this.documentSourceRepository = b.documentSourceRepository;
         this.globalConfigProvider = b.globalConfigProvider;
         this.embeddingProvider = b.embeddingProvider;
         this.indexProvider = b.indexProvider;
@@ -106,6 +110,10 @@ public final class SearchableLibrary implements AutoCloseable {
 
     public UserDictionaryRepository dictionaryRepository() {
         return dictionaryRepository;
+    }
+
+    public DocumentSourceRepository documentSourceRepository() {
+        return documentSourceRepository;
     }
 
     public GlobalConfigProvider globalConfigProvider() {
@@ -208,6 +216,7 @@ public final class SearchableLibrary implements AutoCloseable {
         private NamespaceRepository namespaceRepository;
         private IndexMetadataRepository indexMetadataRepository;
         private UserDictionaryRepository dictionaryRepository;
+        private DocumentSourceRepository documentSourceRepository;
         private GlobalConfigProvider globalConfigProvider;
         private EmbeddingProvider embeddingProvider;
         private AnalyzerFactory analyzerFactory;
@@ -268,6 +277,11 @@ public final class SearchableLibrary implements AutoCloseable {
             return this;
         }
 
+        public Builder documentSourceRepository(final DocumentSourceRepository repo) {
+            this.documentSourceRepository = repo;
+            return this;
+        }
+
         public Builder globalConfig(final GlobalConfig globalConfig) {
             this.globalConfigProvider = new GlobalConfigProvider(globalConfig);
             return this;
@@ -322,14 +336,20 @@ public final class SearchableLibrary implements AutoCloseable {
             if (dictionaryRepository == null) {
                 dictionaryRepository = new JdbcUserDictionaryRepository(dataSource);
             }
+            if (documentSourceRepository == null) {
+                documentSourceRepository = new JdbcDocumentSourceRepository(dataSource);
+            }
             if (globalConfigProvider == null) {
                 globalConfigProvider = new GlobalConfigProvider(applicationConfig.global());
             }
 
             // Lucene + analyzer.
             if (analyzerFactory == null) {
-                analyzerFactory = new UserDictionaryAnalyzerFactory(
-                    new UserDictionaryResolver(dictionaryRepository));
+                final var analyzerType = applicationConfig.global().analyzer();
+                analyzerFactory = analyzerType == io.searchable.core.infrastructure.lucene.AnalyzerType.KUROMOJI
+                    ? new UserDictionaryAnalyzerFactory(
+                        new UserDictionaryResolver(dictionaryRepository))
+                    : AnalyzerFactory.forType(analyzerType);
             }
             if (indexProvider == null) {
                 indexProvider = new LuceneIndexProvider(
@@ -362,7 +382,8 @@ public final class SearchableLibrary implements AutoCloseable {
             }
             if (indexService == null && !readOnly) {
                 indexService = new IndexService(
-                    namespaceRepository, indexMetadataRepository, indexProvider, indexer, clock);
+                    namespaceRepository, indexMetadataRepository, indexProvider, indexer,
+                    documentSourceRepository, clock);
             }
             if (namespaceService == null && !readOnly) {
                 namespaceService = new NamespaceService(

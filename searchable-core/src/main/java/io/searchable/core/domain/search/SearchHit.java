@@ -16,6 +16,10 @@ import java.util.Objects;
  * @param score       relevance score (higher = more relevant)
  * @param highlights  highlighted fragments per field (may be empty)
  * @param metadata    metadata included in the index (may be empty)
+ * @param subResults  section-level matches inside this document
+ *                    (TASK-049/050); the list is never {@code null} but may
+ *                    be empty when chunking did not split the document or
+ *                    no further sections matched
  */
 public record SearchHit(
     String documentId,
@@ -24,7 +28,8 @@ public record SearchHit(
     String content,
     double score,
     Map<String, List<String>> highlights,
-    Map<String, Object> metadata
+    Map<String, Object> metadata,
+    List<SubResult> subResults
 ) {
 
     public SearchHit {
@@ -37,5 +42,18 @@ public record SearchHit(
         metadata = metadata == null
             ? Map.of()
             : Collections.unmodifiableMap(new LinkedHashMap<>(metadata));
+        subResults = subResults == null ? List.of() : List.copyOf(subResults);
+    }
+
+    /** Backward-compatible constructor without {@code subResults}. */
+    public SearchHit(final String documentId,
+                     final String namespaceId,
+                     final String title,
+                     final String content,
+                     final double score,
+                     final Map<String, List<String>> highlights,
+                     final Map<String, Object> metadata) {
+        this(documentId, namespaceId, title, content, score,
+            highlights, metadata, List.of());
     }
 }

@@ -27,15 +27,24 @@ public final class SectionChunkingStrategy implements ChunkingStrategy {
 
     private final ParserRegistry registry;
     private final ChunkingStrategy fallback;
+    private final HeadingWeights weights;
 
     public SectionChunkingStrategy() {
-        this(ParserRegistry.defaults(), new WholeDocumentChunkingStrategy());
+        this(ParserRegistry.defaults(), new WholeDocumentChunkingStrategy(),
+            HeadingWeights.defaults());
     }
 
     public SectionChunkingStrategy(final ParserRegistry registry,
                                    final ChunkingStrategy fallback) {
+        this(registry, fallback, HeadingWeights.defaults());
+    }
+
+    public SectionChunkingStrategy(final ParserRegistry registry,
+                                   final ChunkingStrategy fallback,
+                                   final HeadingWeights weights) {
         this.registry = Objects.requireNonNull(registry);
         this.fallback = Objects.requireNonNull(fallback);
+        this.weights = Objects.requireNonNull(weights);
     }
 
     @Override
@@ -54,16 +63,44 @@ public final class SectionChunkingStrategy implements ChunkingStrategy {
         final List<Chunk> chunks = new ArrayList<>();
         for (int i = 0; i < sections.size(); i++) {
             final ParsedDocument.Section section = sections.get(i);
+            final double weight = weights.weightFor(section.level());
+            final String boostedHeading = repeatHeading(section.heading(), weight);
             final String text = document.title()
-                + "\n" + section.heading() + "\n" + section.content();
+                + "\n" + boostedHeading
+                + "\n" + section.content();
             final Map<String, Object> meta = new LinkedHashMap<>();
             meta.put("strategy", name());
             meta.put("heading", section.heading());
             meta.put("level", section.level());
+            meta.put("headingWeight", weight);
+            meta.put("effectiveBoost", HeadingWeights.effectiveBoost(weight));
             chunks.add(new Chunk(document.id(), i,
                 Chunk.defaultChunkId(document.id(), i), text, meta));
         }
         return chunks;
+    }
+
+    /**
+     * Inflate the heading text by repeating it N additional times to apply
+     * the automatic heading boost (TASK-027) under the quadratic scaling
+     * defined by TASK-029. The original heading remains the first
+     * occurrence so analyzers and highlighters still see the untransformed
+     * surface form.
+     */
+    private static String repeatHeading(final String heading, final double weight) {
+        if (heading == null || heading.isBlank()) {
+            return heading == null ? "" : heading;
+        }
+        final int extra = HeadingWeights.repetitionsForWeight(weight);
+        if (extra <= 0) {
+            return heading;
+        }
+        final StringBuilder sb = new StringBuilder(heading.length() * (extra + 1) + extra);
+        sb.append(heading);
+        for (int i = 0; i < extra; i++) {
+            sb.append(' ').append(heading);
+        }
+        return sb.toString();
     }
 
     private List<ParsedDocument.Section> resolveSections(final Document document) {

@@ -18,4 +18,12 @@ public interface AnalyzerFactory {
     static AnalyzerFactory japanese() {
         return namespaceId -> new JapaneseAnalyzer();
     }
+
+    /** Resolve a built-in factory by analyzer type. */
+    static AnalyzerFactory forType(final AnalyzerType type) {
+        return switch (type) {
+            case KUROMOJI -> japanese();
+            case SUDACHI -> new SudachiAnalyzerFactory();
+        };
+    }
 }

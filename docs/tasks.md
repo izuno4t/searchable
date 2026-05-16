@@ -46,19 +46,19 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-020 | ✅ | Lucene IndexWriter ライフサイクル管理(Namespace 単位)実装 | TASK-017 |
 | TASK-021 | ✅ | Lucene IndexReader / Searcher プロバイダ実装 | TASK-017 |
 | TASK-022 | ✅ | Kuromoji ベース JapaneseAnalyzer 実装 | TASK-020 |
-| TASK-023 | ⏳ | Sudachi ベース JapaneseAnalyzer 実装(設定で切替) | TASK-020 |
+| TASK-023 | ✅ | Sudachi ベース JapaneseAnalyzer 実装(設定で切替) | TASK-020 |
 | TASK-024 | ✅ | 全文検索クエリビルダ(フィールド指定/ファジー/ワイルドカード)実装 | TASK-021,TASK-022 |
 | TASK-025 | ✅ | ハイライタ実装(日本語対応・`<mark>` 出力) | TASK-024 |
 | TASK-026 | ✅ | 全文検索サービスのユニットテスト | TASK-024,TASK-025 |
-| TASK-027 | ⏳ | 見出し自動ブースト(h1=7.0..h6=2.0)実装 | TASK-024 |
-| TASK-028 | ⏳ | カスタムセクション重み(0.0〜10.0)設定 API 実装 | TASK-027 |
-| TASK-029 | ⏳ | 二次関数スケーリング(weight 2.0→約4倍)実装 | TASK-027 |
-| TASK-030 | ⏳ | コンテンツ重み付けのユニットテスト | TASK-027,TASK-028,TASK-029 |
+| TASK-027 | ✅ | 見出し自動ブースト(h1=7.0..h6=2.0)実装 | TASK-024 |
+| TASK-028 | ✅ | カスタムセクション重み(0.0〜10.0)設定 API 実装 | TASK-027 |
+| TASK-029 | ✅ | 二次関数スケーリング(weight 2.0→約4倍)実装 | TASK-027 |
+| TASK-030 | ✅ | コンテンツ重み付けのユニットテスト | TASK-027,TASK-028,TASK-029 |
 | TASK-031 | ✅ | Kuromoji UserDictionary 形式パーサ実装 | TASK-022 |
 | TASK-032 | ✅ | ユーザー辞書ファイルストレージ実装 | TASK-031 |
 | TASK-033 | ✅ | ユーザー辞書 DB ストレージ実装 | TASK-031,TASK-014 |
 | TASK-034 | ✅ | グローバル+Namespace 個別辞書マージロジック実装 | TASK-032,TASK-033 |
-| TASK-035 | ⏳ | 辞書変更の新規・再構築時反映処理実装 | TASK-034 |
+| TASK-035 | ✅ | 辞書変更の新規・再構築時反映処理実装 | TASK-034 |
 | TASK-036 | ✅ | ユーザー辞書管理機能のユニットテスト | TASK-034,TASK-035 |
 | TASK-037 | ✅ | ONNX Runtime 組込とモデルローダ実装 | TASK-020 |
 | TASK-038 | ✅ | 埋め込みモデル選択設定(multilingual-e5 等)実装 | TASK-037 |
@@ -73,8 +73,8 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-047 | ✅ | ハイブリッド検索のユニットテスト | TASK-044,TASK-045,TASK-046 |
 | TASK-048 | ✅ | ページネーション実装 | TASK-026 |
 | TASK-049 | ✅ | Sub-results(セクション単位)データモデル定義 | TASK-001 |
-| TASK-050 | ⏳ | Sub-results 検索・スコアリング実装 | TASK-049,TASK-024 |
-| TASK-051 | ⏳ | Sub-results アンカー付き URL 生成実装 | TASK-050 |
+| TASK-050 | 🚧 | Sub-results 検索・スコアリング実装 | TASK-049,TASK-024 |
+| TASK-051 | 🚧 | Sub-results アンカー付き URL 生成実装 | TASK-050 |
 | TASK-052 | ✅ | スニペット自動生成実装(HTML/プレーン両形式) | TASK-025 |
 | TASK-053 | ✅ | スニペット長設定とマークアップエンコード実装 | TASK-052 |
 | TASK-054 | ⏳ | ファセット集計(値・件数)実装 | TASK-024 |
@@ -90,13 +90,13 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-064 | ✅ | PDF パーサ(PDFBox)実装 | TASK-001 |
 | TASK-065 | ✅ | HTML パーサ(Jsoup)実装 | TASK-001 |
 | TASK-066 | ✅ | チャンキング戦略(文/段落/セクション/全体/固定長)実装 | TASK-061,TASK-062,TASK-063,TASK-064,TASK-065 |
-| TASK-067 | ⏳ | コンテンツハッシュベース変更検知実装 | TASK-066 |
-| TASK-068 | ⏳ | 非同期インデックス更新キュー実装 | TASK-020 |
+| TASK-067 | ✅ | コンテンツハッシュベース変更検知実装 | TASK-066 |
+| TASK-068 | ✅ | 非同期インデックス更新キュー実装 | TASK-020 |
 | TASK-069 | ✅ | バッチ更新 API 実装 | TASK-068,TASK-066 |
 | TASK-070 | ✅ | 差分更新(再投入による全置換)動作確認とテスト | TASK-069 |
-| TASK-071 | ⏳ | バックアップサービス(スナップショット)実装 | TASK-020,TASK-014 |
-| TASK-072 | ⏳ | リストアサービス実装 | TASK-071 |
-| TASK-073 | ⏳ | 自動バックアップスケジューラ実装 | TASK-071 |
+| TASK-071 | ✅ | バックアップサービス(スナップショット)実装 | TASK-020,TASK-014 |
+| TASK-072 | ✅ | リストアサービス実装 | TASK-071 |
+| TASK-073 | ✅ | 自動バックアップスケジューラ実装 | TASK-071 |
 | TASK-074 | ✅ | Namespace 単位 write.lock 動作確認テスト | TASK-020 |
 | TASK-075 | ✅ | 異なる Namespace 並列書込統合テスト | TASK-074 |
 | TASK-076 | ✅ | SearchableLibrary 読込専用モード(readOnly=true)実装 | TASK-004,TASK-021 |

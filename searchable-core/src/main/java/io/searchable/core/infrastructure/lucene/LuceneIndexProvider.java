@@ -67,6 +67,20 @@ public final class LuceneIndexProvider implements AutoCloseable {
         return contexts.containsKey(namespaceId);
     }
 
+    /**
+     * Reopen the index context so that a refreshed
+     * {@link AnalyzerFactory} (e.g. after a user-dictionary update) takes
+     * effect immediately. Existing on-disk segments are kept; only the
+     * in-memory writer/reader state is rebuilt.
+     */
+    public void refreshAnalyzer(final String namespaceId) throws IOException {
+        final LuceneIndexContext ctx = contexts.remove(namespaceId);
+        if (ctx != null) {
+            ctx.close();
+        }
+        getOrCreate(namespaceId);
+    }
+
     /** Close and remove the context, optionally wiping the index files. */
     public void remove(final String namespaceId, final boolean deleteFiles) throws IOException {
         final LuceneIndexContext ctx = contexts.remove(namespaceId);

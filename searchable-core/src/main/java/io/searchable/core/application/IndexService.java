@@ -1,6 +1,9 @@
 package io.searchable.core.application;
 
+import io.searchable.core.domain.document.ContentHashes;
 import io.searchable.core.domain.document.Document;
+import io.searchable.core.domain.document.DocumentSource;
+import io.searchable.core.domain.document.DocumentSourceRepository;
 import io.searchable.core.domain.index.IndexMetadata;
 import io.searchable.core.domain.index.IndexMetadataRepository;
 import io.searchable.core.domain.index.IndexStatus;
@@ -18,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Application-layer service for index lifecycle operations.
@@ -33,6 +37,7 @@ public final class IndexService {
     private final IndexMetadataRepository indexMetadata;
     private final LuceneIndexProvider indexProvider;
     private final LuceneIndexer indexer;
+    private final DocumentSourceRepository documentSources;
     private final Clock clock;
 
     public IndexService(final NamespaceRepository namespaces,
@@ -40,10 +45,20 @@ public final class IndexService {
                         final LuceneIndexProvider indexProvider,
                         final LuceneIndexer indexer,
                         final Clock clock) {
+        this(namespaces, indexMetadata, indexProvider, indexer, null, clock);
+    }
+
+    public IndexService(final NamespaceRepository namespaces,
+                        final IndexMetadataRepository indexMetadata,
+                        final LuceneIndexProvider indexProvider,
+                        final LuceneIndexer indexer,
+                        final DocumentSourceRepository documentSources,
+                        final Clock clock) {
         this.namespaces = Objects.requireNonNull(namespaces);
         this.indexMetadata = Objects.requireNonNull(indexMetadata);
         this.indexProvider = Objects.requireNonNull(indexProvider);
         this.indexer = Objects.requireNonNull(indexer);
+        this.documentSources = documentSources;
         this.clock = Objects.requireNonNull(clock);
     }
 
@@ -51,7 +66,65 @@ public final class IndexService {
         Objects.requireNonNull(document, "document must not be null");
         requireNamespaceExists(document.namespaceId());
         indexer.index(document);
+        recordSource(document);
         refreshMetadata(document.namespaceId(), IndexStatus.READY);
+    }
+
+    /**
+     * Index the document only if its content has changed since the last
+     * ingest. Change detection compares the SHA-256 content hash supplied
+     * via {@code document.source().contentHash()} (or computed on the fly)
+     * against the value stored by the {@link DocumentSourceRepository}.
+     *
+     * @return {@code true} when the document was actually written to the index
+     */
+    public boolean indexIfChanged(final Document document) {
+        Objects.requireNonNull(document, "document must not be null");
+        requireNamespaceExists(document.namespaceId());
+        if (documentSources == null) {
+            // No repository configured -- behave like {@link #index(Document)}.
+            index(document);
+            return true;
+        }
+        final String newHash = effectiveHash(document);
+        final Optional<DocumentSource> previous = documentSources.findByDocumentId(
+            document.namespaceId(), document.id());
+        if (previous.isPresent()
+            && previous.get().contentHash() != null
+            && previous.get().contentHash().equals(newHash)) {
+            log.debug("skipping unchanged document {} (hash={})", document.id(), newHash);
+            return false;
+        }
+        indexer.index(document);
+        recordSource(document, newHash);
+        refreshMetadata(document.namespaceId(), IndexStatus.READY);
+        return true;
+    }
+
+    private String effectiveHash(final Document document) {
+        if (document.source() != null && document.source().contentHash() != null) {
+            return document.source().contentHash();
+        }
+        return ContentHashes.hash(document);
+    }
+
+    private void recordSource(final Document document) {
+        if (documentSources == null) {
+            return;
+        }
+        recordSource(document, effectiveHash(document));
+    }
+
+    private void recordSource(final Document document, final String hash) {
+        if (documentSources == null) {
+            return;
+        }
+        final DocumentSource existing = document.source();
+        final DocumentSource source = existing == null
+            ? new DocumentSource("inline", document.id(), hash, null)
+            : new DocumentSource(existing.type(), existing.location(), hash,
+                existing.sourceUpdated());
+        documentSources.save(document.namespaceId(), document.id(), source);
     }
 
     public void indexBatch(final String namespaceId, final List<Document> documents) {
