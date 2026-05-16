@@ -63,6 +63,13 @@ mvn -f examples/plugin-datasource-s3/pom.xml test
 The included tests mock the S3 client with Mockito — no live AWS or
 LocalStack is required.
 
+## End-to-end verification (against MinIO)
+
+To prove the plugin actually loads via `ServiceLoader` and talks to a
+real S3 endpoint, follow [verify.md](verify.md). The procedure spins up
+a local MinIO container, uploads two sample documents, and runs
+`VerifyMain` via `mvn exec:java` — all in roughly a minute.
+
 ## Limitations (intentional for an example)
 
 - Object bodies are decoded as UTF-8 text. Binary formats (PDF, Office,
