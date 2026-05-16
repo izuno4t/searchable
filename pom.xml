@@ -48,6 +48,7 @@
         <mockito.version>5.14.2</mockito.version>
         <testcontainers.version>1.20.4</testcontainers.version>
         <postgresql.version>42.7.4</postgresql.version>
+        <hikaricp.version>6.2.1</hikaricp.version>
 
         <!-- Plugin versions -->
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
@@ -123,6 +124,16 @@
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
                 <version>${h2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.zaxxer</groupId>
+                <artifactId>HikariCP</artifactId>
+                <version>${hikaricp.version}</version>
             </dependency>
 
             <!-- ONNX Runtime (vector embedding) -->

@@ -77,14 +77,14 @@ public final class SearchService {
                                    final BiFunction<String, SearchRequest, SearchResult> engine,
                                    final long startNanos) {
         if (targets.size() == 1) {
-            return engine.apply(targets.get(0), request);
+            return applyIndexWeight(targets.get(0), engine.apply(targets.get(0), request));
         }
 
         final SearchRequest expanded = expandFor(request);
         final List<SearchHit> all = new ArrayList<>();
         long totalHits = 0L;
         for (final String namespaceId : targets) {
-            final SearchResult partial = engine.apply(namespaceId, expanded);
+            final SearchResult partial = applyIndexWeight(namespaceId, engine.apply(namespaceId, expanded));
             totalHits += partial.totalHits();
             all.addAll(partial.hits());
         }
@@ -94,6 +94,29 @@ public final class SearchService {
         final List<SearchHit> page = all.subList(from, to);
         final double maxScore = all.isEmpty() ? 0.0 : all.get(0).score();
         return new SearchResult(page, totalHits, maxScore, Map.of(), elapsedMs(startNanos));
+    }
+
+    /**
+     * Multiply every hit's score by the namespace's {@code indexWeight}.
+     * When the weight is exactly {@code 1.0} (the default) the result is
+     * returned unchanged to avoid allocating new {@link SearchHit} records.
+     */
+    private SearchResult applyIndexWeight(final String namespaceId, final SearchResult result) {
+        final double weight = namespaces.findById(namespaceId)
+            .map(Namespace::config)
+            .map(NamespaceConfig::indexWeight)
+            .orElse(NamespaceConfig.DEFAULT_INDEX_WEIGHT);
+        if (weight == NamespaceConfig.DEFAULT_INDEX_WEIGHT || result.hits().isEmpty()) {
+            return result;
+        }
+        final List<SearchHit> scaled = new ArrayList<>(result.hits().size());
+        for (final SearchHit h : result.hits()) {
+            scaled.add(new SearchHit(h.documentId(), h.namespaceId(), h.title(),
+                h.content(), h.score() * weight, h.highlights(), h.metadata()));
+        }
+        final double maxScore = scaled.isEmpty() ? 0.0 : scaled.get(0).score();
+        return new SearchResult(scaled, result.totalHits(), maxScore,
+            result.aggregations(), result.tookMs());
     }
 
     private SearchResult hybridSearch(final String namespaceId, final SearchRequest request) {

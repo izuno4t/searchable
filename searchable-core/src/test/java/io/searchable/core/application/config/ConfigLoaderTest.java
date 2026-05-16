@@ -46,6 +46,24 @@ class ConfigLoaderTest {
     }
 
     @Test
+    void loadsPostgresqlConfigFromYamlClasspath() {
+        final ConfigLoader loader = new ConfigLoader();
+        final ApplicationConfig config;
+        try (InputStream in = getClass().getResourceAsStream("/searchable-postgres-config.yaml")) {
+            assertThat(in).isNotNull();
+            config = loader.load(in);
+        } catch (Exception e) {
+            throw new AssertionError(e);
+        }
+
+        assertThat(config.persistence().type()).isEqualTo("POSTGRESQL");
+        assertThat(config.persistence().url()).startsWith("jdbc:postgresql://");
+        assertThat(config.persistence().username()).isEqualTo("searchable");
+        assertThat(config.persistence().password()).isEqualTo("secret");
+        assertThat(config.persistence().maxPoolSize()).isEqualTo(32);
+    }
+
+    @Test
     void appliesDefaultsForOmittedSections() {
         final String yaml = """
             data-directory: ./data

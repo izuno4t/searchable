@@ -27,21 +27,21 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-001 | ✅ | ドメインモデル(Document/Chunk/Namespace/SearchRequest/SearchResult)定義 | - |
 | TASK-002 | ✅ | Java API インターフェース(SearchService/IndexService/NamespaceService/AdminService)定義 | TASK-001 |
 | TASK-003 | ✅ | 設定モデル(GlobalConfig/NamespaceConfig/EmbeddingConfig/AIConfig)定義 | TASK-001 |
-| TASK-004 | ⏳ | SearchableLibrary ファサードビルダ実装 | TASK-002,TASK-003 |
+| TASK-004 | ✅ | SearchableLibrary ファサードビルダ実装 | TASK-002,TASK-003 |
 | TASK-005 | 🚫 | Lucene Directory バックエンド抽象(DirectoryProvider)定義 | TASK-001 |
 | TASK-006 | ✅ | ファイルシステム Directory バックエンド実装 | TASK-005 |
 | TASK-007 | 🚫 | インメモリ Directory バックエンド(ByteBuffersDirectory)実装 | TASK-005 |
 | TASK-008 | 🚫 | S3 互換 Directory バックエンド実装 | TASK-005 |
-| TASK-009 | ⏳ | メタデータ DB JDBC 接続抽象(URL ベース)定義 | TASK-001 |
+| TASK-009 | ✅ | メタデータ DB JDBC 接続抽象(URL ベース)定義 | TASK-001 |
 | TASK-010 | ✅ | H2 (ファイル/インメモリ)バックエンド統合 | TASK-009 |
-| TASK-011 | ⏳ | PostgreSQL / TCP RDB バックエンド統合 | TASK-009 |
-| TASK-012 | ⏳ | ストレージ設定スキーマと application.properties 取込 | TASK-006,TASK-007,TASK-008,TASK-010,TASK-011 |
-| TASK-013 | ⏳ | ストレージバックエンドのユニット・統合テスト(Testcontainers) | TASK-012 |
+| TASK-011 | ✅ | PostgreSQL / TCP RDB バックエンド統合 | TASK-009 |
+| TASK-012 | ✅ | ストレージ設定スキーマと application.properties 取込 | TASK-006,TASK-007,TASK-008,TASK-010,TASK-011 |
+| TASK-013 | ✅ | ストレージバックエンドのユニット・統合テスト(Testcontainers) | TASK-012 |
 | TASK-014 | ✅ | Namespace リポジトリ(JDBC) 実装 | TASK-010 |
 | TASK-015 | ✅ | NamespaceService CRUD 実装 | TASK-014 |
 | TASK-016 | ✅ | Namespace 設定マージロジック(グローバル+個別)実装 | TASK-003,TASK-015 |
 | TASK-017 | ✅ | Namespace 単位インデックスディレクトリ分離実装 | TASK-006,TASK-015 |
-| TASK-018 | ⏳ | indexWeight 適用ロジック実装 | TASK-016 |
+| TASK-018 | ✅ | indexWeight 適用ロジック実装 | TASK-016 |
 | TASK-019 | ✅ | Namespace 管理機能ユニットテスト | TASK-015,TASK-016,TASK-017,TASK-018 |
 | TASK-020 | ✅ | Lucene IndexWriter ライフサイクル管理(Namespace 単位)実装 | TASK-017 |
 | TASK-021 | ✅ | Lucene IndexReader / Searcher プロバイダ実装 | TASK-017 |

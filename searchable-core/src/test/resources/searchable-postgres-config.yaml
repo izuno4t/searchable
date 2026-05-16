@@ -1,0 +1,15 @@
+data-directory: ./data
+persistence:
+  type: POSTGRESQL
+  url: "jdbc:postgresql://db.example.invalid:5432/searchable"
+  username: searchable
+  password: "secret"
+  max-pool-size: 32
+index:
+  directory: ./data/indexes
+plugins:
+  directory: ./plugins
+global:
+  default-architecture: HYBRID
+  default-search-strategy: PARALLEL
+  default-search-order: FULL_TEXT_FIRST

@@ -11,6 +11,10 @@ import java.util.Map;
  *
  * <p>Used by application services to merge user-supplied overrides on top
  * of global defaults before constructing the strict {@link NamespaceConfig}.
+ *
+ * <p>{@code indexWeight} is boxed so that {@code null} can express
+ * "fall back to the global default" while explicit values (including
+ * {@code 0.0}) are honored.
  */
 public record NamespaceConfigPatch(
     SearchType architecture,
@@ -18,10 +22,22 @@ public record NamespaceConfigPatch(
     SearchOrder searchOrder,
     EmbeddingConfig embeddingConfig,
     AiConfig aiConfig,
+    Double indexWeight,
     Map<String, Object> customParams
 ) {
 
     public static NamespaceConfigPatch empty() {
-        return new NamespaceConfigPatch(null, null, null, null, null, null);
+        return new NamespaceConfigPatch(null, null, null, null, null, null, null);
+    }
+
+    /** Backward-compatible constructor that omits {@code indexWeight}. */
+    public NamespaceConfigPatch(final SearchType architecture,
+                                final SearchStrategy searchStrategy,
+                                final SearchOrder searchOrder,
+                                final EmbeddingConfig embeddingConfig,
+                                final AiConfig aiConfig,
+                                final Map<String, Object> customParams) {
+        this(architecture, searchStrategy, searchOrder, embeddingConfig,
+            aiConfig, null, customParams);
     }
 }

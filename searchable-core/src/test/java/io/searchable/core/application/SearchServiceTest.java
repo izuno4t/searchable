@@ -155,6 +155,29 @@ class SearchServiceTest {
     }
 
     @Test
+    void indexWeightScalesScoresDuringCrossNamespaceAggregation() {
+        // Two namespaces with identical content: the one with higher
+        // indexWeight wins in the merged ranking.
+        namespaceService.create("ns-low", "Low",
+            new NamespaceConfigPatch(null, null, null, null, null, 0.5, null));
+        namespaceService.create("ns-high", "High",
+            new NamespaceConfigPatch(null, null, null, null, null, 3.0, null));
+        indexer.index(doc("ns-low", "d-low", "全文検索", "全文検索の解説"));
+        indexer.index(doc("ns-high", "d-high", "全文検索", "全文検索の解説"));
+
+        final SearchResult result = searchService.search(SearchRequest.builder()
+            .query("全文検索")
+            .namespaceIds(List.of("ns-low", "ns-high"))
+            .build());
+
+        assertThat(result.hits()).hasSize(2);
+        assertThat(result.hits().get(0).documentId()).isEqualTo("d-high");
+        assertThat(result.hits().get(1).documentId()).isEqualTo("d-low");
+        assertThat(result.hits().get(0).score())
+            .isGreaterThan(result.hits().get(1).score());
+    }
+
+    @Test
     void implicitTypeFromNamespaceConfig() {
         namespaceService.create("ns-a", "A", new NamespaceConfigPatch(
             SearchType.VECTOR, null, null, null, null, null));

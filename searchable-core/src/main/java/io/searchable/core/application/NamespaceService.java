@@ -144,6 +144,7 @@ public final class NamespaceService {
             p.searchOrder() != null ? p.searchOrder() : globalConfig.defaultSearchOrder(),
             p.embeddingConfig(),
             p.aiConfig() != null ? p.aiConfig() : AiConfig.disabled(),
+            p.indexWeight() != null ? p.indexWeight() : NamespaceConfig.DEFAULT_INDEX_WEIGHT,
             p.customParams()
         );
     }
