@@ -179,7 +179,7 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-153 | ✅ | examples/api/api-specification.ja.md と examples/api/openapi.yaml 整備 | TASK-128 |
 | TASK-154 | ✅ | docs/cli-guide.ja.md 整備 | TASK-101 |
 | TASK-155 | ✅ | docs/admin-guide.ja.md 整備 | TASK-113 |
-| TASK-156 | ⏳ | S3 互換ストレージからの DataSource を `searchable-core` に直接実装(`DataSourcePlugin` SPI を介さず、`searchable.datasource.s3.enabled=true` で有効化) | TASK-069 |
+| TASK-156 | ✅ | `examples/plugin-datasource-s3` として S3 互換ストレージ取込のリファレンスプラグイン実装を追加(本体ビルド対象外の独立プロジェクト、`DataSourcePlugin` SPI 実装) | TASK-079,TASK-083 |
 
 ## タスク詳細
 
@@ -208,14 +208,16 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 
 ### TASK-156
 
-- 補足: S3 互換ストレージに置かれた原文ドキュメント(PDF/Markdown/HTML 等)を取り込むための DataSource を `searchable-core` 内に直接実装する。`DataSourcePlugin` SPI は介さず、専用のサービスクラスとして提供
-- 補足: 設定例
-  - `searchable.datasource.s3.enabled=true` (既定 `false`、未指定時はサービスをロードしない)
-  - `searchable.datasource.s3.bucket`, `searchable.datasource.s3.region`, `searchable.datasource.s3.prefix`
+- 配置: `examples/plugin-datasource-s3/`(新規)。`examples/` 配下の他サンプルと同様、本体マルチモジュールビルドには **含めない独立 Maven プロジェクト**
+- 目的: `DataSourcePlugin` SPI 実装のリファレンスとして、プラグイン作者向けの雛形・参考実装を提供する。本番利用はそのまま想定せず、フォーク/コピーや独自実装の起点として使う
+- 補足: 既存の `examples/` はアプリケーションのリファレンスのみだったが、ここに **プラグインのリファレンス** という新カテゴリを追加する
+- 補足: 依存は example 側 pom に閉じる(`searchable-plugins`, `aws-java-sdk-s3`, テスト用 LocalStack)。`searchable-core` / `searchable-plugins` 本体には AWS SDK の依存を持ち込まない
+- 補足: 設定（PluginContext.config 経由）の想定キー
+  - `bucket`, `region`, `prefix`
   - 認証情報は AWS SDK 標準の credential provider chain に委譲
-- 注意: AWS SDK の依存は `searchable-core` の pom に追加する(必要なら `<optional>true</optional>` で利用者の opt-in にする)
-- 注意: 既存の `FilesystemDataSourcePlugin` と異なり、SPI 実装ではなく内部サービスとして配線する設計のため、`PluginLoader` の経路には乗らない
-- 関連: Lucene インデックス側の S3 連携(TASK-008)とは別系統
+- 使い方: アプリ(`examples/webapp` 等)が S3 取込を有効化したい場合、本 example の JAR を依存追加し、`searchable.namespaces.<id>.plugin` 設定で参照する
+- 経緯: 当初は core 直実装 → sibling モジュール案 → 別リポジトリ案 を経て、最終的に「本リポジトリの `examples/` にリファレンス実装を置く」方針に確定
+- 関連: Lucene インデックス側の S3 連携(TASK-008)とは別系統(取込元と保存先の違い)
 
 ### TASK-011
 

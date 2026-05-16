@@ -74,12 +74,24 @@ AI クライアント (Claude Desktop 等) から Searchable の検索機能を
 
 ## サンプル一覧
 
+### アプリケーションのリファレンス
+
 | サンプル | パターン | ビルド方法 |
 | --- | --- | --- |
 | [webapp](webapp/) | Web アプリ(library 組み込み) | `mvn -f examples/webapp/pom.xml package` |
 | [api](api/) | API 経由(サーバー) | `mvn -f examples/api/pom.xml package` |
 | [search-ui](search-ui/) | API 経由(クライアント) | ビルド不要(静的ファイル) |
 | [mcp](mcp/) | MCP 経由 | `mvn -f examples/mcp/pom.xml package` |
+
+### プラグインのリファレンス実装
+
+`DataSourcePlugin` SPI 等の拡張ポイントを実装する際の参考実装。
+本リポジトリではあくまでリファレンスであり、本番運用は別リポジトリ等での
+ハードニングを推奨。
+
+| サンプル | 概要 | ビルド方法 |
+| --- | --- | --- |
+| [plugin-datasource-s3](plugin-datasource-s3/) | S3 互換ストレージから取込む `DataSourcePlugin` 実装 | `mvn -f examples/plugin-datasource-s3/pom.xml package` |
 
 各サンプルをビルドする前に、Searchable 本体をローカル Maven リポジトリに
 インストールしておくこと。
