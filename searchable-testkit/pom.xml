@@ -85,4 +85,25 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+                searchable-testkit is itself a test-support library, not
+                production code. Its public types (fixtures, fakes,
+                builders) are exercised indirectly by every other module
+                that consumes the testkit, so chasing per-line coverage
+                of this artifact provides no engineering value. We
+                disable the JaCoCo agent + report for this module
+                entirely, while still running its own self-smoke tests.
+            -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

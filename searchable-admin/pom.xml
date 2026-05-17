@@ -66,6 +66,22 @@
             <artifactId>searchable-testkit</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Mockito inline mock-maker needs byte-buddy 1.17 on JDK 25 to
+             redefine the final SpringApplication class from
+             SearchableUiApplicationTest. -->
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>1.17.7</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <version>1.17.7</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -83,6 +99,27 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <!-- Same byte-buddy javaagent attach as searchable-core. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>resolve-test-agent-paths</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-javaagent:${net.bytebuddy:byte-buddy-agent:jar} -XX:+EnableDynamicAgentLoading @{argLine}</argLine>
+                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -125,5 +125,69 @@
             <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Mockito with inline mock-maker so we can stub static methods
+             on ai.onnxruntime classes from OnnxEmbeddingProviderForwardPassTest.
+             byte-buddy-agent is pulled in explicitly because surefire
+             attaches it as -javaagent below; without that, mocking the
+             final OrtEnvironment fails on JDK 25 with
+             "Could not modify all classes [class java.lang.Object]". -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Spring Boot BOM pins byte-buddy to 1.15.x; bump to 1.17.x so
+             Mockito 5.20's inline mock-maker can redefine final classes
+             (it needs Java 25 class file support shipped in 1.17.5+). -->
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>1.17.7</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <version>1.17.7</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+                Resolve Mockito's Byte Buddy agent JAR path into a Maven
+                property (${net.bytebuddy:byte-buddy-agent:jar}) so the
+                surefire argLine below can attach it as a JVM agent. This
+                is the supported pattern for mocking final classes from
+                modules outside the test classpath on JDK 17+/25.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>resolve-test-agent-paths</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-javaagent:${net.bytebuddy:byte-buddy-agent:jar} -XX:+EnableDynamicAgentLoading @{argLine}</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

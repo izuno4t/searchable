@@ -45,7 +45,10 @@
         <!-- Test dependency versions -->
         <junit.version>5.11.4</junit.version>
         <assertj.version>3.27.0</assertj.version>
-        <mockito.version>5.14.2</mockito.version>
+        <!-- Mockito 5.20 ships Byte Buddy 1.17 which knows about Java 25's
+             class file format; older Mockito (5.14) fails to mock final
+             classes such as ai.onnxruntime.OrtEnvironment on JDK 25. -->
+        <mockito.version>5.20.0</mockito.version>
         <testcontainers.version>1.20.4</testcontainers.version>
         <postgresql.version>42.7.4</postgresql.version>
         <hikaricp.version>6.2.1</hikaricp.version>
@@ -278,6 +281,20 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven-surefire-plugin.version}</version>
+                    <configuration>
+                        <!--
+                            Allow Mockito's inline mock-maker (used by
+                            OnnxEmbeddingProviderForwardPassTest to mock
+                            the final ai.onnxruntime classes) to attach
+                            its Byte Buddy agent at runtime. Java 25
+                            otherwise refuses dynamic agent loading and
+                            mockStatic() fails. The @{argLine} suffix
+                            forwards any argLine set by JaCoCo's
+                            prepare-agent so coverage instrumentation
+                            keeps working.
+                        -->
+                        <argLine>-XX:+EnableDynamicAgentLoading @{argLine}</argLine>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -389,6 +406,39 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
+                <!--
+                    Coverage exclusions. Each pattern below is documented
+                    with the *technical* reason it cannot be exercised by
+                    automated tests (i.e. removing the exclusion will not
+                    increase coverage no matter how many tests are added).
+                    Lines that are merely *hard* to test (Lucene/IO catch
+                    blocks, Spring validation error paths, etc.) are NOT
+                    listed here so they remain visible to the report.
+                -->
+                <configuration>
+                    <excludes>
+                        <!--
+                            SearchableCli (CLI module):
+                            main() calls System.exit(int); JUnit cannot
+                            invoke it without terminating the JVM and
+                            killing sibling tests. Java 17+ deprecates
+                            SecurityManager so the conventional
+                            "catch the exit" trick is no longer
+                            available. The picocli-driven sub-commands
+                            (which contain the actual logic) are covered
+                            by CliCommandTest.
+
+                            VersionProvider depends on
+                            Package.getImplementationVersion(), which is
+                            null when classes are loaded from
+                            target/classes rather than from a packaged
+                            jar — so the "version != null" arm of the
+                            ternary is unreachable from unit tests.
+                        -->
+                        <exclude>io/searchable/cli/SearchableCli.class</exclude>
+                        <exclude>io/searchable/cli/SearchableCli$VersionProvider.class</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
