@@ -11,7 +11,13 @@
 #
 # Options:
 #   --source NAME       Document source (default: bundled)
-#   --skip-build        Reuse existing examples/api JAR
+#   --ingest-via MODE   api | cli (default: api)
+#                       'cli' routes step 4 through searchable-cli, which
+#                       runs ParserRegistry (HtmlParser, MarkdownParser,
+#                       AsciiDocParser, PlainTextParser) properly. The
+#                       API server is stopped and restarted around the
+#                       CLI invocation because H2 file mode is exclusive.
+#   --skip-build        Reuse existing JARs
 #   --keep-running      Do not stop the server after verification
 #   --base-url URL      Override base URL (default: http://localhost:8080)
 #   -h, --help          Show this help
@@ -32,11 +38,13 @@ SERVER_LOG="${VERIFY_LOG:-${WORK_DIR}/server.log}"
 
 # ---------- defaults ----------
 SOURCE="bundled"
+INGEST_VIA="api"
 SKIP_BUILD=false
 KEEP_RUNNING=false
 BASE_URL="${BASE_URL:-http://localhost:8080}"
 NAMESPACE_ID="verify"
 SERVER_READY_TIMEOUT=180
+CLI_CONFIG="${WORK_DIR}/searchable.yaml"
 
 # ---------- arg parsing ----------
 usage() { sed -n '2,/^set -euo/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//;/^set /d'; }
@@ -45,6 +53,8 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --source) SOURCE="$2"; shift 2 ;;
         --source=*) SOURCE="${1#*=}"; shift ;;
+        --ingest-via) INGEST_VIA="$2"; shift 2 ;;
+        --ingest-via=*) INGEST_VIA="${1#*=}"; shift ;;
         --skip-build) SKIP_BUILD=true; shift ;;
         --keep-running) KEEP_RUNNING=true; shift ;;
         --base-url) BASE_URL="$2"; shift 2 ;;
@@ -53,6 +63,11 @@ while [[ $# -gt 0 ]]; do
         *) echo "unknown arg: $1" >&2; usage >&2; exit 2 ;;
     esac
 done
+
+case "${INGEST_VIA}" in
+    api|cli) ;;
+    *) echo "invalid --ingest-via '${INGEST_VIA}' (api|cli)" >&2; exit 2 ;;
+esac
 
 # ---------- helpers ----------
 SERVER_PID=""
@@ -108,6 +123,63 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Start the examples/api server. Idempotent: clears any stale state in
+# SERVER_PID and re-launches. Honors VERIFY_LOG.
+start_api() {
+    : >"${SERVER_LOG}"
+    SEARCHABLE_DATA_DIRECTORY="${DATA_DIR}" \
+    SEARCHABLE_PERSISTENCE_URL="jdbc:h2:${DATA_DIR}/metadata;MODE=PostgreSQL" \
+    SEARCHABLE_INDEX_DIRECTORY="${DATA_DIR}/indexes" \
+        nohup "${JAVA:-java}" -jar \
+        "${PROJECT_ROOT}/examples/api/target/api-example-1.0.0-SNAPSHOT.jar" \
+        >>"${SERVER_LOG}" 2>&1 &
+    SERVER_PID=$!
+    log "  api PID: ${SERVER_PID} (log: ${SERVER_LOG})"
+    local i
+    for ((i = 0; i < SERVER_READY_TIMEOUT; i++)); do
+        if ! kill -0 "${SERVER_PID}" 2>/dev/null; then
+            fail "api process exited prematurely (check ${SERVER_LOG})"
+        fi
+        if curl -fsS "${BASE_URL}/api/v1/namespaces" >/dev/null 2>&1; then
+            log "  api ready in ${i}s"
+            return 0
+        fi
+        sleep 1
+    done
+    fail "api did not become ready within ${SERVER_READY_TIMEOUT}s"
+}
+
+# Stop the API and wait until the H2 / Lucene locks on DATA_DIR are
+# released. Required before the CLI opens the same library.
+stop_api() {
+    [[ -n "${SERVER_PID}" ]] || return 0
+    if kill -0 "${SERVER_PID}" 2>/dev/null; then
+        kill "${SERVER_PID}" 2>/dev/null || true
+        wait "${SERVER_PID}" 2>/dev/null || true
+        log "  api stopped (PID ${SERVER_PID})"
+    fi
+    SERVER_PID=""
+}
+
+# Generate the CLI's YAML config so it points at the same data dir as
+# the API. Run once before any CLI invocation.
+write_cli_config() {
+    cat >"${CLI_CONFIG}" <<EOF
+data-directory: "${DATA_DIR}"
+persistence:
+  type: H2
+  url: "jdbc:h2:${DATA_DIR}/metadata;MODE=PostgreSQL"
+  username: sa
+  password: ""
+index:
+  directory: "${DATA_DIR}/indexes"
+global:
+  default-architecture: HYBRID
+  default-search-strategy: PARALLEL
+  default-search-order: FULL_TEXT_FIRST
+EOF
+}
+
 # ---------- step 0 ----------
 step_0_prereq() {
     header "Step 0: Prerequisites"
@@ -131,16 +203,33 @@ step_0_prereq() {
 # ---------- step 1 ----------
 step_1_build() {
     header "Step 1: Build"
-    local jar="${PROJECT_ROOT}/examples/api/target/api-example-1.0.0-SNAPSHOT.jar"
+    local api_jar="${PROJECT_ROOT}/examples/api/target/api-example-1.0.0-SNAPSHOT.jar"
+    local cli_classes="${PROJECT_ROOT}/searchable-cli/target/classes"
+    local cli_libs="${PROJECT_ROOT}/searchable-cli/target/lib"
+
     if [[ "${SKIP_BUILD}" == "true" ]]; then
-        [[ -f "${jar}" ]] || fail "JAR not found at ${jar} (drop --skip-build to build)"
-        pass "reusing existing JAR"
+        [[ -f "${api_jar}" ]] || fail "API JAR not found at ${api_jar} (drop --skip-build to build)"
+        if [[ "${INGEST_VIA}" == "cli" ]]; then
+            [[ -d "${cli_classes}" && -d "${cli_libs}" ]] \
+                || fail "CLI target not built (drop --skip-build to build)"
+        fi
+        pass "reusing existing artifacts"
         return
     fi
-    (cd "${PROJECT_ROOT}" && ./mvnw -B -pl examples/api -am package -DskipTests >"${WORK_DIR}/build.log" 2>&1) \
+
+    local modules="examples/api"
+    [[ "${INGEST_VIA}" == "cli" ]] && modules="examples/api,searchable-cli"
+    (cd "${PROJECT_ROOT}" && ./mvnw -B -pl "${modules}" -am package -DskipTests \
+        >"${WORK_DIR}/build.log" 2>&1) \
         || fail "build failed (see ${WORK_DIR}/build.log)"
-    [[ -f "${jar}" ]] || fail "JAR not produced"
-    pass "JAR built: ${jar}"
+
+    [[ -f "${api_jar}" ]] || fail "API JAR not produced"
+    pass "API built: ${api_jar}"
+    if [[ "${INGEST_VIA}" == "cli" ]]; then
+        [[ -d "${cli_classes}" && -d "${cli_libs}" ]] \
+            || fail "CLI target tree not produced (${cli_classes}, ${cli_libs})"
+        pass "CLI built: ${cli_classes} + ${cli_libs}/"
+    fi
 }
 
 # ---------- step 2 ----------
@@ -148,26 +237,8 @@ step_2_start() {
     header "Step 2: Start"
     rm -rf "${DATA_DIR}"
     mkdir -p "${DATA_DIR}"
-    : >"${SERVER_LOG}"
-    SEARCHABLE_DATA_DIRECTORY="${DATA_DIR}" \
-        nohup "${JAVA:-java}" -jar \
-        "${PROJECT_ROOT}/examples/api/target/api-example-1.0.0-SNAPSHOT.jar" \
-        >"${SERVER_LOG}" 2>&1 &
-    SERVER_PID=$!
-    log "  server PID: ${SERVER_PID} (log: ${SERVER_LOG})"
-
-    local i
-    for ((i = 0; i < SERVER_READY_TIMEOUT; i++)); do
-        if ! kill -0 "${SERVER_PID}" 2>/dev/null; then
-            fail "server process exited prematurely (check ${SERVER_LOG})"
-        fi
-        if curl -fsS "${BASE_URL}/api/v1/namespaces" >/dev/null 2>&1; then
-            pass "server ready in ${i}s"
-            return
-        fi
-        sleep 1
-    done
-    fail "server did not become ready within ${SERVER_READY_TIMEOUT}s"
+    start_api
+    pass "api ready at ${BASE_URL}"
 }
 
 # ---------- step 3 ----------
@@ -198,13 +269,40 @@ step_3_namespace() {
 
 # ---------- step 4 ----------
 step_4_index() {
-    header "Step 4: Index documents"
+    if [[ "${INGEST_VIA}" == "cli" ]]; then
+        step_4_index_cli
+    else
+        step_4_index_api
+    fi
+}
+
+# Index every text-shaped staged file by POSTing pre-extracted content
+# to /api/v1/index/batch. Does NOT exercise ParserRegistry; HTML tags
+# leak into the index, AsciiDoc markup is searched as-is, etc.
+step_4_index_api() {
+    header "Step 4: Index documents (via REST batch)"
     local count=0 docs_json
     docs_json=$(mktemp)
     printf '[' >"${docs_json}"
     local first=true
     local f
-    for f in "${STAGING_DIR}"/*.md "${STAGING_DIR}"/*.txt; do
+    # NOTE: examples/api's index/batch endpoint takes pre-extracted text
+    # in the `content` field, so we ingest text-shaped files as raw UTF-8
+    # here. To exercise PdfParser and other binary-aware parsers, use
+    # the CLI-based runner instead (planned follow-up).
+    shopt -s nullglob
+    local staged=("${STAGING_DIR}"/*.md \
+        "${STAGING_DIR}"/*.markdown \
+        "${STAGING_DIR}"/*.txt \
+        "${STAGING_DIR}"/*.text \
+        "${STAGING_DIR}"/*.log \
+        "${STAGING_DIR}"/*.adoc \
+        "${STAGING_DIR}"/*.asciidoc \
+        "${STAGING_DIR}"/*.html \
+        "${STAGING_DIR}"/*.htm \
+        "${STAGING_DIR}"/*.xhtml)
+    shopt -u nullglob
+    for f in "${staged[@]}"; do
         [[ -f "$f" ]] || continue
         local id title content
         id=$(basename "$f")
@@ -235,6 +333,53 @@ step_4_index() {
         || fail "batch result: succeeded=${succeeded} failed=${failed} (expected ${count}/0)"
     pass "indexed ${succeeded} document(s)"
 
+    assert_metadata_has_docs
+}
+
+# Run ingest through searchable-cli so ParserRegistry is exercised for
+# real (HtmlParser strips tags, MarkdownParser strips formatting, etc.).
+# H2 file mode is exclusive per JVM, so the API must stop before the
+# CLI opens the same data directory and start again afterwards for
+# step 5/6 to query through HTTP.
+step_4_index_cli() {
+    header "Step 4: Index documents (via searchable-cli ingest)"
+    write_cli_config
+    log "  cli config: ${CLI_CONFIG}"
+
+    log "  stopping api to release H2 / Lucene locks"
+    stop_api
+
+    local cli_classes="${PROJECT_ROOT}/searchable-cli/target/classes"
+    local cli_libs="${PROJECT_ROOT}/searchable-cli/target/lib"
+    local ingest_log="${WORK_DIR}/cli-ingest.log"
+    : >"${ingest_log}"
+
+    if ! "${JAVA:-java}" \
+            -cp "${cli_classes}:${cli_libs}/*" \
+            io.searchable.cli.SearchableCli \
+            --config "${CLI_CONFIG}" \
+            ingest \
+            --namespace "${NAMESPACE_ID}" \
+            --source-type file \
+            "${STAGING_DIR}" \
+            >"${ingest_log}" 2>&1; then
+        cat "${ingest_log}" >&2 || true
+        fail "cli ingest failed (see ${ingest_log})"
+    fi
+
+    local indexed
+    indexed=$(awk '/Indexed [0-9]+ document/{print $2; exit}' "${ingest_log}")
+    [[ -n "${indexed}" && "${indexed}" -ge 1 ]] \
+        || { cat "${ingest_log}" >&2; fail "cli reported no indexed documents"; }
+    pass "cli indexed ${indexed} document(s) (ParserRegistry-aware)"
+
+    log "  restarting api to serve search queries"
+    start_api
+    assert_metadata_has_docs
+}
+
+# Common metadata assertion shared by step_4 variants.
+assert_metadata_has_docs() {
     local meta total
     meta=$(curl_json GET "${BASE_URL}/api/v1/index/${NAMESPACE_ID}/metadata")
     total=$(printf '%s' "${meta}" \
@@ -300,7 +445,7 @@ step_7_cleanup() {
 
 # ---------- entry ----------
 main() {
-    log "Searchable verification (source=${SOURCE})"
+    log "Searchable verification (source=${SOURCE}, ingest-via=${INGEST_VIA})"
 
     local source_script="${SCRIPT_DIR}/sources/${SOURCE}.sh"
     [[ -f "${source_script}" ]] || fail "no source script: ${source_script}"
@@ -313,7 +458,11 @@ main() {
     VERIFY_STAGING_DIR="${STAGING_DIR}" source "${source_script}"
     [[ -n "${VERIFY_QUERY_FULLTEXT:-}" && -n "${VERIFY_QUERY_VECTOR:-}" ]] \
         || fail "source script must export VERIFY_QUERY_FULLTEXT and VERIFY_QUERY_VECTOR"
-    log "  staged $(find "${STAGING_DIR}" -maxdepth 1 -type f \( -name '*.md' -o -name '*.txt' \) | wc -l | tr -d ' ') file(s)"
+    log "  staged $(find "${STAGING_DIR}" -maxdepth 1 -type f \
+        \( -name '*.md' -o -name '*.markdown' \
+        -o -name '*.txt' -o -name '*.text' -o -name '*.log' \
+        -o -name '*.adoc' -o -name '*.asciidoc' \
+        -o -name '*.html' -o -name '*.htm' -o -name '*.xhtml' \) | wc -l | tr -d ' ') file(s)"
     log "  full-text query : ${VERIFY_QUERY_FULLTEXT}"
     log "  vector query    : ${VERIFY_QUERY_VECTOR}"
 
