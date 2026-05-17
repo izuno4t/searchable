@@ -144,39 +144,42 @@ public final class LuceneIndexProvider implements AutoCloseable {
     }
 
     private LuceneIndexContext openFilesystemReadWrite(final String namespaceId, final Path path) {
+        final Directory directory;
         try {
             Files.createDirectories(path);
-            final Directory directory = new MMapDirectory(path);
-            return openWriter(namespaceId, directory, "at " + path);
+            directory = new MMapDirectory(path);
         } catch (IOException e) {
             throw new IllegalStateException(
                 "Failed to open Lucene index for namespace " + namespaceId, e);
         }
+        return openWriter(namespaceId, directory, "at " + path);
     }
 
     private LuceneIndexContext openMemoryReadWrite(final String namespaceId) {
-        try {
-            final Directory directory = new ByteBuffersDirectory();
-            return openWriter(namespaceId, directory, "in memory");
-        } catch (IOException e) {
-            throw new IllegalStateException(
-                "Failed to open in-memory Lucene index for namespace " + namespaceId, e);
-        }
+        // ByteBuffersDirectory construction is purely in-memory and cannot
+        // throw IOException; any IO failure on writer creation is wrapped
+        // by openWriter().
+        return openWriter(namespaceId, new ByteBuffersDirectory(), "in memory");
     }
 
     private LuceneIndexContext openWriter(final String namespaceId,
                                           final Directory directory,
-                                          final String locationLabel) throws IOException {
+                                          final String locationLabel) {
         final Analyzer analyzer = analyzerFactory.create(namespaceId);
         final IndexWriterConfig config = new IndexWriterConfig(analyzer);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         config.setRAMBufferSizeMB(64);
-        final IndexWriter writer = new IndexWriter(directory, config);
-        // Initial commit so the SearcherManager has a readable index.
-        writer.commit();
-        final SearcherManager manager = new SearcherManager(writer, true, true, null);
-        log.info("opened Lucene index for namespace {} {}", namespaceId, locationLabel);
-        return new LuceneIndexContext(namespaceId, directory, analyzer, writer, manager);
+        try {
+            final IndexWriter writer = new IndexWriter(directory, config);
+            // Initial commit so the SearcherManager has a readable index.
+            writer.commit();
+            final SearcherManager manager = new SearcherManager(writer, true, true, null);
+            log.info("opened Lucene index for namespace {} {}", namespaceId, locationLabel);
+            return new LuceneIndexContext(namespaceId, directory, analyzer, writer, manager);
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                "Failed to open Lucene index for namespace " + namespaceId, e);
+        }
     }
 
     private LuceneIndexContext openReadOnly(final String namespaceId, final Path path) {

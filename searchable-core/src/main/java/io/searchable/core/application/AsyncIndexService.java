@@ -4,12 +4,14 @@ import io.searchable.core.domain.document.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -30,7 +32,10 @@ public final class AsyncIndexService implements AutoCloseable {
 
     private static final Logger log = LoggerFactory.getLogger(AsyncIndexService.class);
 
+    private static final Duration DEFAULT_SHUTDOWN_TIMEOUT = Duration.ofSeconds(30);
+
     private final IndexService delegate;
+    private final Duration shutdownTimeout;
     private final Map<String, ExecutorService> executors = new ConcurrentHashMap<>();
     private final Map<String, AtomicLong> queueDepth = new ConcurrentHashMap<>();
     private final Map<String, AtomicLong> processed = new ConcurrentHashMap<>();
@@ -38,7 +43,17 @@ public final class AsyncIndexService implements AutoCloseable {
     private volatile boolean closed;
 
     public AsyncIndexService(final IndexService delegate) {
+        this(delegate, DEFAULT_SHUTDOWN_TIMEOUT);
+    }
+
+    /**
+     * Visible for tests so they can verify the "timeout exceeded" branch
+     * of {@link #close()} without waiting the production-default 30 s.
+     */
+    AsyncIndexService(final IndexService delegate, final Duration shutdownTimeout) {
         this.delegate = Objects.requireNonNull(delegate, "delegate must not be null");
+        this.shutdownTimeout = Objects.requireNonNull(shutdownTimeout,
+            "shutdownTimeout must not be null");
     }
 
     /**
@@ -101,8 +116,9 @@ public final class AsyncIndexService implements AutoCloseable {
         executors.forEach((id, exec) -> {
             exec.shutdown();
             try {
-                if (!exec.awaitTermination(30, java.util.concurrent.TimeUnit.SECONDS)) {
-                    log.warn("async indexer for {} did not terminate within 30s; forcing", id);
+                if (!exec.awaitTermination(shutdownTimeout.toMillis(), TimeUnit.MILLISECONDS)) {
+                    log.warn("async indexer for {} did not terminate within {}; forcing",
+                        id, shutdownTimeout);
                     exec.shutdownNow();
                 }
             } catch (InterruptedException e) {

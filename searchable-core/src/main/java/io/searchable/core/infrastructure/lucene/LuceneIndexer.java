@@ -44,12 +44,6 @@ public final class LuceneIndexer {
 
     public LuceneIndexer(final LuceneIndexProvider provider,
                          final LuceneDocumentMapper mapper,
-                         final EmbeddingProvider embeddingProvider) {
-        this(provider, mapper, embeddingProvider, new WholeDocumentChunkingStrategy());
-    }
-
-    public LuceneIndexer(final LuceneIndexProvider provider,
-                         final LuceneDocumentMapper mapper,
                          final EmbeddingProvider embeddingProvider,
                          final ChunkingStrategy chunkingStrategy) {
         this.provider = Objects.requireNonNull(provider, "provider must not be null");

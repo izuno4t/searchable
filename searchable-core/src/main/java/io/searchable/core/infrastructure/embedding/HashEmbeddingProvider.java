@@ -1,10 +1,9 @@
 package io.searchable.core.infrastructure.embedding;
 
 import io.searchable.core.domain.embedding.EmbeddingProvider;
+import io.searchable.core.infrastructure.crypto.Sha256;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 
 /**
@@ -67,10 +66,6 @@ public final class HashEmbeddingProvider implements EmbeddingProvider {
     }
 
     private static byte[] sha256(final byte[] data) {
-        try {
-            return MessageDigest.getInstance("SHA-256").digest(data);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 unavailable", e);
-        }
+        return Sha256.digest(data);
     }
 }

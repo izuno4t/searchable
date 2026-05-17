@@ -1,5 +1,6 @@
 package io.searchable.core.infrastructure.datasource;
 
+import io.searchable.core.infrastructure.crypto.Sha256;
 import io.searchable.plugin.DataSourcePlugin;
 import io.searchable.plugin.PluginContext;
 import io.searchable.plugin.PluginDocument;
@@ -9,8 +10,6 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
@@ -104,11 +103,7 @@ public final class FilesystemDataSourcePlugin implements DataSourcePlugin {
     }
 
     private static String sha256(final String input) {
-        try {
-            final MessageDigest md = MessageDigest.getInstance("SHA-256");
-            return HexFormat.of().formatHex(md.digest(input.getBytes(StandardCharsets.UTF_8)));
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
+        return HexFormat.of().formatHex(
+            Sha256.digest(input.getBytes(StandardCharsets.UTF_8)));
     }
 }
