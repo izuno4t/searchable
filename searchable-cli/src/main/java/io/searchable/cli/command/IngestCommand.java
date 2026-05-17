@@ -2,12 +2,15 @@ package io.searchable.cli.command;
 
 import io.searchable.core.SearchableLibrary;
 import io.searchable.core.domain.document.Document;
+import io.searchable.core.domain.parser.DocumentParser;
+import io.searchable.core.domain.parser.ParsedDocument;
 import io.searchable.core.infrastructure.parser.ParserRegistry;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -52,14 +55,20 @@ public final class IngestCommand implements Callable<Integer> {
             final List<Path> paths = collectFiles(source);
             int indexed = 0;
             for (final Path path : paths) {
-                final String body = Files.readString(path);
-                final var parsed = registry
-                    .resolveForFile(path.getFileName().toString())
+                final String fileName = path.getFileName().toString();
+                final DocumentParser parser = registry.resolveForFile(fileName)
                     .orElseThrow(() -> new IllegalArgumentException(
-                        "No parser registered for " + path))
-                    .parse(body, path.getFileName().toString());
+                        "No parser registered for " + path));
+                // Use the byte-stream overload so binary-aware parsers
+                // (e.g. PdfParser) work as well as text parsers. The
+                // default impl on DocumentParser handles text formats by
+                // decoding the stream as UTF-8.
+                final ParsedDocument parsed;
+                try (InputStream in = Files.newInputStream(path)) {
+                    parsed = parser.parse(in, fileName);
+                }
                 final Document doc = Document.builder()
-                    .id(idPrefix + path.getFileName().toString())
+                    .id(idPrefix + fileName)
                     .namespaceId(namespace)
                     .title(parsed.title())
                     .content(parsed.content())
