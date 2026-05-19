@@ -28,3 +28,4 @@ logs/
 data/
 /indexes/
 *.tmp
+.mvn/jvm.config
