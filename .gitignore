@@ -29,3 +29,6 @@ data/
 /indexes/
 *.tmp
 .mvn/jvm.config
+
+# Claude Code (personal, per-project overrides)
+.claude/settings.local.json
