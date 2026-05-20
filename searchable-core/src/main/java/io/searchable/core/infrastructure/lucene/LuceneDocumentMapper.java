@@ -55,6 +55,13 @@ public final class LuceneDocumentMapper {
     /**
      * Build a Lucene sub-document for one chunk of the given document.
      *
+     * <p>Document-level fields ({@code namespaceId}, parent {@code metadata})
+     * are intentionally <em>not</em> written here — they live exclusively in
+     * the metadata DB ({@code DocumentMetadataRepository}). The Lucene
+     * document only carries the per-chunk search-time data plus the
+     * {@code PARENT_ID} link back to the document registry.
+     * See {@code docs/architecture.md} §5.7.
+     *
      * @param doc    parent domain document
      * @param chunk  chunk produced by a {@code ChunkingStrategy}
      * @param vector L2-normalized embedding vector for the chunk
@@ -70,12 +77,10 @@ public final class LuceneDocumentMapper {
         lucene.add(new StringField(LuceneFields.PARENT_ID, doc.id(), Field.Store.YES));
         lucene.add(new StoredField(LuceneFields.CHUNK_ORDINAL, chunk.ordinal()));
         lucene.add(new NumericDocValuesField(LuceneFields.CHUNK_ORDINAL, chunk.ordinal()));
-        lucene.add(new StringField(LuceneFields.NAMESPACE_ID, doc.namespaceId(), Field.Store.YES));
         lucene.add(new Field(LuceneFields.TITLE, doc.title(),
             LuceneFields.ANALYZED_STORED_WITH_VECTORS));
         lucene.add(new Field(LuceneFields.CONTENT, chunk.text(),
             LuceneFields.ANALYZED_STORED_WITH_VECTORS));
-        lucene.add(new StoredField(LuceneFields.METADATA_JSON, serializeMetadata(doc.metadata())));
         lucene.add(new StoredField(LuceneFields.CHUNK_METADATA_JSON,
             serializeMetadata(chunk.metadata())));
         if (doc.indexedAt() != null) {

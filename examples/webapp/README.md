@@ -101,7 +101,7 @@ index:
   ~/Documents/handbook
 ```
 
-> Stop the webapp before running ccli writes if you are using the
+> Stop the webapp before running searchable-cli writes if you are using the
 > default H2 metadata store (H2 in embedded mode is single-writer).
 > Switch the persistence URL to TCP or use PostgreSQL when both
 > processes need to be online simultaneously.

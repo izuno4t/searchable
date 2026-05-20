@@ -180,7 +180,7 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-154 | ✅ | docs/cli-guide.ja.md 整備 | TASK-101 |
 | TASK-155 | ✅ | docs/admin-guide.ja.md 整備 | TASK-113 |
 | TASK-156 | ✅ | `examples/plugin-datasource-s3` として S3 互換ストレージ取込のリファレンスプラグイン実装を追加(本体ビルド対象外の独立プロジェクト、`DataSourcePlugin` SPI 実装) | TASK-079,TASK-083 |
-| TASK-157 | ⏳ | 文書レベル metadata を Lucene stored field から専用の **metadata DB** に移管する仕様策定。検索結果は post-search で enrich する。`metadata.url` を URI 必須の予約キーとして `docs/architecture.md` / `docs/usage.ja.md` に明文化 | TASK-150,TASK-152 |
+| TASK-157 | ✅ | 文書レベル metadata を Lucene stored field から専用の **metadata DB** に移管する仕様策定。検索結果は post-search で enrich する。`metadata.url` を URI 必須の予約キーとして `docs/architecture.md` / `docs/usage.ja.md` に明文化 | TASK-150,TASK-152 |
 | TASK-158 | ⏳ | `searchable-cli` `IngestCommand` で `metadata.url = path.toUri().toString()` を自動設定 | TASK-157,TASK-168 |
 | TASK-159 | ⏳ | `examples/webapp` `StartupIngestRunner` で `metadata.url` を自動設定し詳細ページに元ファイルリンクを表示 | TASK-157,TASK-168 |
 | TASK-160 | ⏳ | `examples/api` OpenAPI と `api-specification.ja.md` に `metadata.url` 規約を反映(reserved key 説明追加、生パス禁止) | TASK-153,TASK-157 |
@@ -189,9 +189,9 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-163 | ⏳ | `ResultMerger.withScore` / `intersect` バグ修正: ハイブリッド経由で `SearchHit.subResults` が取りこぼされる問題を解消 | TASK-051 |
 | TASK-164 | ⏳ | ベクトル検索/ハイブリッド検索でのセクション anchor 方針を確定(`LuceneVectorSearcher` で SubResult を返すか、明示的に full-text 限定と明文化するか) | TASK-051,TASK-157 |
 | TASK-165 | ✅ | `examples/webapp` と `examples/api` の `pom.xml` から不要な `<classifier>boot</classifier>` を除去し、二重 repackage による起動時 StackOverflowError(`Start-Class: JarLauncher` の無限再帰)を修正 | TASK-119,TASK-130 |
-| TASK-166 | ✅ | `examples/*` の README に Quick start(インデックス→検索)節を追加し、`examples/` 配下が独立 Maven プロジェクトであることを明記。あわせて ccli 連携セクションで「ソースディレクトリと index ディレクトリは別物」を明示 | TASK-119,TASK-130,TASK-137,TASK-145 |
-| TASK-167 | ⏳ | `DocumentMetadataRepository` 実装(JDBC、H2/PostgreSQL 両対応)。PK は自然キー `(namespace_id, document_id)`(surrogate key は採らない)。スキーマ: `title` + `metadata_json` + `indexed_at` を保持する文書レジストリ。`DocumentSourceRepository`(change-detection 用)とは責務分離 | TASK-010,TASK-011,TASK-157 |
-| TASK-168 | ⏳ | `LuceneDocumentMapper` から `METADATA_JSON` および冗長な `NAMESPACE_ID` stored field を除去(Lucene index は既に Directory 単位で namespace 分割されているため)し、`IndexService` で `DocumentMetadataRepository` に書込むよう変更。`PARENT_ID` / `CHUNK_METADATA_JSON` / `INDEXED_AT_EPOCH` は残す | TASK-167 |
+| TASK-166 | ✅ | `examples/*` の README に Quick start(インデックス→検索)節を追加し、`examples/` 配下が独立 Maven プロジェクトであることを明記。あわせて searchable-cli 連携セクションで「ソースディレクトリと index ディレクトリは別物」を明示 | TASK-119,TASK-130,TASK-137,TASK-145 |
+| TASK-167 | ✅ | `DocumentMetadataRepository` 実装(JDBC、H2/PostgreSQL 両対応)。PK は自然キー `(namespace_id, document_id)`(surrogate key は採らない)。スキーマ: `title` + `metadata_json` + `indexed_at` を保持する文書レジストリ。`DocumentSourceRepository`(change-detection 用)とは責務分離 | TASK-010,TASK-011,TASK-157 |
+| TASK-168 | 🚧 | `LuceneDocumentMapper` から `METADATA_JSON` および冗長な `NAMESPACE_ID` stored field を除去(Lucene index は既に Directory 単位で namespace 分割されているため)し、`IndexService` で `DocumentMetadataRepository` に書込むよう変更。`PARENT_ID` / `CHUNK_METADATA_JSON` / `INDEXED_AT_EPOCH` は残す | TASK-167 |
 | TASK-169 | ⏳ | `SearchService`(または新規 `SearchResultEnricher`)に metadata enrich 処理を実装。Lucene 検索後にバッチ `IN` クエリで metadata を一括取得し `SearchHit.metadata` に注入。`LuceneFullTextSearcher.toSubResult` の `anchorUrl` 生成ロジックを enricher 側に移管 | TASK-167,TASK-168 |
 | TASK-170 | ⏳ | `DocumentBrowser` を `DocumentMetadataRepository` ベースに書き換え。Lucene `MatchAllDocsQuery` 由来のチャンク重複・`totalHits` 不正・ソート/フィルタ不足を解消。`webapp/SearchController.detail` の `filter` workaround も同時に解消 | TASK-167 |
 | TASK-171 | ⏳ | 既存 Lucene index との互換性方針確定(rebuild 必須 or fallback 読み)+ マイグレーションノートを `docs/setup-guide.md` に記載 | TASK-168,TASK-169,TASK-170 |
@@ -327,7 +327,10 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 ### TASK-166
 
 - 補足: 各サンプル README に Run + Quick start(index → search) 一連の手順を追加。mcp は書込 IF が無いため事前 ingest 必須を冒頭で明示。search-ui は API 前提クライアントである旨を明示。
-- 注意: `examples/README.md` には共通プレリク(searchable-core install / ccli ビルド)と「ccli の searchable.yaml は index の場所であり、ドキュメントソースとは別」の概念整理だけ置き、詳細は子 README に委譲する構成。
+- 注意: `examples/README.md` には共通プレリク(searchable-core install /
+  searchable-cli ビルド)と「searchable-cli の searchable.yaml は index の
+  場所であり、ドキュメントソースとは別」の概念整理だけ置き、詳細は子
+  README に委譲する構成。
 
 ## バックログ一覧
 

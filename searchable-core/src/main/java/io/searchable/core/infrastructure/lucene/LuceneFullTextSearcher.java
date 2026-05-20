@@ -184,36 +184,38 @@ public final class LuceneFullTextSearcher {
             final String id = parentId != null ? parentId : doc.get(LuceneFields.ID);
             final String title = doc.get(LuceneFields.TITLE);
             final String content = lazy ? null : doc.get(LuceneFields.CONTENT);
-            final Map<String, Object> metadata = mapper.deserializeMetadata(
-                doc.get(LuceneFields.METADATA_JSON));
 
             final Map<String, List<String>> highlights = (highlighter == null || lazy)
                 ? Map.of()
                 : buildHighlights(highlighter, analyzer, reader, first.luceneDocId,
                     doc.get(LuceneFields.CONTENT));
 
+            // Parent metadata (incl. metadata.url) is held in the metadata DB,
+            // not in the Lucene index. Hits returned by this searcher carry
+            // an empty metadata map and SubResult.anchorUrl=null; the
+            // application-layer SearchResultEnricher fills both in by
+            // batch-loading from DocumentMetadataRepository.
             final List<SubResult> subResults = new ArrayList<>();
             for (final ChunkRow row : others) {
-                subResults.add(toSubResult(row, id, metadata));
+                subResults.add(toSubResult(row, id));
             }
             return new SearchHit(id, namespaceId, title, content,
-                first.score, highlights, metadata, subResults);
+                first.score, highlights, Map.of(), subResults);
         }
     }
 
-    private SubResult toSubResult(final ChunkRow row, final String parentId,
-                                  final Map<String, Object> parentMetadata) {
+    private SubResult toSubResult(final ChunkRow row, final String parentId) {
         final Map<String, Object> chunkMeta = mapper.deserializeMetadata(
             row.doc.get(LuceneFields.CHUNK_METADATA_JSON));
         final int level = chunkMeta.get("level") instanceof Number n ? n.intValue() : 0;
         final String heading = chunkMeta.get("heading") instanceof String s ? s : "";
         final String chunkContent = row.doc.get(LuceneFields.CONTENT);
         final String sectionId = parentId + "#" + row.doc.get(LuceneFields.CHUNK_ORDINAL);
-        final String baseUrl = parentMetadata.get("url") instanceof String u ? u : null;
-        final String anchorUrl = AnchorUrls.anchorFor(baseUrl, heading);
+        // anchorUrl is left null here; SearchResultEnricher attaches it once
+        // it has the parent metadata.url loaded from the metadata DB.
         return new SubResult(sectionId, parentId, level, heading,
             chunkContent == null ? "" : chunkContent,
-            row.score, Map.of(), anchorUrl);
+            row.score, Map.of(), null);
     }
 
     private record ChunkRow(org.apache.lucene.document.Document doc, double score, int luceneDocId) { }

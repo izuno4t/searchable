@@ -12,14 +12,12 @@ public final class LuceneFields {
     public static final FieldType ANALYZED_STORED_WITH_VECTORS;
 
     public static final String ID = "id";
-    public static final String NAMESPACE_ID = "namespaceId";
     /** Domain-level document id (same value across all chunks of one document). */
     public static final String PARENT_ID = "parentId";
     /** Position of the chunk within its parent document (0-based). */
     public static final String CHUNK_ORDINAL = "chunkOrdinal";
     public static final String TITLE = "title";
     public static final String CONTENT = "content";
-    public static final String METADATA_JSON = "metadataJson";
     /** Per-chunk metadata serialized as JSON (heading, level, weight, ...). */
     public static final String CHUNK_METADATA_JSON = "chunkMetadataJson";
     public static final String INDEXED_AT_EPOCH = "indexedAtEpoch";

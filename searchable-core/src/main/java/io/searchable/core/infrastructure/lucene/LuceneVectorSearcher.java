@@ -94,11 +94,12 @@ public final class LuceneVectorSearcher {
             final String id = parentId != null ? parentId : doc.get(LuceneFields.ID);
             final String title = doc.get(LuceneFields.TITLE);
             final String content = lazy ? null : doc.get(LuceneFields.CONTENT);
-            final Map<String, Object> metadata = mapper.deserializeMetadata(
-                doc.get(LuceneFields.METADATA_JSON));
 
+            // Parent metadata is held in the metadata DB, not in Lucene.
+            // The application-layer SearchResultEnricher attaches metadata
+            // to hits after this method returns.
             result.add(new SearchHit(id, namespaceId, title, content, scoreDoc.score,
-                Map.of(), metadata));
+                Map.of(), Map.of()));
         }
         return result;
     }

@@ -64,13 +64,39 @@ Document document = Document.builder()
     .id("doc-1")
     .title("製品マニュアル")
     .content("Searchable は日本語形態素解析に対応した全文検索ライブラリです。")
-    .metadata(Map.of("source", "manual.md"))
+    .metadata(Map.of(
+        "url", Path.of("/srv/docs/manual.md").toUri().toString(),  // 推奨: URI で origin を記録
+        "category", "product",
+        "lang", "ja"))
     .build();
 
 indexService.indexDocument("project-a", document);
 ```
 
 バッチ登録には `indexDocuments(namespaceId, List<Document>)` を使う。
+
+#### `Document.metadata` の予約キー
+
+`metadata` は自由項目だが、いくつかのキーはライブラリ・サンプル UI 側で
+特別な意味を持つ。
+
+| キー | 値 | 用途 |
+| --- | --- | --- |
+| `url` | **URI**(RFC 3986)、スキーム必須 | 文書の origin 参照。`file:///abs/path`、`http(s)://...`、`ftp://...`、`s3://bucket/key` 等。生パス(`/abs/path`)は禁止 |
+| `category` | string | facet 用 |
+| `lang` | string | facet 用 |
+| `tags` | string or string[] | facet 用 |
+
+`metadata.url` を入れておくと、検索結果(`SearchHit.metadata.url`)から
+元文書への直リンクを生成でき、セクション単位ヒット(`SubResult`)では
+`anchorUrl = url + "#heading-slug"` が自動で組み立てられる。
+
+#### metadata の保管場所
+
+文書レベル metadata(`Document.metadata`)は **専用の metadata DB** に
+1 文書 1 行で保存される(`DocumentMetadataRepository`)。Lucene のチャンク
+stored field には保存されないため、チャンク数が増えても metadata 量は
+線形に増えない。詳細は [architecture.md §5.7](architecture.md) を参照。
 
 ### 2.4 検索
 

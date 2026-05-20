@@ -391,6 +391,51 @@ class IndexMetadata {
 }
 ```
 
+### 5.7 文書 metadata の保存方針
+
+`Document.metadata`（タイトル、URL、カテゴリ等の **文書レベル属性**）は
+**専用の metadata DB**(`DocumentMetadataRepository`)に保存する。
+Lucene のチャンク stored field には保存しない。
+
+| 種別 | 保存先 | 主キー |
+| --- | --- | --- |
+| 文書レベル metadata | metadata DB(`DocumentMetadataRepository`) | `(namespace_id, document_id)` |
+| チャンク固有 metadata | Lucene stored field (`CHUNK_METADATA_JSON`) | `(namespace_id, parent_id, chunk_ordinal)` |
+| origin 識別子 / change-detection | metadata DB(`DocumentSourceRepository`) | `(namespace_id, document_id)` |
+
+主キーは自然キー `(namespace_id, document_id)` のみを使い、surrogate key
+(global id 等)は採らない。namespace は Lucene Directory 単位で物理的に
+分割されているため、Lucene 側で per-chunk の `NAMESPACE_ID` フィールドも
+持たない。
+
+この分離により:
+
+- **チャンク数に依存せず metadata 量が線形** (`O(N_docs)`、`O(N_chunks)` ではない)
+- **文書一覧** (`DocumentBrowser`)・カテゴリフィルタ・ソートが DB の
+  SQL 機能で素直に実装できる(チャンク重複も発生しない)
+- **metadata 更新**(URL 書き換え等)が単一 UPDATE で完結し、Lucene の
+  再書込が不要
+
+#### 予約キー一覧(`Document.metadata`)
+
+| キー | 必須 | 値 | 用途 |
+| --- | --- | --- | --- |
+| `url` | 推奨 | **URI**(RFC 3986)、**スキーム必須** | 文書のオリジン参照。`file:///abs/path`, `http(s)://...`, `ftp://...`, `s3://bucket/key` 等。生パスは禁止 |
+| `category` | 任意 | string | facet 用 |
+| `lang` | 任意 | string | facet 用 |
+| `tags` | 任意 | string or string[] | facet 用 |
+
+`metadata.url` は `SubResult.anchorUrl` の base URL としても使われる
+(セクション slug を `#` で連結する)。
+
+#### 検索結果での enrichment
+
+検索エンジン(Lucene)は ID・スコア・チャンク固有情報のみを返し、
+`SearchHit.metadata` および `SubResult.anchorUrl` はアプリケーション層
+(`SearchResultEnricher`)が metadata DB から取得してヒットに注入する。
+バッチ `WHERE (namespace_id, document_id) IN ((?, ?), ...)` の単発クエリ
+で全ヒット分まとめて取得する。
+
 ---
 
 ## 6. モジュール構成
