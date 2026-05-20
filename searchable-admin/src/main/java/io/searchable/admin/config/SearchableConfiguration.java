@@ -206,12 +206,30 @@ public class SearchableConfiguration {
     }
 
     @Bean
+    public io.searchable.core.domain.document.DocumentMetadataRepository documentMetadataRepository(
+            final DataSource dataSource,
+            final SchemaInitializer init) {
+        return new io.searchable.core.infrastructure.persistence.jdbc.JdbcDocumentMetadataRepository(
+            dataSource);
+    }
+
+    @Bean
+    public io.searchable.core.domain.document.DocumentSourceRepository documentSourceRepository(
+            final DataSource dataSource,
+            final SchemaInitializer init) {
+        return new io.searchable.core.infrastructure.persistence.jdbc.JdbcDocumentSourceRepository(
+            dataSource);
+    }
+
+    @Bean
     public IndexService indexService(final NamespaceRepository nr,
                                      final IndexMetadataRepository imr,
                                      final LuceneIndexProvider provider,
                                      final LuceneIndexer indexer,
+                                     final io.searchable.core.domain.document.DocumentSourceRepository dsr,
+                                     final io.searchable.core.domain.document.DocumentMetadataRepository dmr,
                                      final Clock clock) {
-        return new IndexService(nr, imr, provider, indexer, clock);
+        return new IndexService(nr, imr, provider, indexer, dsr, dmr, clock);
     }
 
     @Bean
@@ -233,7 +251,9 @@ public class SearchableConfiguration {
     public SearchService searchService(final NamespaceRepository nr,
                                        final LuceneFullTextSearcher fullText,
                                        final LuceneVectorSearcher vector,
-                                       final HybridSearchOrchestrator hybrid) {
-        return new SearchService(nr, fullText, vector, hybrid);
+                                       final HybridSearchOrchestrator hybrid,
+                                       final io.searchable.core.domain.document.DocumentMetadataRepository dmr) {
+        return new SearchService(nr, fullText, vector, hybrid,
+            new io.searchable.core.application.SearchResultEnricher(dmr));
     }
 }

@@ -5,6 +5,7 @@ import io.searchable.core.application.HybridSearchOrchestrator;
 import io.searchable.core.application.IndexService;
 import io.searchable.core.application.IndexStatisticsService;
 import io.searchable.core.application.NamespaceService;
+import io.searchable.core.application.SearchResultEnricher;
 import io.searchable.core.application.SearchService;
 import io.searchable.core.application.config.ApplicationConfig;
 import io.searchable.core.application.config.GlobalConfig;
@@ -396,12 +397,14 @@ public final class SearchableLibrary implements AutoCloseable {
                 registerCloseable(hybridOrchestrator);
             }
             if (searchService == null) {
-                searchService = new SearchService(namespaceRepository, fullText, vector, hybridOrchestrator);
+                searchService = new SearchService(namespaceRepository, fullText, vector,
+                    hybridOrchestrator,
+                    new SearchResultEnricher(documentMetadataRepository));
             }
             if (indexService == null && !readOnly) {
                 indexService = new IndexService(
                     namespaceRepository, indexMetadataRepository, indexProvider, indexer,
-                    documentSourceRepository, clock);
+                    documentSourceRepository, documentMetadataRepository, clock);
             }
             if (namespaceService == null && !readOnly) {
                 namespaceService = new NamespaceService(
@@ -412,7 +415,7 @@ public final class SearchableLibrary implements AutoCloseable {
                 statisticsService = new IndexStatisticsService(namespaceRepository, indexMetadataRepository);
             }
             if (documentBrowser == null) {
-                documentBrowser = new DocumentBrowser(indexProvider);
+                documentBrowser = new DocumentBrowser(documentMetadataRepository);
             }
             if (pluginLoader == null) {
                 pluginLoader = new PluginLoader(applicationConfig.plugins().directory());

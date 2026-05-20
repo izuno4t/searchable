@@ -1,37 +1,26 @@
 package io.searchable.core.application;
 
-import io.searchable.core.domain.document.Document;
-import io.searchable.core.infrastructure.lucene.AnalyzerFactory;
-import io.searchable.core.infrastructure.lucene.IndexLayout;
-import io.searchable.core.infrastructure.lucene.LuceneIndexProvider;
-import io.searchable.core.infrastructure.lucene.LuceneIndexer;
-import org.junit.jupiter.api.AfterEach;
+import io.searchable.core.domain.document.DocumentMetadataRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
 
-import java.nio.file.Path;
-
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** Closes the validation/null branches in {@link DocumentBrowser}. */
+/** Closes the validation / null branches in {@link DocumentBrowser}. */
 class DocumentBrowserBranchTest {
 
-    @TempDir Path tempDir;
-
-    private LuceneIndexProvider provider;
     private DocumentBrowser browser;
 
     @BeforeEach
     void setUp() {
-        provider = new LuceneIndexProvider(new IndexLayout(tempDir), AnalyzerFactory.japanese());
-        browser = new DocumentBrowser(provider);
+        browser = new DocumentBrowser(Mockito.mock(DocumentMetadataRepository.class));
     }
 
-    @AfterEach
-    void tearDown() {
-        provider.close();
+    @Test
+    void rejectsNullRepository() {
+        assertThatThrownBy(() -> new DocumentBrowser((DocumentMetadataRepository) null))
+            .isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -46,16 +35,5 @@ class DocumentBrowserBranchTest {
             .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> browser.list("ns", 0, -3))
             .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void documentWithoutIndexedAtReturnsNullTimestamp() {
-        final LuceneIndexer indexer = new LuceneIndexer(provider);
-        indexer.index(Document.builder()
-            .id("d").namespaceId("ns").title("title").content("body")
-            .build());
-        final DocumentPage page = browser.list("ns", 0, 10);
-        assertThat(page.items()).hasSize(1);
-        assertThat(page.items().get(0).indexedAt()).isNull();
     }
 }

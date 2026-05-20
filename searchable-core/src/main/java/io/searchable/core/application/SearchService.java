@@ -41,15 +41,26 @@ public final class SearchService {
     private final LuceneFullTextSearcher fullTextSearcher;
     private final LuceneVectorSearcher vectorSearcher;
     private final HybridSearchOrchestrator hybrid;
+    private final SearchResultEnricher enricher;
 
     public SearchService(final NamespaceRepository namespaces,
                          final LuceneFullTextSearcher fullTextSearcher,
                          final LuceneVectorSearcher vectorSearcher,
                          final HybridSearchOrchestrator hybrid) {
+        this(namespaces, fullTextSearcher, vectorSearcher, hybrid,
+            new SearchResultEnricher(null));
+    }
+
+    public SearchService(final NamespaceRepository namespaces,
+                         final LuceneFullTextSearcher fullTextSearcher,
+                         final LuceneVectorSearcher vectorSearcher,
+                         final HybridSearchOrchestrator hybrid,
+                         final SearchResultEnricher enricher) {
         this.namespaces = Objects.requireNonNull(namespaces);
         this.fullTextSearcher = Objects.requireNonNull(fullTextSearcher);
         this.vectorSearcher = Objects.requireNonNull(vectorSearcher);
         this.hybrid = Objects.requireNonNull(hybrid);
+        this.enricher = Objects.requireNonNull(enricher);
     }
 
     public SearchResult search(final SearchRequest request) {
@@ -62,7 +73,7 @@ public final class SearchService {
         final SearchType type = resolveType(request, targets);
         log.debug("executing search type={} targets={}", type, targets);
 
-        return switch (type) {
+        final SearchResult raw = switch (type) {
             case FULL_TEXT -> aggregate(targets, request,
                 fullTextSearcher::search, start);
             case VECTOR -> aggregate(targets, request,
@@ -70,6 +81,7 @@ public final class SearchService {
             case HYBRID -> aggregate(targets, request,
                 this::hybridSearch, start);
         };
+        return enricher.enrich(raw);
     }
 
     private SearchResult aggregate(final List<String> targets,

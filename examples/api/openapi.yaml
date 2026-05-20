@@ -501,6 +501,21 @@ components:
         metadata:
           type: object
           additionalProperties: true
+          description: |
+            Free-form per-document metadata returned by the search
+            backend. Reserved keys (see docs/architecture.md §5.7):
+
+              * `url`       — origin reference as an RFC 3986 URI with a
+                              scheme (`file:///abs/path`, `https://...`,
+                              `s3://bucket/key`, ...). UIs may follow this
+                              as the link to the source document.
+                              Raw filesystem paths without a scheme are
+                              rejected.
+              * `category`  — facet attribute (string)
+              * `lang`      — facet attribute (string)
+              * `tags`      — facet attribute (string or string array)
+
+            All other keys pass through unchanged.
     SearchResponse:
       type: object
       properties:
@@ -524,6 +539,18 @@ components:
         metadata:
           type: object
           additionalProperties: true
+          description: |
+            Per-document attributes. Reserved keys:
+
+              * `url`       — origin reference as an RFC 3986 URI with a
+                              scheme (`file:///abs/path`, `https://...`,
+                              `s3://bucket/key`, ...). Strongly recommended
+                              so search results can link back to the
+                              source document and `SubResult.anchorUrl`
+                              is generated automatically. Raw filesystem
+                              paths without a scheme are not portable;
+                              wrap them with `file://` instead.
+              * `category` / `lang` / `tags` — facet attributes.
     IndexRequest:
       type: object
       required: [namespaceId, document]

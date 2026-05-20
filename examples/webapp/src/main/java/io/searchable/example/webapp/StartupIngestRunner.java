@@ -66,11 +66,17 @@ public class StartupIngestRunner implements CommandLineRunner {
                     }
                     final var parsedDoc = parsed.parse(Files.readString(path),
                         path.getFileName().toString());
+                    final var absolute = path.toAbsolutePath();
                     library.indexService().indexIfChanged(Document.builder()
                         .id(path.getFileName().toString())
                         .namespaceId(namespaceId)
                         .title(parsedDoc.title())
                         .content(parsedDoc.content())
+                        // url is the reserved metadata key for the
+                        // document origin (see docs/architecture.md §5.7).
+                        .metadata(java.util.Map.of(
+                            "url", absolute.toUri().toString(),
+                            "path", absolute.toString()))
                         .indexedAt(Instant.now())
                         .build());
                 } catch (Exception e) {

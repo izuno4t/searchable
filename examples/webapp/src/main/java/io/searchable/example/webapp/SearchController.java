@@ -50,15 +50,20 @@ public class SearchController {
     public String detail(@org.springframework.web.bind.annotation.PathVariable final String namespaceId,
                          @org.springframework.web.bind.annotation.PathVariable final String documentId,
                          final Model model) {
-        // Search for the parent document by id; the embedded library uses
-        // DocumentBrowser so reading a single doc remains cheap.
-        final var page = library.documentBrowser().list(namespaceId, 0, 1000);
-        final var match = page.items().stream()
-            .filter(d -> d.id().equals(documentId))
-            .findFirst()
+        final var match = library.documentBrowser()
+            .findById(namespaceId, documentId)
             .orElseThrow(() -> new IllegalArgumentException(
                 "Document not found: " + namespaceId + "/" + documentId));
         model.addAttribute("document", match);
+        // Resolve the origin URL from metadata.url so the detail page can
+        // link to the source file / page (see docs/architecture.md §5.7).
+        final String originUrl = library.documentMetadataRepository()
+            .findById(namespaceId, documentId)
+            .map(r -> r.metadata().get("url"))
+            .filter(String.class::isInstance)
+            .map(String.class::cast)
+            .orElse(null);
+        model.addAttribute("originUrl", originUrl);
         return "detail";
     }
 }

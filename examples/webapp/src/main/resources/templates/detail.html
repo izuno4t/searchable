@@ -17,6 +17,10 @@
     <strong>ID:</strong> <span th:text="${document.id}"></span><br/>
     <strong>Indexed at:</strong> <span th:text="${document.indexedAt}"></span>
 </p>
+<p th:if="${originUrl}">
+    <strong>元ファイル:</strong>
+    <a th:href="${originUrl}" th:text="${originUrl}" target="_blank" rel="noopener">link</a>
+</p>
 <pre th:text="${document.snippet}">body</pre>
 </body>
 </html>

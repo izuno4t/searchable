@@ -2,6 +2,8 @@ package io.searchable.core.application;
 
 import io.searchable.core.domain.document.ContentHashes;
 import io.searchable.core.domain.document.Document;
+import io.searchable.core.domain.document.DocumentMetadataRecord;
+import io.searchable.core.domain.document.DocumentMetadataRepository;
 import io.searchable.core.domain.document.DocumentSource;
 import io.searchable.core.domain.document.DocumentSourceRepository;
 import io.searchable.core.domain.index.IndexMetadata;
@@ -38,6 +40,7 @@ public final class IndexService {
     private final LuceneIndexProvider indexProvider;
     private final LuceneIndexer indexer;
     private final DocumentSourceRepository documentSources;
+    private final DocumentMetadataRepository documentMetadata;
     private final Clock clock;
 
     public IndexService(final NamespaceRepository namespaces,
@@ -45,7 +48,7 @@ public final class IndexService {
                         final LuceneIndexProvider indexProvider,
                         final LuceneIndexer indexer,
                         final Clock clock) {
-        this(namespaces, indexMetadata, indexProvider, indexer, null, clock);
+        this(namespaces, indexMetadata, indexProvider, indexer, null, null, clock);
     }
 
     public IndexService(final NamespaceRepository namespaces,
@@ -54,11 +57,22 @@ public final class IndexService {
                         final LuceneIndexer indexer,
                         final DocumentSourceRepository documentSources,
                         final Clock clock) {
+        this(namespaces, indexMetadata, indexProvider, indexer, documentSources, null, clock);
+    }
+
+    public IndexService(final NamespaceRepository namespaces,
+                        final IndexMetadataRepository indexMetadata,
+                        final LuceneIndexProvider indexProvider,
+                        final LuceneIndexer indexer,
+                        final DocumentSourceRepository documentSources,
+                        final DocumentMetadataRepository documentMetadata,
+                        final Clock clock) {
         this.namespaces = Objects.requireNonNull(namespaces);
         this.indexMetadata = Objects.requireNonNull(indexMetadata);
         this.indexProvider = Objects.requireNonNull(indexProvider);
         this.indexer = Objects.requireNonNull(indexer);
         this.documentSources = documentSources;
+        this.documentMetadata = documentMetadata;
         this.clock = Objects.requireNonNull(clock);
     }
 
@@ -67,6 +81,7 @@ public final class IndexService {
         requireNamespaceExists(document.namespaceId());
         indexer.index(document);
         recordSource(document);
+        recordMetadata(document);
         refreshMetadata(document.namespaceId(), IndexStatus.READY);
     }
 
@@ -97,6 +112,7 @@ public final class IndexService {
         }
         indexer.index(document);
         recordSource(document, newHash);
+        recordMetadata(document);
         refreshMetadata(document.namespaceId(), IndexStatus.READY);
         return true;
     }
@@ -127,6 +143,21 @@ public final class IndexService {
         documentSources.save(document.namespaceId(), document.id(), source);
     }
 
+    private void recordMetadata(final Document document) {
+        if (documentMetadata == null) {
+            return;
+        }
+        final Instant indexedAt = document.indexedAt() == null
+            ? clock.instant()
+            : document.indexedAt();
+        documentMetadata.save(new DocumentMetadataRecord(
+            document.namespaceId(),
+            document.id(),
+            document.title(),
+            document.metadata(),
+            indexedAt));
+    }
+
     public void indexBatch(final String namespaceId, final List<Document> documents) {
         Objects.requireNonNull(namespaceId, "namespaceId must not be null");
         Objects.requireNonNull(documents, "documents must not be null");
@@ -135,6 +166,9 @@ public final class IndexService {
         markStatus(namespaceId, IndexStatus.INDEXING);
         try {
             indexer.indexBatch(namespaceId, documents);
+            for (final Document d : documents) {
+                recordMetadata(d);
+            }
             refreshMetadata(namespaceId, IndexStatus.READY);
         } catch (RuntimeException e) {
             markStatus(namespaceId, IndexStatus.ERROR);
@@ -148,6 +182,9 @@ public final class IndexService {
         requireNamespaceExists(namespaceId);
         final boolean removed = indexer.delete(namespaceId, documentId);
         if (removed) {
+            if (documentMetadata != null) {
+                documentMetadata.delete(namespaceId, documentId);
+            }
             refreshMetadata(namespaceId, IndexStatus.READY);
         }
         return removed;
@@ -158,6 +195,9 @@ public final class IndexService {
         requireNamespaceExists(namespaceId);
         markStatus(namespaceId, IndexStatus.INDEXING);
         indexer.deleteAll(namespaceId);
+        if (documentMetadata != null) {
+            documentMetadata.deleteByNamespace(namespaceId);
+        }
         refreshMetadata(namespaceId, IndexStatus.READY);
         log.info("rebuilt index for namespace {}", namespaceId);
     }

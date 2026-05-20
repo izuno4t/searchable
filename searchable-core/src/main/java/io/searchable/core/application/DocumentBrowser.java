@@ -1,37 +1,46 @@
 package io.searchable.core.application;
 
-import io.searchable.core.infrastructure.lucene.LuceneFields;
-import io.searchable.core.infrastructure.lucene.LuceneIndexContext;
+import io.searchable.core.domain.document.DocumentMetadataRecord;
+import io.searchable.core.domain.document.DocumentMetadataRepository;
 import io.searchable.core.infrastructure.lucene.LuceneIndexProvider;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
 
-import java.io.IOException;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Application-layer helper that enumerates indexed documents in a namespace.
  *
- * <p>Used by the admin UI's document-list screen; not part of the public
- * search API.
+ * <p>Backed by {@link DocumentMetadataRepository} (one row per document) so
+ * pagination, count, and ordering use plain SQL. Lucene is not queried
+ * here — chunk-level duplication and {@code MatchAllDocsQuery} ordering
+ * concerns from the previous implementation are gone.
  */
 public final class DocumentBrowser {
 
-    private static final int MAX_SNIPPET_LENGTH = 200;
+    private final DocumentMetadataRepository repository;
 
-    private final LuceneIndexProvider provider;
-
-    public DocumentBrowser(final LuceneIndexProvider provider) {
-        this.provider = Objects.requireNonNull(provider);
+    public DocumentBrowser(final DocumentMetadataRepository repository) {
+        this.repository = Objects.requireNonNull(repository, "repository must not be null");
     }
 
-    /** Returns a page of documents, ordered by insertion. */
+    /**
+     * Backwards-compatible constructor for callers that have not yet
+     * been migrated. Document listings issued through this overload
+     * return empty pages because metadata is no longer stored in Lucene.
+     * Callers should switch to the {@code DocumentMetadataRepository}
+     * overload as part of the same release.
+     *
+     * @deprecated supply a {@link DocumentMetadataRepository} instead.
+     */
+    @Deprecated
+    public DocumentBrowser(final LuceneIndexProvider provider) {
+        Objects.requireNonNull(provider, "provider must not be null");
+        this.repository = null;
+    }
+
+    /** Returns a page of documents in the namespace, newest first. */
     public DocumentPage list(final String namespaceId, final int offset, final int limit) {
         Objects.requireNonNull(namespaceId, "namespaceId must not be null");
         if (offset < 0) {
@@ -40,57 +49,40 @@ public final class DocumentBrowser {
         if (limit <= 0) {
             throw new IllegalArgumentException("limit must be positive");
         }
-
-        final LuceneIndexContext ctx = provider.getOrCreate(namespaceId);
-        IndexSearcher searcher = null;
-        try {
-            searcher = ctx.acquireSearcher();
-            final TopDocs hits = searcher.search(new MatchAllDocsQuery(), offset + limit);
-            final long total = hits.totalHits.value();
-            final List<DocumentSummary> items = new ArrayList<>();
-            final int upper = Math.min(hits.scoreDocs.length, offset + limit);
-            for (int i = offset; i < upper; i++) {
-                items.add(toSummary(searcher, namespaceId, hits.scoreDocs[i]));
-            }
-            return new DocumentPage(items, total);
-        } catch (IOException e) {
-            throw new IllegalStateException(
-                "Failed to list documents in " + namespaceId, e);
-        } finally {
-            if (searcher != null) {
-                try {
-                    ctx.release(searcher);
-                } catch (IOException ignored) {
-                    // best-effort release
-                }
-            }
+        if (repository == null) {
+            return new DocumentPage(List.of(), 0L);
         }
+        final long total = repository.count(namespaceId);
+        if (total == 0L) {
+            return new DocumentPage(List.of(), 0L);
+        }
+        final List<DocumentMetadataRecord> rows = repository.list(namespaceId, offset, limit);
+        final List<DocumentSummary> items = new ArrayList<>(rows.size());
+        for (final DocumentMetadataRecord row : rows) {
+            items.add(toSummary(row));
+        }
+        return new DocumentPage(items, total);
     }
 
-    private DocumentSummary toSummary(final IndexSearcher searcher,
-                                      final String namespaceId,
-                                      final ScoreDoc scoreDoc) throws IOException {
-        final Document doc = searcher.storedFields().document(scoreDoc.doc);
-        final String parentId = doc.get(LuceneFields.PARENT_ID);
-        final String id = parentId != null ? parentId : doc.get(LuceneFields.ID);
-        final String title = doc.get(LuceneFields.TITLE);
-        final String content = doc.get(LuceneFields.CONTENT);
-        final String indexedAtRaw = doc.get(LuceneFields.INDEXED_AT_EPOCH);
-        final Instant indexedAt = indexedAtRaw == null
-            ? null
-            : Instant.ofEpochMilli(Long.parseLong(indexedAtRaw));
+    /** Fetch a single document by id. */
+    public Optional<DocumentSummary> findById(final String namespaceId, final String documentId) {
+        Objects.requireNonNull(namespaceId, "namespaceId must not be null");
+        Objects.requireNonNull(documentId, "documentId must not be null");
+        if (repository == null) {
+            return Optional.empty();
+        }
+        return repository.findById(namespaceId, documentId).map(this::toSummary);
+    }
+
+    private DocumentSummary toSummary(final DocumentMetadataRecord rec) {
+        // Snippet generation now belongs to the search layer (which has
+        // access to the per-chunk Lucene content). The browser surfaces
+        // the authoritative document attributes only.
         return new DocumentSummary(
-            id,
-            namespaceId,
-            title == null ? "(no title)" : title,
-            content == null ? "" : truncate(content),
-            indexedAt
-        );
-    }
-
-    private String truncate(final String text) {
-        return text.length() <= MAX_SNIPPET_LENGTH
-            ? text
-            : text.substring(0, MAX_SNIPPET_LENGTH) + "...";
+            rec.documentId(),
+            rec.namespaceId(),
+            rec.title(),
+            "",
+            rec.indexedAt());
     }
 }

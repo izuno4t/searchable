@@ -1,7 +1,7 @@
 package io.searchable.admin.config;
 
 import io.searchable.core.application.DocumentBrowser;
-import io.searchable.core.infrastructure.lucene.LuceneIndexProvider;
+import io.searchable.core.domain.document.DocumentMetadataRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 public class IndexBrowserConfig {
 
     @Bean
-    public DocumentBrowser documentBrowser(final LuceneIndexProvider provider) {
-        return new DocumentBrowser(provider);
+    public DocumentBrowser documentBrowser(final DocumentMetadataRepository repository) {
+        return new DocumentBrowser(repository);
     }
 }

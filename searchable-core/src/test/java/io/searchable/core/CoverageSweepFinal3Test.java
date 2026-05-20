@@ -225,15 +225,19 @@ class CoverageSweepFinal3Test {
     }
 
     // ─── LuceneDocumentMapper.serializeMetadata JSON exception ──────────
+    // Parent metadata no longer flows into the Lucene index (it lives in
+    // DocumentMetadataRepository now), so the cyclic-input failure is
+    // exercised via per-chunk metadata instead.
     @Test
     void luceneDocumentMapperSerializeMetadataWrapsBadValue() {
         final var mapper = new io.searchable.core.infrastructure.lucene.LuceneDocumentMapper();
         final java.util.Map<String, Object> cyclic = new java.util.HashMap<>();
         cyclic.put("self", cyclic);
-        assertThatThrownBy(() -> mapper.toLucene(
-            io.searchable.core.domain.document.Document.builder()
-                .id("d").namespaceId("ns").title("t").content("c")
-                .metadata(cyclic).build()))
+        final var doc = io.searchable.core.domain.document.Document.builder()
+            .id("d").namespaceId("ns").title("t").content("c").build();
+        final var chunk = new io.searchable.core.domain.chunking.Chunk(
+            "d", 0, "d#0", "c", cyclic);
+        assertThatThrownBy(() -> mapper.toLucene(doc, chunk, null))
             .isInstanceOf(IllegalStateException.class);
     }
 

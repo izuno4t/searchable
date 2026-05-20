@@ -248,12 +248,24 @@
     "title": "ドキュメントタイトル",
     "content": "本文...",
     "metadata": {
-      "source": "file.txt",
+      "url": "https://docs.example.com/doc123",
+      "category": "guide",
+      "lang": "ja",
+      "tags": ["beginner", "tutorial"],
       "author": "user1"
     }
   }
 }
 ```
+
+`metadata` の予約キー(詳細は `docs/architecture.md` §5.7):
+
+| キー | 値 | 用途 |
+| --- | --- | --- |
+| `url` | RFC 3986 形式の **URI(スキーム必須)**。`file:///abs/path`, `https://...`, `s3://bucket/key` 等。生パス(`/abs/path`)は不可。 | 検索結果から元ドキュメントへの直リンク。セクション単位ヒット (`SubResult.anchorUrl`) の base としても利用 |
+| `category` / `lang` / `tags` | string / string array | facet 用 |
+
+これら以外の任意キーはそのまま保存・返却される(`author` 等)。
 
 **レスポンス**:
 

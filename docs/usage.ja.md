@@ -91,6 +91,11 @@ indexService.indexDocument("project-a", document);
 元文書への直リンクを生成でき、セクション単位ヒット(`SubResult`)では
 `anchorUrl = url + "#heading-slug"` が自動で組み立てられる。
 
+なお `SubResult` は **full-text 検索でのみ生成** される。ベクトル検索
+単体および「ベクトル経由でヒットした文書」では `subResults` は空配列、
+`anchorUrl` は無し。UI は `subResults` が空でも動くように作ること
+(`SearchHit.metadata.url` だけで元文書への直リンクは作れる)。
+
 #### metadata の保管場所
 
 文書レベル metadata(`Document.metadata`)は **専用の metadata DB** に

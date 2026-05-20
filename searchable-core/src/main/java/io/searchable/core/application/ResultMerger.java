@@ -82,6 +82,9 @@ public final class ResultMerger {
     }
 
     private SearchHit withScore(final SearchHit hit, final double score) {
+        // 8-arg constructor preserves subResults; the 7-arg overload would
+        // silently default them to List.of() and drop section-level matches
+        // that came from the full-text engine.
         return new SearchHit(
             hit.documentId(),
             hit.namespaceId(),
@@ -89,7 +92,8 @@ public final class ResultMerger {
             hit.content(),
             score,
             hit.highlights(),
-            hit.metadata()
+            hit.metadata(),
+            hit.subResults()
         );
     }
 }

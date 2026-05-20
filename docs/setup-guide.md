@@ -157,6 +157,47 @@ curl -X DELETE http://localhost:8080/api/v1/namespaces/project-a
 `logback-spring.xml` を上書きしてカスタマイズ可能。
 デフォルトでは標準出力に出力し、ログレベルは `com.searchable=INFO`。
 
+## 8. メタデータ DB スキーマの更新と既存インデックスの互換性
+
+文書レベルの metadata (`title` / `metadata.url` / `category` 等) は
+`DOCUMENT_METADATA` テーブルに移管されました(`docs/architecture.md` §5.7)。
+旧バージョンで作成された Lucene index には `metadataJson` / `namespaceId`
+の stored field が残っていますが、新バージョンの検索パスはこれらを
+読まないため **検索結果の `SearchHit.metadata` は空** になります
+(セクション anchor も生成されません)。
+
+### 推奨手順: rebuild
+
+新バージョンに上げた直後に namespace ごとに再取込を行ってください。
+
+```bash
+# 1. メタデータ DB スキーマを最新にする(自動 -- SchemaInitializer が
+#    起動時に CREATE TABLE IF NOT EXISTS を流す)
+java -jar searchable-cli.jar --config ./searchable.yaml status
+
+# 2. namespace の index をクリアして再取込
+java -jar searchable-cli.jar --config ./searchable.yaml \
+    rebuild --namespace <namespace-id>
+java -jar searchable-cli.jar --config ./searchable.yaml \
+    ingest --namespace <namespace-id> --source-type file <path>
+```
+
+ccli の `ingest` は新仕様に従って `metadata.url` を自動で埋めます。
+api / webapp 経由の再取込でも、それぞれの取込パスが `metadata.url` を
+セットするように更新済みです。
+
+### 移行期間に再取込できない場合
+
+旧 index をそのまま検索すること自体は可能(ヒットは返る)ですが、
+以下の機能は **新たに取込んだ文書でないと有効になりません**:
+
+- `SearchHit.metadata.url` での元文書リンク
+- `SubResult.anchorUrl` (セクション anchor)
+- `DocumentBrowser` での文書一覧と件数(metadata DB ベースに変更)
+
+移行期間中は admin / webapp の文書一覧画面が空に見える可能性がある
+ため、計画的に `rebuild` + `ingest` を実施してください。
+
 ## 8. テスト実行
 
 ```bash

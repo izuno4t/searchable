@@ -173,44 +173,19 @@ class CoverageSweepTest {
             .hasMessageContaining("Failed to clear existing index");
     }
 
-    // ─── DocumentBrowser.toSummary defaults ─────────────────────────────
+    // ─── DocumentBrowser deprecated Lucene-backed constructor returns
+    // ─── empty pages (metadata moved to DocumentMetadataRepository).
     @Test
-    void documentBrowserHandlesMissingTitleAndContent() throws Exception {
+    void documentBrowserDeprecatedConstructorReturnsEmptyPage() throws Exception {
         try (LuceneIndexProvider provider = new LuceneIndexProvider(
                 new IndexLayout(tempDir.resolve("idx")), AnalyzerFactory.japanese())) {
-            // Directly add a doc that only has the ID field; title and
-            // content default branches must produce "(no title)" + empty
-            // snippet, and indexedAt must be null.
-            final LuceneIndexContext ctx = provider.getOrCreate("ns");
-            final IndexWriter writer = ctx.writer();
-            final org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
-            doc.add(new org.apache.lucene.document.StringField(
-                io.searchable.core.infrastructure.lucene.LuceneFields.ID,
-                "id-only", org.apache.lucene.document.Field.Store.YES));
-            writer.addDocument(doc);
-            writer.commit();
-            ctx.refresh();
-
+            @SuppressWarnings("deprecation")
             final DocumentBrowser b = new DocumentBrowser(provider);
             final var page = b.list("ns", 0, 10);
-            assertThat(page.items()).hasSize(1);
-            assertThat(page.items().get(0).title()).isEqualTo("(no title)");
-            assertThat(page.items().get(0).snippet()).isEmpty();
-            assertThat(page.items().get(0).indexedAt()).isNull();
+            assertThat(page.items()).isEmpty();
+            assertThat(page.total()).isZero();
+            assertThat(b.findById("ns", "any")).isEmpty();
         }
-    }
-
-    @Test
-    void documentBrowserWrapsIoException() throws Exception {
-        final LuceneIndexProvider provider = mock(LuceneIndexProvider.class);
-        final LuceneIndexContext ctx = mock(LuceneIndexContext.class);
-        when(provider.getOrCreate(any())).thenReturn(ctx);
-        when(ctx.acquireSearcher()).thenThrow(new IOException("acquire-boom"));
-
-        final DocumentBrowser b = new DocumentBrowser(provider);
-        assertThatThrownBy(() -> b.list("ns", 0, 10))
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("Failed to list documents");
     }
 
     // ─── IndexService.indexBatch / clockInstant ─────────────────────────

@@ -436,6 +436,23 @@ Lucene のチャンク stored field には保存しない。
 バッチ `WHERE (namespace_id, document_id) IN ((?, ?), ...)` の単発クエリ
 で全ヒット分まとめて取得する。
 
+#### セクション anchor (SubResult) の対象範囲
+
+`SubResult` および `SubResult.anchorUrl` は **full-text 検索でのみ生成**
+される。ベクトル検索(`LuceneVectorSearcher`) はチャンクをセクション単位
+の `SubResult` として再構成しない:
+
+- ベクトル類似度はチャンク単位の連続値であり、「親 1 件 + セクション複数」
+  という構造に collapse する明確な基準が存在しない
+- ハイブリッド検索 (`HybridSearchOrchestrator`) は内部で full-text と
+  ベクトルの結果をマージするため、full-text 経由でヒットした文書には
+  `SubResult` が付くが、ベクトル経由でヒットした文書には付かない
+  (これは仕様)
+
+呼び出し側は `SubResult` が空であることを許容するように UI を組むこと
+(主結果 `SearchHit` の `metadata.url` を href として使えば、セクション
+anchor が無くても元文書に飛べる)。
+
 ---
 
 ## 6. モジュール構成

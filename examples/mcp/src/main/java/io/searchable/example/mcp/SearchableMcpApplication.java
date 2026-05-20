@@ -60,15 +60,20 @@ public final class SearchableMcpApplication {
                  new LuceneFullTextSearcher(provider),
                  new LuceneVectorSearcher(provider, embedding))) {
 
+            final io.searchable.core.domain.document.DocumentMetadataRepository metadataRepo =
+                new io.searchable.core.infrastructure.persistence.jdbc.JdbcDocumentMetadataRepository(
+                    dataSource);
+
             final SearchService searchService = new SearchService(
                 new JdbcNamespaceRepository(dataSource),
                 new LuceneFullTextSearcher(provider),
                 new LuceneVectorSearcher(provider, embedding),
-                hybrid);
+                hybrid,
+                new io.searchable.core.application.SearchResultEnricher(metadataRepo));
 
             final ObjectMapper objectMapper = newObjectMapper();
             final io.searchable.core.application.DocumentBrowser documentBrowser =
-                new io.searchable.core.application.DocumentBrowser(provider);
+                new io.searchable.core.application.DocumentBrowser(metadataRepo);
             final McpServer server = new McpServer(objectMapper, List.of(
                 new SearchDocumentsTool(searchService, objectMapper),
                 new io.searchable.example.mcp.tool.GetDocumentTool(documentBrowser, objectMapper)),

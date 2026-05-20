@@ -67,12 +67,20 @@ public final class IngestCommand implements Callable<Integer> {
                 try (InputStream in = Files.newInputStream(path)) {
                     parsed = parser.parse(in, fileName);
                 }
+                final java.nio.file.Path absolute = path.toAbsolutePath();
                 final Document doc = Document.builder()
                     .id(idPrefix + fileName)
                     .namespaceId(namespace)
                     .title(parsed.title())
                     .content(parsed.content())
-                    .metadata(Map.of("path", path.toAbsolutePath().toString()))
+                    // `url` is the reserved metadata key for the document
+                    // origin (see docs/architecture.md §5.7). Use the
+                    // file URI so SearchHit.metadata.url can be opened
+                    // directly from the UI and SubResult.anchorUrl can
+                    // append heading slugs to it.
+                    .metadata(Map.of(
+                        "url", absolute.toUri().toString(),
+                        "path", absolute.toString()))
                     .indexedAt(Instant.now())
                     .build();
                 library.indexService().index(doc);

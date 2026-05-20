@@ -110,7 +110,15 @@
 
         const title = document.createElement("h3");
         const link = document.createElement("a");
-        link.href = "#";
+        // metadata.url is the reserved key for the document origin
+        // (see docs/architecture.md §5.7). Falls back to a no-op anchor
+        // when the indexer did not populate it.
+        const originUrl = hit.metadata?.url;
+        link.href = originUrl ?? "#";
+        if (originUrl) {
+            link.target = "_blank";
+            link.rel = "noopener";
+        }
         link.textContent = hit.title ?? hit.documentId;
         title.appendChild(link);
 
