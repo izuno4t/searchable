@@ -12,6 +12,7 @@ import io.searchable.core.infrastructure.lucene.LuceneIndexer;
 import io.searchable.core.infrastructure.lucene.LuceneVectorSearcher;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcIndexMetadataRepository;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcNamespaceRepository;
+import io.searchable.example.mcp.config.McpCapabilitiesConfig;
 import io.searchable.example.mcp.tool.SearchDocumentsTool;
 import io.searchable.testkit.db.H2DatabaseFixture;
 import io.searchable.testkit.embedding.FakeEmbeddingProvider;
@@ -29,6 +30,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -68,7 +70,10 @@ class SearchDocumentsToolIntegrationTest {
         ));
 
         final ObjectMapper json = SearchableMcpApplication.newObjectMapper();
-        server = new McpServer(json, List.of(new SearchDocumentsTool(searchService, json)));
+        server = new McpServer(json, List.of(new SearchDocumentsTool(searchService, json)),
+            new McpCapabilitiesConfig(
+                new McpCapabilitiesConfig.ServerInfo("searchable-mcp", "1.0.0"),
+                Map.of("tools", Map.of())));
     }
 
     @AfterEach

@@ -2,6 +2,7 @@ package io.searchable.example.mcp;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.searchable.example.mcp.config.McpCapabilitiesConfig;
 import io.searchable.example.mcp.protocol.ToolDefinition;
 import io.searchable.example.mcp.protocol.ToolResult;
 import io.searchable.example.mcp.tool.McpTool;
@@ -28,7 +29,10 @@ class McpServerTest {
     void setUp() {
         json = SearchableMcpApplication.newObjectMapper();
         tool = new RecordingTool(json);
-        server = new McpServer(json, List.of(tool));
+        server = new McpServer(json, List.of(tool),
+            new McpCapabilitiesConfig(
+                new McpCapabilitiesConfig.ServerInfo("searchable-mcp", "1.0.0"),
+                Map.of("tools", Map.of())));
     }
 
     private JsonNode roundTrip(final String request) throws Exception {

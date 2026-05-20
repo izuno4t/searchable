@@ -3,6 +3,7 @@ package io.searchable.example.mcp;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.searchable.example.mcp.config.McpCapabilitiesConfig;
 import io.searchable.example.mcp.protocol.JsonRpcMessage;
 import io.searchable.example.mcp.protocol.ToolDefinition;
 import io.searchable.example.mcp.protocol.ToolResult;
@@ -36,14 +37,17 @@ public final class McpServer {
     private static final Logger log = LoggerFactory.getLogger(McpServer.class);
 
     private static final String PROTOCOL_VERSION = "2024-11-05";
-    private static final String SERVER_NAME = "searchable-mcp";
-    private static final String SERVER_VERSION = "1.0.0";
 
     private final ObjectMapper json;
     private final Map<String, McpTool> tools;
+    private final McpCapabilitiesConfig capabilities;
 
-    public McpServer(final ObjectMapper json, final List<McpTool> tools) {
+    public McpServer(
+        final ObjectMapper json,
+        final List<McpTool> tools,
+        final McpCapabilitiesConfig capabilities) {
         this.json = Objects.requireNonNull(json);
+        this.capabilities = Objects.requireNonNull(capabilities);
         this.tools = new LinkedHashMap<>();
         for (final McpTool t : tools) {
             this.tools.put(t.definition().name(), t);
@@ -114,8 +118,10 @@ public final class McpServer {
     private Map<String, Object> initializeResult() {
         return Map.of(
             "protocolVersion", PROTOCOL_VERSION,
-            "capabilities", Map.of("tools", Map.of()),
-            "serverInfo", Map.of("name", SERVER_NAME, "version", SERVER_VERSION)
+            "capabilities", capabilities.capabilities(),
+            "serverInfo", Map.of(
+                "name", capabilities.serverInfo().name(),
+                "version", capabilities.serverInfo().version())
         );
     }
 

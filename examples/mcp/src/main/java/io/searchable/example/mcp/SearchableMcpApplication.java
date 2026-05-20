@@ -18,6 +18,8 @@ import io.searchable.core.infrastructure.lucene.LuceneVectorSearcher;
 import io.searchable.core.infrastructure.persistence.DataSourceFactory;
 import io.searchable.core.infrastructure.persistence.SchemaInitializer;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcNamespaceRepository;
+import io.searchable.example.mcp.config.McpCapabilitiesConfig;
+import io.searchable.example.mcp.config.McpCapabilitiesLoader;
 import io.searchable.example.mcp.tool.SearchDocumentsTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +48,8 @@ public final class SearchableMcpApplication {
         log.info("loading config from {}", configPath);
         final ApplicationConfig config = new ConfigLoader().load(configPath);
 
+        final McpCapabilitiesConfig capabilities = loadCapabilities(args);
+
         final DataSource dataSource = DataSourceFactory.create(config.persistence());
         new SchemaInitializer(dataSource).initialize();
 
@@ -67,7 +71,8 @@ public final class SearchableMcpApplication {
                 new io.searchable.core.application.DocumentBrowser(provider);
             final McpServer server = new McpServer(objectMapper, List.of(
                 new SearchDocumentsTool(searchService, objectMapper),
-                new io.searchable.example.mcp.tool.GetDocumentTool(documentBrowser, objectMapper)));
+                new io.searchable.example.mcp.tool.GetDocumentTool(documentBrowser, objectMapper)),
+                capabilities);
 
             log.info("searchable-mcp ready (stdio)");
             server.serve(System.in, System.out);
@@ -86,6 +91,36 @@ public final class SearchableMcpApplication {
                 "No configuration found. Pass --config <path> or place searchable.yaml in CWD.");
         }
         return fallback;
+    }
+
+    /**
+     * Resolve the MCP capabilities source in this order:
+     * <ol>
+     *   <li>{@code --mcp-capabilities <path>} CLI argument</li>
+     *   <li>{@code ./mcp-capabilities.yaml} in the working directory</li>
+     * </ol>
+     * Fails fast if neither is available — the sample file is checked into
+     * the {@code examples/mcp} module and is intentionally not packaged
+     * inside the JAR.
+     */
+    static McpCapabilitiesConfig loadCapabilities(final String[] args) {
+        final McpCapabilitiesLoader loader = new McpCapabilitiesLoader();
+        for (int i = 0; i < args.length - 1; i++) {
+            if ("--mcp-capabilities".equals(args[i])) {
+                final Path explicit = Path.of(args[i + 1]);
+                log.info("loading MCP capabilities from {}", explicit);
+                return loader.load(explicit);
+            }
+        }
+        final Path cwd = Path.of("./mcp-capabilities.yaml");
+        if (Files.exists(cwd)) {
+            log.info("loading MCP capabilities from {}", cwd);
+            return loader.load(cwd);
+        }
+        throw new IllegalStateException(
+            "No MCP capabilities file found. Pass --mcp-capabilities <path> or place "
+            + "mcp-capabilities.yaml in the working directory. "
+            + "See examples/mcp/mcp-capabilities.yaml for a sample.");
     }
 
     static ObjectMapper newObjectMapper() {

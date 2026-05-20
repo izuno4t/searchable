@@ -33,15 +33,23 @@ cd searchable
 ```
 
 これで `searchable-core` などコア JAR がローカル `~/.m2` に配置され、
-`examples/` のサンプルアプリから依存できるようになる。
+`examples/` 配下のサンプルアプリから依存解決できるようになる。
 
 > Maven がインストール済みであれば `mvn -B clean install -DskipTests` でも可。
 
 続いて REST API サンプル（Spring Boot）をビルドする。
 
+`examples/` 配下のサンプルアプリはルート POM のリアクターには含まれない
+**独立した Maven プロジェクト**として構成しており、`~/.m2` に
+インストール済みの `searchable-core` 等を依存として参照する。
+このためルートからは `-f` でサブプロジェクトの POM を指定してビルドする。
+
 ```bash
-./mvnw -B -pl examples/api -am package
+./mvnw -B -f examples/api/pom.xml package
 ```
+
+> `examples/api` ディレクトリに移動してから `../../mvnw -B package` を
+> 実行しても結果は同じ。
 
 成果物:
 
@@ -146,7 +154,14 @@ SearchResult result = searchService.search(
 
 ```bash
 ./mvnw -B -pl searchable-core -am test
-./mvnw -B -pl examples/api -am test
+```
+
+`examples/api` は独立した Maven プロジェクトのため、`-pl` ではなく
+`-f` でサブプロジェクトの POM を指定する（`searchable-core` を
+事前に `install` しておく必要がある）。
+
+```bash
+./mvnw -B -f examples/api/pom.xml test
 ```
 
 ## 8. 次に読むもの
@@ -164,6 +179,6 @@ SearchResult result = searchService.search(
 
 ---
 
-**Document Version**: 1.1
-**Last Updated**: 2026-05-16
+**Document Version**: 1.2
+**Last Updated**: 2026-05-20
 **Status**: Phases 1–5 complete（モジュール再構成中）

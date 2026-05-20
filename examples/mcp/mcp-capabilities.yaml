@@ -1,0 +1,42 @@
+# MCP server's InitializeResult payload (excluding protocolVersion,
+# which is bound to the implementation and cannot be overridden here).
+#
+# Resolution order at startup:
+#   1. --mcp-capabilities <path> CLI flag
+#   2. ./mcp-capabilities.yaml in the current working directory
+# The server refuses to start if neither is available.
+#
+# Property names use kebab-case to match `searchable.yaml`.
+
+# `server-info` -> the `Implementation` block.
+# Clients (Claude Desktop, etc.) display `name` next to the tool palette.
+server-info:
+  name: searchable-mcp
+  version: 1.0.0
+
+# `capabilities` -> the `ServerCapabilities` block.
+#
+# Each top-level key advertises a capability category. The inner object is
+# passed through to the client verbatim, so you can wire up newer MCP
+# spec options by editing this file alone (no recompile needed).
+#
+# This example registers tools at startup and exposes nothing else, so
+# only the `tools` category is enabled. Uncomment the other entries when
+# you extend the server to support them.
+capabilities:
+  tools:
+    # Set to true if your server emits notifications/tools/list_changed
+    # at runtime. This example registers tools once at boot, so false.
+    listChanged: false
+
+  # resources:
+  #   # Notify clients when the resource list changes.
+  #   listChanged: true
+  #   # Allow clients to subscribe to individual resource updates.
+  #   subscribe: true
+
+  # prompts:
+  #   listChanged: true
+
+  # # An empty object means "supported, no sub-options".
+  # logging: {}

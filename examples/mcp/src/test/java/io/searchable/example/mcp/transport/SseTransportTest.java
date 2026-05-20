@@ -2,6 +2,7 @@ package io.searchable.example.mcp.transport;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.searchable.example.mcp.McpServer;
+import io.searchable.example.mcp.config.McpCapabilitiesConfig;
 import io.searchable.example.mcp.protocol.JsonRpcMessage;
 import io.searchable.example.mcp.protocol.ToolDefinition;
 import io.searchable.example.mcp.protocol.ToolResult;
@@ -21,6 +22,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,7 +38,7 @@ class SseTransportTest {
             port = free.getLocalPort();
         }
         final ObjectMapper json = new ObjectMapper();
-        final McpServer server = new McpServer(json, List.of(new HelloTool(json)));
+        final McpServer server = new McpServer(json, List.of(new HelloTool(json)), capabilities());
         transport = new SseTransport(server, json, null);
         transport.start(port);
     }
@@ -78,7 +80,8 @@ class SseTransportTest {
     void apiKeyEnforcedWhenConfigured() throws Exception {
         transport.stop();
         transport = new SseTransport(
-            new McpServer(new ObjectMapper(), List.of(new HelloTool(new ObjectMapper()))),
+            new McpServer(new ObjectMapper(), List.of(new HelloTool(new ObjectMapper())),
+                capabilities()),
             new ObjectMapper(), "secret");
         transport.start(port);
         final HttpClient http = HttpClient.newBuilder()
@@ -88,6 +91,12 @@ class SseTransportTest {
             .uri(URI.create("http://localhost:" + port + "/sse"))
             .GET().build(), HttpResponse.BodyHandlers.ofString());
         assertThat(denied.statusCode()).isEqualTo(401);
+    }
+
+    private static McpCapabilitiesConfig capabilities() {
+        return new McpCapabilitiesConfig(
+            new McpCapabilitiesConfig.ServerInfo("searchable-mcp", "1.0.0"),
+            Map.of("tools", Map.of()));
     }
 
     /** Trivial tool used to exercise the transport without depending on Lucene. */
