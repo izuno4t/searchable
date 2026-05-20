@@ -5,6 +5,7 @@
 ![Lucene](https://img.shields.io/badge/Lucene-10.2-blue)
 ![MCP Protocol](https://img.shields.io/badge/MCP-2024--11--05-blueviolet)
 ![Version](https://img.shields.io/badge/Version-1.0.0--SNAPSHOT-brightgreen)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > 🇯🇵 **Japanese-optimized hybrid search for Java** — full-text and vector
 > search in a single embeddable JAR.
@@ -257,10 +258,9 @@ command / code, and the relevant log lines from `stderr`.
 
 ## 📜 License
 
-⚠️ **License is not yet finalized.** Until a `LICENSE` file is added,
-treat this codebase as *all rights reserved* — please contact the
-maintainer before redistributing, vendoring, or deploying it in a
-production setting.
+Released under the **MIT License** — see [`LICENSE`](LICENSE) for the
+full text.
 
-The intent is to ship an OSS-friendly license at 1.0; track progress in
-[GitHub Issues](https://github.com/izuno4t/searchable/issues).
+You are free to use, modify, and redistribute the code (including for
+commercial purposes); just keep the copyright notice and the license
+text intact in derivative works.
