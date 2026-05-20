@@ -134,25 +134,48 @@ mvn -B clean install -DskipTests
 | **ccli 経由** | `searchable-cli` の `ingest` サブコマンドで、アプリと同じ `data-directory` を指す `searchable.yaml` を使って投入 | 大量データを一括投入したい / アプリを起動せずに事前構築したい / 読み取り専用のサンプル (`mcp`, `search-ui`) でインデックスを用意したい |
 
 ccli 経路を採るときの肝は **アプリと CLI で同じ `data-directory` を指す
-設定にする** こと。たとえば次の `searchable.yaml` を用意すれば、
-`examples/webapp` のデフォルトデータディレクトリ
-（`./data/webapp`）を CLI からも触れる。
+設定にする** こと。`searchable.yaml` が指すのは
+**アプリの index 格納場所**（webapp なら `./data/webapp/indexes`）であり、
+**ソースとなるドキュメントの場所** とは別物。ソースは
+`~/Documents/handbook` や `/var/data/manuals` など、アプリのデータ領域とは
+無関係な場所にあることがほとんど。
+
+たとえば次の `searchable.yaml` を用意すれば、`examples/webapp` の
+データディレクトリを CLI からも触れる。
 
 ```yaml
+# searchable.yaml — アプリのデータ領域（Lucene index + metadata DB の保管先）を表す設定。
+# 以下のパスはすべて「アプリが自分用に確保するストレージ」を指しており、
+# ingest 対象のソースドキュメントの場所ではない。
+# ソースは下の ingest コマンドに引数として渡す（~/Documents/handbook など、
+# このアプリのデータ領域とは無関係な場所が一般的）。
+
+# アプリが永続化するもの全部の親ディレクトリ。
+# アプリ側の searchable.data-directory と必ず一致させる
+# （同じ index を両方のプロセスが見るため）。
 data-directory: ./data/webapp
+
+# メタデータ DB（namespace 一覧、ドキュメント ↔ index ポインタ等）。
+# H2 ファイル ./data/webapp/metadata.mv.db に保存される。
 persistence:
   type: H2
   url: "jdbc:h2:./data/webapp/metadata;MODE=PostgreSQL"
   username: sa
   password: ""
+
+# Lucene の index ファイルの書き込み先。
+# 慣例的に data-directory 配下に置く。
 index:
   directory: ./data/webapp/indexes
 ```
 
 ```bash
+# ingest の最後の引数 = ソースディレクトリ。data-directory とは独立で、
+# 普段ドキュメントが置いてある場所をそのまま指定する。
 ./searchable-cli/src/main/scripts/searchable \
   --config ./searchable.yaml \
-  ingest --namespace default --source-type file ./path/to/docs
+  ingest --namespace default --source-type file \
+  ~/Documents/handbook
 ```
 
 ### サンプル別の特性

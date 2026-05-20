@@ -1,5 +1,11 @@
 # Searchable
 
+![Java](https://img.shields.io/badge/Java-21-orange)
+![Build](https://img.shields.io/badge/Build-Maven-c71a36)
+![Lucene](https://img.shields.io/badge/Lucene-10.2-blue)
+![MCP Protocol](https://img.shields.io/badge/MCP-2024--11--05-blueviolet)
+![Version](https://img.shields.io/badge/Version-1.0.0--SNAPSHOT-brightgreen)
+
 A Japanese-optimized hybrid search library for Java that combines full-text
 search and vector search in a single embeddable package.
 

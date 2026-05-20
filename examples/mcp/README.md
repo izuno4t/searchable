@@ -5,10 +5,11 @@ exposes `searchable-core`'s hybrid search to AI clients such as Claude
 Desktop.
 
 This module is a runnable reference for how to wrap the library as an MCP
-server. It implements the JSON-RPC 2.0 handshake (`initialize` /
-`notifications/initialized`), tool discovery (`tools/list`), tool invocation
-(`tools/call`), and a `ping` health check over both the stdio and the SSE
-transports.
+server. The CLI speaks JSON-RPC 2.0 over **stdio** and implements the
+handshake (`initialize` / `notifications/initialized`), tool discovery
+(`tools/list`), tool invocation (`tools/call`), and a `ping` health check.
+An optional **SSE** transport (`SseTransport.java`) is provided for
+embedding; it is not wired into the CLI of this example.
 
 The Japanese walkthrough lives in [`guide.ja.md`](./guide.ja.md).
 
@@ -142,18 +143,37 @@ index on disk; the MCP server only needs to point at the same
 #### 1a. Using `searchable-cli` (simplest)
 
 Create a `searchable.yaml` that the MCP server will also use, then run
-`ingest`:
+`ingest`. The YAML describes **where the index lives**; the source
+directory of the documents you want indexed is independent of that and
+typically sits somewhere else entirely (your notes folder, a content
+repo, an external drive, ...).
 
 ```yaml
-# searchable.yaml
+# searchable.yaml — describes the MCP SERVER'S DATA AREA.
+# Every path below points at storage that the MCP server itself owns
+# (Lucene index + metadata DB). NONE of these point at the source
+# documents to ingest — those are passed as an argument to the
+# `ingest` command further down and live wherever your docs actually
+# are (~/Documents/handbook, /srv/manuals, ...).
+
+# Root directory for everything the MCP server persists. Must match
+# whatever data-directory the writer (cli / api) uses so both
+# processes open the same index.
 data-directory: ./data/mcp
+
+# Metadata DB (namespace registry, document↔index pointers).
+# Stored as an H2 file at ./data/mcp/metadata.mv.db.
 persistence:
   type: H2
   url: "jdbc:h2:./data/mcp/metadata;MODE=PostgreSQL"
   username: sa
   password: ""
+
+# Where the Lucene index files are written.
+# Lives under data-directory by convention.
 index:
   directory: ./data/mcp/indexes
+
 global:
   default-architecture: HYBRID
   default-search-strategy: PARALLEL
@@ -161,9 +181,12 @@ global:
 ```
 
 ```bash
+# Source path is independent of data-directory; pass any local path
+# (typically nothing to do with the server's data area).
 ./searchable-cli/src/main/scripts/searchable \
   --config ./searchable.yaml \
-  ingest --namespace default --source-type file ./path/to/docs
+  ingest --namespace default --source-type file \
+  ~/Documents/handbook
 ```
 
 #### 1b. Using `examples/api`
@@ -175,21 +198,49 @@ Boot the [REST API example](../api/) against the same
 when ingestion is complete; the MCP server will reopen the index
 read-only.
 
-### Step 2. Start the MCP server
+### Step 2. Place a `mcp-capabilities.yaml`
 
-Use the `--config` produced in Step 1:
+Copy the bundled sample next to your `searchable.yaml`, or pass an
+absolute path on the next step with `--mcp-capabilities`:
 
 ```bash
-java -jar examples/mcp/target/mcp-example-1.0.0-SNAPSHOT.jar \
-  --config ./searchable.yaml \
-  --mcp-capabilities ./mcp-capabilities.yaml
+cp examples/mcp/mcp-capabilities.yaml ./mcp-capabilities.yaml
 ```
 
-### Step 3. Call `search_documents`
+### Step 3. Verify the server starts (no index needed)
 
-For a manual smoke test, pipe JSON-RPC frames into stdin. The example
-below performs the handshake, lists tools, then calls
-`search_documents`:
+Before searching, you can confirm the server boots, completes the
+handshake, and advertises its tools. This works **without any indexed
+documents** — useful for catching config issues early:
+
+```bash
+{
+  printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"manual","version":"0.0"}}}'
+  printf '%s\n' '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+  printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+  printf '%s\n' '{"jsonrpc":"2.0","id":3,"method":"ping"}'
+} | java -jar examples/mcp/target/mcp-example-1.0.0-SNAPSHOT.jar \
+       --config ./searchable.yaml \
+       --mcp-capabilities ./mcp-capabilities.yaml
+```
+
+Expected (one JSON object per line, formatted here for readability):
+
+```json
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2024-11-05",
+  "serverInfo":{"name":"searchable-mcp","version":"1.0.0-SNAPSHOT"},
+  "capabilities":{"tools":{"listChanged":false}},
+  "instructions":"Searchable is a Japanese-optimized hybrid search..."}}
+{"jsonrpc":"2.0","id":2,"result":{"tools":[
+  {"name":"search_documents","description":"...","inputSchema":{...}},
+  {"name":"get_document","description":"...","inputSchema":{...}}]}}
+{"jsonrpc":"2.0","id":3,"result":{}}
+```
+
+### Step 4. Call `search_documents`
+
+Once the namespace has indexed documents (from Step 1), run the same
+pattern with a `tools/call` frame:
 
 ```bash
 {
@@ -201,13 +252,31 @@ below performs the handshake, lists tools, then calls
        --mcp-capabilities ./mcp-capabilities.yaml
 ```
 
+The `tools/call` result's `content[0].text` contains a human-readable
+summary like:
+
+```text
+検索結果: 2件ヒット (12 ms)
+
+1. [default/doc-001] 形態素解析の基礎
+   score: 0.8542
+   日本語の形態素解析エンジンは ...
+
+2. [default/doc-007] Sudachi 入門
+   score: 0.6213
+   辞書ベースの分かち書きを ...
+```
+
 In production the client is an AI runtime such as Claude Desktop —
 see the next section.
 
 ## Claude Desktop integration
 
 Add the server to Claude Desktop's configuration
-(`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+(`~/Library/Application Support/Claude/claude_desktop_config.json` on
+macOS). Use **absolute paths** — Claude Desktop runs the command with its
+own working directory, so relative paths and the CWD fallback won't
+resolve.
 
 ```json
 {
@@ -218,7 +287,9 @@ Add the server to Claude Desktop's configuration
         "-jar",
         "/absolute/path/to/mcp-example-1.0.0-SNAPSHOT.jar",
         "--config",
-        "/absolute/path/to/searchable.yaml"
+        "/absolute/path/to/searchable.yaml",
+        "--mcp-capabilities",
+        "/absolute/path/to/mcp-capabilities.yaml"
       ]
     }
   }
@@ -252,10 +323,13 @@ indexed-at timestamp, and a snippet of the body.
 | `namespace_id` | string | yes | Namespace that contains the document |
 | `document_id` | string | yes | Identifier of the document to fetch |
 
-The Java side of each tool definition (input schema, description, name)
-lives in `src/main/java/io/searchable/example/mcp/tool/`. The list of
-tools that the server actually registers is built in `SearchableMcpApplication`
-(see `src/main/java/io/searchable/example/mcp/SearchableMcpApplication.java`).
+Each tool's **name** and **input schema** are defined in Java, in
+`src/main/java/io/searchable/example/mcp/tool/`. The **description**
+shown to clients can be overridden per tool via the `tools:` section of
+`mcp-capabilities.yaml`; absent an override, the Java-side default
+description is used. The list of tools the server actually registers is
+built in
+`src/main/java/io/searchable/example/mcp/SearchableMcpApplication.java`.
 
 ## Implemented JSON-RPC methods
 

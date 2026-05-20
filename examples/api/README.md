@@ -74,30 +74,51 @@ The response contains a `hits` array; `doc-1` should appear.
 
 For bulk ingestion (or to pre-build an index before the server boots),
 use [`searchable-cli`](../../searchable-cli/) against the **same
-`data-directory`** as the API server.
+`data-directory`** as the API server. The CLI's config describes
+**where the index lives**, not where the source documents live —
+those two are independent and usually sit in different locations.
 
 The API server's defaults come from
 [`application.properties`](./src/main/resources/application.properties);
 create a matching `searchable.yaml` for the CLI:
 
 ```yaml
+# searchable.yaml — describes the API SERVER'S DATA AREA.
+# Every path below points at storage that the API server itself owns
+# (Lucene index + metadata DB). NONE of these point at the source
+# documents to ingest — those are passed as an argument to the
+# `ingest` command further down and live wherever your docs actually
+# are (~/Documents/handbook, /srv/manuals, ...).
+
+# Root directory for everything the API server persists. Must match
+# the server's `searchable.data-directory` so both processes open the
+# same index.
 data-directory: ./data/api
+
+# Metadata DB (namespace registry, document↔index pointers).
+# Stored as an H2 file at ./data/api/metadata.mv.db.
 persistence:
   type: H2
   url: "jdbc:h2:./data/api/metadata;MODE=PostgreSQL"
   username: sa
   password: ""
+
+# Where the Lucene index files are written.
+# Lives under data-directory by convention.
 index:
   directory: ./data/api/indexes
 ```
 
-Then ingest a directory tree (or a single file) and search via the API
-as in Step 3:
+Then ingest documents from wherever they actually live, and search via
+the API as in Step 3:
 
 ```bash
+# Source path is independent of data-directory; pass any local path
+# (typically nothing to do with the API server's data area).
 ./searchable-cli/src/main/scripts/searchable \
   --config ./searchable.yaml \
-  ingest --namespace quickstart --source-type file ./path/to/docs
+  ingest --namespace quickstart --source-type file \
+  ~/Documents/handbook
 ```
 
 > The CLI also supports `delete`, `rebuild`, `status`, `backup`, and

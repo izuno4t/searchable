@@ -180,6 +180,21 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-154 | ✅ | docs/cli-guide.ja.md 整備 | TASK-101 |
 | TASK-155 | ✅ | docs/admin-guide.ja.md 整備 | TASK-113 |
 | TASK-156 | ✅ | `examples/plugin-datasource-s3` として S3 互換ストレージ取込のリファレンスプラグイン実装を追加(本体ビルド対象外の独立プロジェクト、`DataSourcePlugin` SPI 実装) | TASK-079,TASK-083 |
+| TASK-157 | ⏳ | 文書レベル metadata を Lucene stored field から専用の **metadata DB** に移管する仕様策定。検索結果は post-search で enrich する。`metadata.url` を URI 必須の予約キーとして `docs/architecture.md` / `docs/usage.ja.md` に明文化 | TASK-150,TASK-152 |
+| TASK-158 | ⏳ | `searchable-cli` `IngestCommand` で `metadata.url = path.toUri().toString()` を自動設定 | TASK-157,TASK-168 |
+| TASK-159 | ⏳ | `examples/webapp` `StartupIngestRunner` で `metadata.url` を自動設定し詳細ページに元ファイルリンクを表示 | TASK-157,TASK-168 |
+| TASK-160 | ⏳ | `examples/api` OpenAPI と `api-specification.ja.md` に `metadata.url` 規約を反映(reserved key 説明追加、生パス禁止) | TASK-153,TASK-157 |
+| TASK-161 | ⏳ | `examples/plugin-datasource-s3` の取込で `metadata.url = s3://bucket/key` を設定 | TASK-157,TASK-168 |
+| TASK-162 | ⏳ | `examples/search-ui` の `renderHit` を `hit.metadata.url` でリンク化 | TASK-157,TASK-169 |
+| TASK-163 | ⏳ | `ResultMerger.withScore` / `intersect` バグ修正: ハイブリッド経由で `SearchHit.subResults` が取りこぼされる問題を解消 | TASK-051 |
+| TASK-164 | ⏳ | ベクトル検索/ハイブリッド検索でのセクション anchor 方針を確定(`LuceneVectorSearcher` で SubResult を返すか、明示的に full-text 限定と明文化するか) | TASK-051,TASK-157 |
+| TASK-165 | ✅ | `examples/webapp` と `examples/api` の `pom.xml` から不要な `<classifier>boot</classifier>` を除去し、二重 repackage による起動時 StackOverflowError(`Start-Class: JarLauncher` の無限再帰)を修正 | TASK-119,TASK-130 |
+| TASK-166 | ✅ | `examples/*` の README に Quick start(インデックス→検索)節を追加し、`examples/` 配下が独立 Maven プロジェクトであることを明記。あわせて ccli 連携セクションで「ソースディレクトリと index ディレクトリは別物」を明示 | TASK-119,TASK-130,TASK-137,TASK-145 |
+| TASK-167 | ⏳ | `DocumentMetadataRepository` 実装(JDBC、H2/PostgreSQL 両対応)。PK は自然キー `(namespace_id, document_id)`(surrogate key は採らない)。スキーマ: `title` + `metadata_json` + `indexed_at` を保持する文書レジストリ。`DocumentSourceRepository`(change-detection 用)とは責務分離 | TASK-010,TASK-011,TASK-157 |
+| TASK-168 | ⏳ | `LuceneDocumentMapper` から `METADATA_JSON` および冗長な `NAMESPACE_ID` stored field を除去(Lucene index は既に Directory 単位で namespace 分割されているため)し、`IndexService` で `DocumentMetadataRepository` に書込むよう変更。`PARENT_ID` / `CHUNK_METADATA_JSON` / `INDEXED_AT_EPOCH` は残す | TASK-167 |
+| TASK-169 | ⏳ | `SearchService`(または新規 `SearchResultEnricher`)に metadata enrich 処理を実装。Lucene 検索後にバッチ `IN` クエリで metadata を一括取得し `SearchHit.metadata` に注入。`LuceneFullTextSearcher.toSubResult` の `anchorUrl` 生成ロジックを enricher 側に移管 | TASK-167,TASK-168 |
+| TASK-170 | ⏳ | `DocumentBrowser` を `DocumentMetadataRepository` ベースに書き換え。Lucene `MatchAllDocsQuery` 由来のチャンク重複・`totalHits` 不正・ソート/フィルタ不足を解消。`webapp/SearchController.detail` の `filter` workaround も同時に解消 | TASK-167 |
+| TASK-171 | ⏳ | 既存 Lucene index との互換性方針確定(rebuild 必須 or fallback 読み)+ マイグレーションノートを `docs/setup-guide.md` に記載 | TASK-168,TASK-169,TASK-170 |
 
 ## タスク詳細
 
@@ -268,6 +283,51 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 
 - 補足: 100k 件投入後の単一 Namespace 検索 p95 を計測。JMH またはカスタムベンチで自動化
 - 注意: ベクトル検索・ハイブリッド検索もそれぞれ別ケースで計測する
+
+### TASK-157
+
+- 補足: `LuceneFullTextSearcher` が既に `parentMetadata.get("url")` を `SubResult.anchorUrl` の base として読んでいる(TASK-051 連携)。これまで予約キーが未文書化だったため取り込み側 4 経路(cli / webapp / api / s3 プラグイン)で誰も埋めておらず、`SubResult.anchorUrl` も検索結果の origin 参照も実質機能していなかった。
+- 注意: 値は RFC 3986 形式の URI でスキーム必須(`file:///`, `http(s)://`, `ftp://`, `s3://`)。生パスは禁止。`Document.metadata` の他の予約キー(`category` / `lang` / `tags`)も同じ節で整理する。
+
+### TASK-158
+
+- 補足: `Path.toUri().toString()` が `file:///...` 形式の URI を生成(空白も自動でパーセントエンコード)。
+- 注意: 既存の `metadata.path` キーは後方互換として残し、`metadata.url` を新規追加。
+
+### TASK-159
+
+- 補足: 起動時バッチ ingest で `metadata.url` を埋め、`SearchController#detail` の Thymeleaf テンプレートに「元ファイルを開く」リンク(`hit.metadata.url`)を追加。
+- 注意: webapp 内部の詳細ページパス(`/documents/{ns}/{id}`)とは別の、原ファイル直リンク。
+
+### TASK-160
+
+- 補足: OpenAPI の `SearchHit.metadata` / `DocumentInput.metadata` の description に reserved keys 一覧と URI 制約を追記。
+- 注意: REST 経由でクライアントが生パスを送ってきた場合の挙動(現状は素通し)を明示し、推奨は URI 化と書く。
+
+### TASK-161
+
+- 補足: `S3DataSourcePlugin` の取込結果に `metadata.url = "s3://" + bucket + "/" + key` を設定。`endpointOverride` が設定されている場合の表記方針も統一する。
+- 注意: pre-signed URL は短命なので `metadata.url` には bare な `s3://` URI を入れる。
+
+### TASK-163
+
+- 補足: `ResultMerger.withScore` (L84-94) および `intersect` (L63-82) が `SearchHit` の 7 引数コンストラクタを使い `subResults = List.of()` で再構築するため、ハイブリッド経由でセクション結果が常に消えていた。
+- 注意: 8 引数版を使い `subResults` を保持。`ResultMergerTest` で RRF / intersect いずれも subResults 保持を検証するケースを追加。
+
+### TASK-164
+
+- 補足: `LuceneVectorSearcher.collectHits` が `subResults = List.of()` を返している。ベクトル空間ではセクション境界の意味付けが薄い場合があるため、実装するか、明示的に「セクション anchor は full-text のみ」と明文化するかを判断する。
+- 注意: 明文化のみで済ますなら `docs/usage.ja.md` / `docs/architecture.md` のサブ結果節に注記、`docs/vector-search-guide.md` にも一行入れる。
+
+### TASK-165
+
+- 補足: 親 POM(`spring-boot-starter-parent`)が `id=repackage` の execution を継承させているため、子側で `<id>` 省略の execution を追加すると 2 重 repackage が走る。1 度目の出力(`Main-Class: JarLauncher / Start-Class: SearchableApp`)を 2 度目が再 repackage して `Start-Class: JarLauncher` の `-boot.jar` を作っていた → `JarLauncher.main` が自分自身を起動し続けて StackOverflowError。
+- 注意: 修正後の成果物は `*-1.0.0-SNAPSHOT.jar` のみ(`-boot` 接尾辞なし)。README 系も追従済み。
+
+### TASK-166
+
+- 補足: 各サンプル README に Run + Quick start(index → search) 一連の手順を追加。mcp は書込 IF が無いため事前 ingest 必須を冒頭で明示。search-ui は API 前提クライアントである旨を明示。
+- 注意: `examples/README.md` には共通プレリク(searchable-core install / ccli ビルド)と「ccli の searchable.yaml は index の場所であり、ドキュメントソースとは別」の概念整理だけ置き、詳細は子 README に委譲する構成。
 
 ## バックログ一覧
 
