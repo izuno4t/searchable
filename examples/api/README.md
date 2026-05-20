@@ -9,13 +9,99 @@ optional API key authentication and CORS.
 
 ## Run
 
+`examples/api` is a stand-alone Maven project (not part of the root
+reactor), so use `-f` to point at its POM. The build requires
+`searchable-core` to be installed in the local `~/.m2` first:
+
 ```bash
-mvn -pl examples/api -am package
+mvn -B clean install -DskipTests           # at repository root
+mvn -B -f examples/api/pom.xml package
 java -jar examples/api/target/api-example-1.0.0-SNAPSHOT.jar \
      --spring.config.location=examples/api/application.properties
 ```
 
 The server listens on `http://localhost:8080` by default.
+
+## Quick start: index and search
+
+End-to-end walkthrough: create a namespace, index a document, and
+search it — all via `curl`.
+
+### Step 1. Create a namespace
+
+```bash
+curl -X POST http://localhost:8080/api/v1/namespaces \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": "quickstart",
+    "name": "Quickstart",
+    "config": {"architecture": "FULL_TEXT"}
+  }'
+```
+
+### Step 2. Index a document
+
+```bash
+curl -X POST http://localhost:8080/api/v1/index/documents \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "namespaceId": "quickstart",
+    "document": {
+      "id": "doc-1",
+      "title": "Searchable について",
+      "content": "Searchable は日本語形態素解析に対応した全文検索ライブラリです。"
+    }
+  }'
+```
+
+For larger imports use `POST /api/v1/index/batch` (see
+[`api-specification.ja.md`](./api-specification.ja.md)).
+
+### Step 3. Search
+
+```bash
+curl -X POST http://localhost:8080/api/v1/search \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": "形態素解析",
+    "namespaceIds": ["quickstart"]
+  }'
+```
+
+The response contains a `hits` array; `doc-1` should appear.
+
+### Alternative: index with `searchable-cli`
+
+For bulk ingestion (or to pre-build an index before the server boots),
+use [`searchable-cli`](../../searchable-cli/) against the **same
+`data-directory`** as the API server.
+
+The API server's defaults come from
+[`application.properties`](./src/main/resources/application.properties);
+create a matching `searchable.yaml` for the CLI:
+
+```yaml
+data-directory: ./data/api
+persistence:
+  type: H2
+  url: "jdbc:h2:./data/api/metadata;MODE=PostgreSQL"
+  username: sa
+  password: ""
+index:
+  directory: ./data/api/indexes
+```
+
+Then ingest a directory tree (or a single file) and search via the API
+as in Step 3:
+
+```bash
+./searchable-cli/src/main/scripts/searchable \
+  --config ./searchable.yaml \
+  ingest --namespace quickstart --source-type file ./path/to/docs
+```
+
+> The CLI also supports `delete`, `rebuild`, `status`, `backup`, and
+> `restore`. See [`searchable-cli/README.md`](../../searchable-cli/README.md).
 
 ## Authentication
 

@@ -96,7 +96,9 @@ class SseTransportTest {
     private static McpCapabilitiesConfig capabilities() {
         return new McpCapabilitiesConfig(
             new McpCapabilitiesConfig.ServerInfo("searchable-mcp", "1.0.0"),
-            Map.of("tools", Map.of()));
+            null,
+            Map.of("tools", Map.of()),
+            Map.of());
     }
 
     /** Trivial tool used to exercise the transport without depending on Lucene. */

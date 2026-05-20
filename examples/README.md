@@ -100,6 +100,74 @@ AI クライアント (Claude Desktop 等) から Searchable の検索機能を
 mvn -B clean install -DskipTests
 ```
 
+## サンプルを試す（インデックス登録 → 検索の最短ルート）
+
+各サンプルの個別 README に **Quick start** セクションを設けており、
+そこにアプリの起動・インデックス登録・検索までを 1 本のシナリオで
+記載している。本節では全サンプル共通の前提と選択肢のみを示す。
+
+### 共通の前準備
+
+1. ライブラリ本体を install（`searchable-core` などのコア JAR をローカル
+   `~/.m2` に配置）。
+
+   ```bash
+   mvn -B clean install -DskipTests
+   ```
+
+2. `searchable-cli`（後述）を使う場合はビルドしておく。
+
+   ```bash
+   mvn -pl searchable-cli -am clean package
+   ```
+
+### インデックス登録の 2 つの選択肢
+
+各サンプルアプリには **アプリ経由で投入する経路** と
+**`searchable-cli` (ccli) で投入する経路** の 2 通りが用意してある。
+どちらを選んでも、最終的に同じ Lucene インデックス（`data-directory`
+配下）に書き込まれる。
+
+| 経路 | 仕組み | こんなときに |
+| --- | --- | --- |
+| **アプリ経由** | 各サンプル固有の書き込み IF（REST API、起動時バッチ ingest など）から登録 | アプリと同じプロセスで完結させたい / 認証や検証付きで投入したい |
+| **ccli 経由** | `searchable-cli` の `ingest` サブコマンドで、アプリと同じ `data-directory` を指す `searchable.yaml` を使って投入 | 大量データを一括投入したい / アプリを起動せずに事前構築したい / 読み取り専用のサンプル (`mcp`, `search-ui`) でインデックスを用意したい |
+
+ccli 経路を採るときの肝は **アプリと CLI で同じ `data-directory` を指す
+設定にする** こと。たとえば次の `searchable.yaml` を用意すれば、
+`examples/webapp` のデフォルトデータディレクトリ
+（`./data/webapp`）を CLI からも触れる。
+
+```yaml
+data-directory: ./data/webapp
+persistence:
+  type: H2
+  url: "jdbc:h2:./data/webapp/metadata;MODE=PostgreSQL"
+  username: sa
+  password: ""
+index:
+  directory: ./data/webapp/indexes
+```
+
+```bash
+./searchable-cli/src/main/scripts/searchable \
+  --config ./searchable.yaml \
+  ingest --namespace default --source-type file ./path/to/docs
+```
+
+### サンプル別の特性
+
+| サンプル | アプリ経由の書き込み | ccli 経路の必要性 |
+| --- | --- | --- |
+| [`api`](api/) | `POST /api/v1/index/documents` 等の REST | 任意（大量データなら推奨） |
+| [`webapp`](webapp/) | `searchable.ingest.enabled=true` での起動時バッチ ingest | 任意（任意のタイミングで再ingest したい場合に有効） |
+| [`mcp`](mcp/) | **なし**（MCP サーバーは読み取り専用） | **必須**（事前に ccli か `api` でインデックスを構築） |
+| [`search-ui`](search-ui/) | **なし**（静的クライアント） | アプリ経由・ccli いずれも可（`api` 側に投入） |
+| [`plugin-datasource-s3`](plugin-datasource-s3/) | プラグインを組み込んだホスト側で起動時 ingest | ccli にプラグインを乗せる構成も可（[verify.md](plugin-datasource-s3/verify.md) 参照） |
+
+詳しいコマンド例とサンプルデータ投入方法は各サンプルの README の
+`Quick start` 節を参照する。
+
 ## サンプルの位置付け
 
 - いずれも **リファレンス実装**。プロダクション用途では認証・監査・運用要件を

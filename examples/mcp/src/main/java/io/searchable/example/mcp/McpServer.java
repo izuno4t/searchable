@@ -116,17 +116,32 @@ public final class McpServer {
     }
 
     private Map<String, Object> initializeResult() {
-        return Map.of(
-            "protocolVersion", PROTOCOL_VERSION,
-            "capabilities", capabilities.capabilities(),
-            "serverInfo", Map.of(
-                "name", capabilities.serverInfo().name(),
-                "version", capabilities.serverInfo().version())
-        );
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("protocolVersion", PROTOCOL_VERSION);
+        result.put("capabilities", capabilities.capabilities());
+        result.put("serverInfo", Map.of(
+            "name", capabilities.serverInfo().name(),
+            "version", capabilities.serverInfo().version()));
+        if (capabilities.instructions() != null && !capabilities.instructions().isBlank()) {
+            result.put("instructions", capabilities.instructions());
+        }
+        return result;
     }
 
     private List<ToolDefinition> toolList() {
-        return tools.values().stream().map(McpTool::definition).toList();
+        return tools.values().stream()
+            .map(McpTool::definition)
+            .map(this::applyOverride)
+            .toList();
+    }
+
+    private ToolDefinition applyOverride(final ToolDefinition base) {
+        final McpCapabilitiesConfig.ToolOverride override = capabilities.tools().get(base.name());
+        if (override == null || override.description() == null
+            || override.description().isBlank()) {
+            return base;
+        }
+        return new ToolDefinition(base.name(), override.description(), base.inputSchema());
     }
 
     private JsonRpcMessage.Response handleToolsCall(final JsonRpcMessage.Request req) {

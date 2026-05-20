@@ -73,7 +73,9 @@ class SearchDocumentsToolIntegrationTest {
         server = new McpServer(json, List.of(new SearchDocumentsTool(searchService, json)),
             new McpCapabilitiesConfig(
                 new McpCapabilitiesConfig.ServerInfo("searchable-mcp", "1.0.0"),
-                Map.of("tools", Map.of())));
+                null,
+                Map.of("tools", Map.of()),
+                Map.of()));
     }
 
     @AfterEach

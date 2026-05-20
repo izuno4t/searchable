@@ -14,8 +14,12 @@ The Japanese walkthrough lives in [`guide.ja.md`](./guide.ja.md).
 
 ## Build
 
+`examples/mcp` is a stand-alone Maven project (not part of the root
+reactor). Install the library first, then build:
+
 ```bash
-mvn -pl examples/mcp -am package
+mvn -B clean install -DskipTests           # at repository root
+mvn -B -f examples/mcp/pom.xml package
 ```
 
 Artifacts:
@@ -57,30 +61,41 @@ global:
 
 ### `mcp-capabilities.yaml`
 
+This file is a **pure override layer**. The Java code provides sensible
+defaults; every field below is optional unless noted.
+
 ```yaml
 server-info:
-  name: searchable-mcp
-  version: 1.0.0
+  name: searchable-mcp        # required
+  # version: 1.0.0            # optional — defaults to the Maven version
 
-capabilities:
-  tools: {}
-```
+instructions: |               # optional — surfaced in InitializeResult
+  Use Searchable when the user's question may be answered by their own
+  indexed documents.
 
-The `protocolVersion` field of `InitializeResult` is bound to the server
-implementation and is not configurable here — it is updated together with
-the code when this example upgrades to a newer MCP specification.
-
-`capabilities` is passed through verbatim. Future MCP options such as
-`tools.listChanged` or `resources.listChanged` can be enabled by editing
-this file alone:
-
-```yaml
-capabilities:
+capabilities:                 # passed through verbatim to the client
   tools:
-    listChanged: true
-  resources:
     listChanged: false
+
+tools:                        # optional per-tool description overrides
+  search_documents:
+    description: |
+      Search the user's document namespaces. Default to HYBRID search.
 ```
+
+Field-by-field behaviour:
+
+| Field | Required | Default |
+| --- | --- | --- |
+| `server-info.name` | yes | — |
+| `server-info.version` | no | Maven version from `searchable-mcp.properties` (filtered at build time) |
+| `instructions` | no | Omitted from `InitializeResult` |
+| `capabilities` | no | Empty object |
+| `tools.<name>.description` | no | The Java-side default from each `McpTool.definition()` |
+
+The `protocolVersion` field of `InitializeResult` is **not** configurable
+here — it is bound to the server implementation and updates together
+with the code when this example moves to a newer MCP specification.
 
 ### Resolution order
 
@@ -109,6 +124,85 @@ java -jar examples/mcp/target/mcp-example-1.0.0-SNAPSHOT.jar \
 - JSON-RPC requests are read from `stdin`, one per line.
 - JSON-RPC responses are written to `stdout`, one per line.
 - All logs go to `stderr` so they do not contaminate the protocol stream.
+
+## Quick start: populate the index and search
+
+> **The MCP server is read-only.** It exposes `search_documents` and
+> `get_document` but has no write tools — there is no MCP method that
+> indexes documents. You must build the index out of band (with
+> `searchable-cli` or with the [`examples/api`](../api/) server) before
+> the MCP tools return anything.
+
+### Step 1. Build an index
+
+Pick **one** of the two approaches below. Both write to the same Lucene
+index on disk; the MCP server only needs to point at the same
+`data-directory`.
+
+#### 1a. Using `searchable-cli` (simplest)
+
+Create a `searchable.yaml` that the MCP server will also use, then run
+`ingest`:
+
+```yaml
+# searchable.yaml
+data-directory: ./data/mcp
+persistence:
+  type: H2
+  url: "jdbc:h2:./data/mcp/metadata;MODE=PostgreSQL"
+  username: sa
+  password: ""
+index:
+  directory: ./data/mcp/indexes
+global:
+  default-architecture: HYBRID
+  default-search-strategy: PARALLEL
+  default-search-order: FULL_TEXT_FIRST
+```
+
+```bash
+./searchable-cli/src/main/scripts/searchable \
+  --config ./searchable.yaml \
+  ingest --namespace default --source-type file ./path/to/docs
+```
+
+#### 1b. Using `examples/api`
+
+Boot the [REST API example](../api/) against the same
+`data-directory` (set `searchable.data-directory=./data/mcp` in its
+`application.properties`) and POST documents as described in
+[`examples/api/README.md`](../api/README.md). Shut the API server down
+when ingestion is complete; the MCP server will reopen the index
+read-only.
+
+### Step 2. Start the MCP server
+
+Use the `--config` produced in Step 1:
+
+```bash
+java -jar examples/mcp/target/mcp-example-1.0.0-SNAPSHOT.jar \
+  --config ./searchable.yaml \
+  --mcp-capabilities ./mcp-capabilities.yaml
+```
+
+### Step 3. Call `search_documents`
+
+For a manual smoke test, pipe JSON-RPC frames into stdin. The example
+below performs the handshake, lists tools, then calls
+`search_documents`:
+
+```bash
+{
+  printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"manual","version":"0.0"}}}'
+  printf '%s\n' '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+  printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"search_documents","arguments":{"query":"形態素解析","namespace_ids":["default"]}}}'
+} | java -jar examples/mcp/target/mcp-example-1.0.0-SNAPSHOT.jar \
+       --config ./searchable.yaml \
+       --mcp-capabilities ./mcp-capabilities.yaml
+```
+
+In production the client is an AI runtime such as Claude Desktop —
+see the next section.
 
 ## Claude Desktop integration
 

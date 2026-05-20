@@ -70,6 +70,77 @@ real S3 endpoint, follow [verify.md](verify.md). The procedure spins up
 a local MinIO container, uploads two sample documents, and runs
 `VerifyMain` via `mvn exec:java` — all in roughly a minute.
 
+## Quick start: ingest from S3 into a sample app and search
+
+This plugin has no runtime of its own; it is meant to be loaded by a
+host process that embeds `searchable-core`. Below is the end-to-end
+flow using [`searchable-cli`](../../searchable-cli/) as the host
+(simplest); the same configuration shape works for `examples/api` and
+`examples/webapp`.
+
+### Step 1. Build everything
+
+```bash
+mvn -B clean install -DskipTests                                # core
+mvn -B -f examples/plugin-datasource-s3/pom.xml package         # plugin
+mvn -pl searchable-cli -am clean package                        # host
+```
+
+### Step 2. Put the plugin on the classpath
+
+Copy the plugin JAR (plus its `aws-sdk` transitive dependencies under
+`target/lib/`) into the CLI's `lib/` directory or into a directory
+referenced by the host's `plugins.directory`:
+
+```bash
+mkdir -p ./plugins
+cp examples/plugin-datasource-s3/target/*.jar ./plugins/
+cp examples/plugin-datasource-s3/target/lib/*.jar ./plugins/
+```
+
+### Step 3. Point a namespace at the plugin
+
+```yaml
+# searchable.yaml
+data-directory: ./data/s3-demo
+persistence:
+  type: H2
+  url: "jdbc:h2:./data/s3-demo/metadata;MODE=PostgreSQL"
+  username: sa
+  password: ""
+index:
+  directory: ./data/s3-demo/indexes
+plugins:
+  directory: ./plugins
+
+namespaces:
+  s3docs:
+    plugin:
+      name: s3
+      config:
+        bucket: my-docs
+        region: ap-northeast-1
+        prefix: production/
+        # endpointOverride: http://localhost:9000   # for MinIO
+```
+
+### Step 4. Ingest and search
+
+```bash
+# Ingest via the plugin (source-type=plugin uses the bound DataSourcePlugin)
+./searchable-cli/src/main/scripts/searchable \
+  --config ./searchable.yaml \
+  ingest --namespace s3docs --source-type plugin
+
+# Confirm the index has documents
+./searchable-cli/src/main/scripts/searchable \
+  --config ./searchable.yaml status
+```
+
+To search the freshly built index, point any sample app
+(`examples/api`, `examples/webapp`, or `examples/mcp`) at the same
+`data-directory` — they will reopen the index transparently.
+
 ## Limitations (intentional for an example)
 
 - Object bodies are decoded as UTF-8 text. Binary formats (PDF, Office,

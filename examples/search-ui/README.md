@@ -34,6 +34,41 @@ By default the UI calls the same-origin `/api/v1/search` endpoint. Click
 `http://localhost:8080/api/v1/search`); the value is persisted in
 `localStorage` so subsequent reloads keep it.
 
+## Quick start: index and search
+
+This sample is a **client only** — it owns no index. You need a running
+[`examples/api`](../api/) (or any compatible search backend) with
+documents already indexed.
+
+### Step 1. Boot the API and index some documents
+
+Follow the Quick start in [`examples/api/README.md`](../api/README.md):
+package and start `examples/api`, then POST a namespace and at least
+one document. Alternatively, ingest with `searchable-cli` against the
+same `data-directory` as the API.
+
+Make sure CORS is enabled on the API when `search-ui` and `api` are on
+different origins. In
+`examples/api/src/main/resources/application.properties`:
+
+```properties
+searchable.cors.allowed-origins=http://localhost:8081
+```
+
+### Step 2. Serve the UI
+
+```bash
+cd examples/search-ui
+python3 -m http.server 8081
+```
+
+### Step 3. Search
+
+Open <http://localhost:8081/>, click "変更" in the footer and point at
+`http://localhost:8080/api/v1/search`, then type a query into the
+search box. Hits that the API returns render with `<mark>` highlights
+and facet counts in the sidebar.
+
 ## Features (TASK-131 .. TASK-136)
 
 | Feature | Source |

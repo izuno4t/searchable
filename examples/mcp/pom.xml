@@ -76,6 +76,25 @@
     </dependencies>
 
     <build>
+        <resources>
+            <!-- Filter only the build metadata file so it can pick up
+                 ${project.version}; leave everything else (logback.xml, etc.)
+                 untouched so that @-placeholders in other files survive. -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>searchable-mcp.properties</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>searchable-mcp.properties</exclude>
+                </excludes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

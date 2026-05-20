@@ -6,37 +6,79 @@
 #   2. ./mcp-capabilities.yaml in the current working directory
 # The server refuses to start if neither is available.
 #
+# Override model: Java code provides sensible defaults (server version
+# from Maven, per-tool description on each McpTool implementation). This
+# file is purely for *overriding* those defaults at deployment time —
+# every field below is optional unless noted.
+#
 # Property names use kebab-case to match `searchable.yaml`.
 
-# `server-info` -> the `Implementation` block.
+# `server-info` -> the `Implementation` block returned to clients.
 # Clients (Claude Desktop, etc.) display `name` next to the tool palette.
 server-info:
   name: searchable-mcp
-  version: 1.0.0
+  # `version` defaults to this module's Maven version (filtered into
+  # searchable-mcp.properties at build time). Set explicitly when you
+  # want the public-facing version to drift from the build version.
+  # version: 1.0.0
+
+# `instructions` -> the `InitializeResult.instructions` field. Clients
+# pass this to the LLM as guidance for *when* to invoke this server.
+# Optional — omit to send no instructions.
+instructions: |
+  Searchable is a Japanese-optimized hybrid search engine over indexed
+  document namespaces.
+
+  Use this server whenever the user asks something that might be
+  answered by their own indexed documents, technical knowledge bases,
+  or any content previously ingested into Searchable.
+
+  - `search_documents` for keyword / semantic / hybrid retrieval.
+    Default to HYBRID search unless the user clearly asks for one
+    specific mode.
+  - `get_document` only after you already know both `namespace_id`
+    and `document_id` (typically from a prior search hit).
 
 # `capabilities` -> the `ServerCapabilities` block.
 #
-# Each top-level key advertises a capability category. The inner object is
-# passed through to the client verbatim, so you can wire up newer MCP
-# spec options by editing this file alone (no recompile needed).
-#
-# This example registers tools at startup and exposes nothing else, so
-# only the `tools` category is enabled. Uncomment the other entries when
-# you extend the server to support them.
+# Each top-level key advertises a capability category. The inner object
+# is passed through verbatim, so you can wire up newer MCP spec options
+# by editing this file alone.
 capabilities:
   tools:
-    # Set to true if your server emits notifications/tools/list_changed
-    # at runtime. This example registers tools once at boot, so false.
+    # This example registers tools once at boot; flip to true if you
+    # add runtime tool reload and want clients to subscribe.
     listChanged: false
 
   # resources:
-  #   # Notify clients when the resource list changes.
   #   listChanged: true
-  #   # Allow clients to subscribe to individual resource updates.
   #   subscribe: true
-
   # prompts:
   #   listChanged: true
-
-  # # An empty object means "supported, no sub-options".
   # logging: {}
+
+# Per-tool description overrides. Keys must match the tool name as
+# registered in Java. Each override replaces the Java-side default
+# description in `tools/list` responses; omit a tool (or this whole
+# block) to keep the Java default.
+tools:
+  search_documents:
+    description: |
+      Search the user's document namespaces (Searchable index).
+      Call this whenever the user asks a question that might be
+      answered by their own indexed documents.
+
+      Arguments:
+        - query (required): natural-language or keyword query
+        - namespace_ids (optional): restrict to specific namespaces
+        - search_type (optional): FULL_TEXT / VECTOR / HYBRID
+          (defaults to the namespace's configured strategy; prefer
+          HYBRID when the user's intent is ambiguous)
+        - max_results (optional, default 10): cap on returned hits
+
+  get_document:
+    description: |
+      Fetch a single indexed document by namespace and id, returning
+      its title, indexed-at timestamp, and a body snippet. Use this
+      after a `search_documents` hit when the user wants the full
+      context of a specific result.

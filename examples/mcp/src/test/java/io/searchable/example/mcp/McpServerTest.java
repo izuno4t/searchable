@@ -32,7 +32,9 @@ class McpServerTest {
         server = new McpServer(json, List.of(tool),
             new McpCapabilitiesConfig(
                 new McpCapabilitiesConfig.ServerInfo("searchable-mcp", "1.0.0"),
-                Map.of("tools", Map.of())));
+                null,
+                Map.of("tools", Map.of()),
+                Map.of()));
     }
 
     private JsonNode roundTrip(final String request) throws Exception {
@@ -54,6 +56,50 @@ class McpServerTest {
         assertThat(response.get("result").get("serverInfo").get("name").asText())
             .isEqualTo("searchable-mcp");
         assertThat(response.get("result").get("capabilities").has("tools")).isTrue();
+        // instructions absent when not configured
+        assertThat(response.get("result").has("instructions")).isFalse();
+    }
+
+    @Test
+    void initializeIncludesInstructionsWhenConfigured() throws Exception {
+        server = new McpServer(json, List.of(tool), new McpCapabilitiesConfig(
+            new McpCapabilitiesConfig.ServerInfo("searchable-mcp", "1.0.0"),
+            "Use this server for indexed-document lookups.",
+            Map.of("tools", Map.of()),
+            Map.of()));
+
+        final JsonNode response = roundTrip(
+            "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}");
+
+        assertThat(response.get("result").get("instructions").asText())
+            .isEqualTo("Use this server for indexed-document lookups.");
+    }
+
+    @Test
+    void toolsListAppliesDescriptionOverride() throws Exception {
+        server = new McpServer(json, List.of(tool), new McpCapabilitiesConfig(
+            new McpCapabilitiesConfig.ServerInfo("searchable-mcp", "1.0.0"),
+            null,
+            Map.of("tools", Map.of()),
+            Map.of("echo", new McpCapabilitiesConfig.ToolOverride("Overridden echo description."))));
+
+        final JsonNode response = roundTrip(
+            "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\"}");
+
+        final JsonNode echoTool = response.get("result").get("tools").get(0);
+        assertThat(echoTool.get("name").asText()).isEqualTo("echo");
+        assertThat(echoTool.get("description").asText())
+            .isEqualTo("Overridden echo description.");
+    }
+
+    @Test
+    void toolsListFallsBackToJavaDescriptionWithoutOverride() throws Exception {
+        // server (in @BeforeEach) has no tool overrides
+        final JsonNode response = roundTrip(
+            "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\"}");
+
+        assertThat(response.get("result").get("tools").get(0).get("description").asText())
+            .isEqualTo("echo the text");
     }
 
     @Test

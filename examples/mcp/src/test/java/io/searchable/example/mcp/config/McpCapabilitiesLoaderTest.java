@@ -19,6 +19,45 @@ class McpCapabilitiesLoaderTest {
         assertThat(config.serverInfo().name()).isEqualTo("searchable-mcp");
         assertThat(config.serverInfo().version()).isNotBlank();
         assertThat(config.capabilities()).containsKey("tools");
+        assertThat(config.instructions()).isNotBlank();
+        assertThat(config.tools()).containsKey("search_documents");
+        assertThat(config.tools().get("search_documents").description()).isNotBlank();
+    }
+
+    @Test
+    void omittedVersionFallsBackToBuildVersion(@TempDir final Path tmp) throws Exception {
+        final Path yaml = tmp.resolve("no-version.yaml");
+        Files.writeString(yaml, """
+            server-info:
+              name: searchable-mcp
+            capabilities:
+              tools: {}
+            """);
+
+        final McpCapabilitiesConfig config = new McpCapabilitiesLoader().load(yaml);
+
+        // Version must be populated; either the real Maven version (when
+        // resources have been filtered) or the VERSION_FALLBACK sentinel.
+        assertThat(config.serverInfo().version()).isNotBlank();
+        assertThat(config.serverInfo().version())
+            .isEqualTo(McpCapabilitiesLoader.defaultVersion());
+    }
+
+    @Test
+    void blankVersionFallsBackToBuildVersion(@TempDir final Path tmp) throws Exception {
+        final Path yaml = tmp.resolve("blank-version.yaml");
+        Files.writeString(yaml, """
+            server-info:
+              name: searchable-mcp
+              version: ""
+            capabilities:
+              tools: {}
+            """);
+
+        final McpCapabilitiesConfig config = new McpCapabilitiesLoader().load(yaml);
+
+        assertThat(config.serverInfo().version())
+            .isEqualTo(McpCapabilitiesLoader.defaultVersion());
     }
 
     @Test
