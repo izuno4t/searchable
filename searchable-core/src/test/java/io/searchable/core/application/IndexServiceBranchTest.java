@@ -13,7 +13,7 @@ import io.searchable.core.infrastructure.lucene.LuceneIndexer;
 import io.searchable.core.infrastructure.persistence.DataSourceFactory;
 import io.searchable.core.infrastructure.persistence.PersistenceConfig;
 import io.searchable.core.infrastructure.persistence.SchemaInitializer;
-import io.searchable.core.infrastructure.persistence.jdbc.JdbcDocumentSourceRepository;
+import io.searchable.core.infrastructure.persistence.jdbc.JdbcDocumentMetadataRepository;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcIndexMetadataRepository;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcNamespaceRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -42,7 +42,7 @@ class IndexServiceBranchTest {
     private LuceneIndexProvider provider;
     private JdbcNamespaceRepository namespaces;
     private JdbcIndexMetadataRepository metadata;
-    private JdbcDocumentSourceRepository sources;
+    private JdbcDocumentMetadataRepository metadataRepo;
     private LuceneIndexer indexer;
     private Clock clock;
 
@@ -55,7 +55,7 @@ class IndexServiceBranchTest {
             new IndexLayout(tempDir.resolve("indexes")), AnalyzerFactory.japanese());
         namespaces = new JdbcNamespaceRepository(dataSource);
         metadata = new JdbcIndexMetadataRepository(dataSource);
-        sources = new JdbcDocumentSourceRepository(dataSource);
+        metadataRepo = new JdbcDocumentMetadataRepository(dataSource);
         final EmbeddingProvider embedding = new HashEmbeddingProvider(128);
         indexer = new LuceneIndexer(provider, embedding);
         clock = Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC);
@@ -72,8 +72,8 @@ class IndexServiceBranchTest {
     }
 
     @Test
-    void indexIfChangedFallsBackToPlainIndexWhenNoSourceRepoConfigured() {
-        // No documentSources param -> indexIfChanged short-circuits to index().
+    void indexIfChangedFallsBackToPlainIndexWhenNoMetadataRepoConfigured() {
+        // No documentMetadata param -> indexIfChanged short-circuits to index().
         final IndexService service = new IndexService(namespaces, metadata, provider, indexer, clock);
         final Document d = Document.builder().id("d").namespaceId("bn")
             .title("t").content("c").build();
@@ -84,27 +84,27 @@ class IndexServiceBranchTest {
     @Test
     void effectiveHashHonoursPreSuppliedContentHash() {
         final IndexService service = new IndexService(namespaces, metadata, provider, indexer,
-            sources, clock);
+            metadataRepo, clock);
         final DocumentSource src = new DocumentSource("file", "/a", "PRECOMPUTED_HASH",
             Instant.parse("2026-05-15T00:00:00Z"));
         final Document withHash = Document.builder().id("hashed").namespaceId("bn")
             .title("t").content("c").source(src).build();
 
         assertThat(service.indexIfChanged(withHash)).isTrue();
-        assertThat(sources.findByDocumentId("bn", "hashed").orElseThrow().contentHash())
+        assertThat(metadataRepo.findById("bn", "hashed").orElseThrow().source().contentHash())
             .isEqualTo("PRECOMPUTED_HASH");
     }
 
     @Test
     void recordSourcePreservesExistingTypeAndLocation() {
         final IndexService service = new IndexService(namespaces, metadata, provider, indexer,
-            sources, clock);
+            metadataRepo, clock);
         final DocumentSource src = new DocumentSource("url", "https://e.x", null, null);
         final Document withSrc = Document.builder().id("rs").namespaceId("bn")
             .title("t").content("c").source(src).build();
         service.index(withSrc);
 
-        final DocumentSource saved = sources.findByDocumentId("bn", "rs").orElseThrow();
+        final DocumentSource saved = metadataRepo.findById("bn", "rs").orElseThrow().source();
         assertThat(saved.type()).isEqualTo("url");
         assertThat(saved.location()).isEqualTo("https://e.x");
         assertThat(saved.contentHash()).isNotNull();
@@ -113,7 +113,7 @@ class IndexServiceBranchTest {
     @Test
     void indexBatchMarksErrorWhenIndexerThrows() {
         final IndexService service = new IndexService(namespaces, metadata, provider, indexer,
-            sources, clock);
+            metadataRepo, clock);
         // A document referencing a missing namespace will cause the indexer
         // to throw, exercising the catch block.
         final Document bad = Document.builder().id("d").namespaceId("missing")
@@ -125,7 +125,7 @@ class IndexServiceBranchTest {
     @Test
     void getMetadataThrowsForUnknownNamespace() {
         final IndexService service = new IndexService(namespaces, metadata, provider, indexer,
-            sources, clock);
+            metadataRepo, clock);
         assertThatThrownBy(() -> service.getMetadata("never-existed"))
             .isInstanceOf(java.util.NoSuchElementException.class);
     }
@@ -133,7 +133,7 @@ class IndexServiceBranchTest {
     @Test
     void rebuildResetsLifecycleStatusToReady() {
         final IndexService service = new IndexService(namespaces, metadata, provider, indexer,
-            sources, clock);
+            metadataRepo, clock);
         service.rebuild("bn");
         assertThat(service.getMetadata("bn").status()).isEqualTo(IndexStatus.READY);
     }

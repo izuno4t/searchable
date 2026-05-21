@@ -137,6 +137,16 @@ curl -X POST http://localhost:8080/api/v1/search \
 `searchType` を省略した場合、対象 Namespace の `architecture`
 設定が使われる。
 
+### セクション anchor (`SubResult`) の対象範囲
+
+`SubResult` および `SubResult.anchorUrl` は **full-text 検索でのみ生成**
+される。ベクトル検索(`VECTOR`)単体の結果には `subResults` が含まれない
+(`SubResult` のセクション分割はベクトル空間では意味付けが薄いため、明示的に
+全文検索限定としている)。ハイブリッド検索(`HYBRID`)の結果は内部で
+full-text とベクトルをマージするため、full-text 経由で見つかった文書には
+`subResults` が付き、ベクトル経由で見つかった文書には付かない。詳細は
+[docs/architecture.md §5.7](architecture.md) 参照。
+
 ## 5. インデックス構築
 
 ベクトル付きインデックスは通常通り `/api/v1/index/documents` または

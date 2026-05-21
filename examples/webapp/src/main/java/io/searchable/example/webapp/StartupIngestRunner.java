@@ -72,11 +72,12 @@ public class StartupIngestRunner implements CommandLineRunner {
                         .namespaceId(namespaceId)
                         .title(parsedDoc.title())
                         .content(parsedDoc.content())
-                        // url is the reserved metadata key for the
-                        // document origin (see docs/architecture.md §5.7).
+                        // url / contentType are reserved metadata keys
+                        // (see docs/architecture.md §5.7).
                         .metadata(java.util.Map.of(
                             "url", absolute.toUri().toString(),
-                            "path", absolute.toString()))
+                            "path", absolute.toString(),
+                            "contentType", parsed.contentType()))
                         .indexedAt(Instant.now())
                         .build());
                 } catch (Exception e) {

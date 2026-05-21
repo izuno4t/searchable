@@ -9,7 +9,7 @@ import io.searchable.core.domain.embedding.EmbeddingProvider;
 import io.searchable.core.infrastructure.embedding.HashEmbeddingProvider;
 import io.searchable.core.infrastructure.lucene.AnalyzerFactory;
 import io.searchable.core.infrastructure.persistence.PersistenceConfig;
-import io.searchable.core.infrastructure.persistence.jdbc.JdbcDocumentSourceRepository;
+import io.searchable.core.infrastructure.persistence.jdbc.JdbcDocumentMetadataRepository;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcIndexMetadataRepository;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcNamespaceRepository;
 import io.searchable.core.infrastructure.dictionary.JdbcUserDictionaryRepository;
@@ -52,7 +52,7 @@ class SearchableLibraryBuilderTest {
         final var nsRepo = new JdbcNamespaceRepository(db.dataSource());
         final var metaRepo = new JdbcIndexMetadataRepository(db.dataSource());
         final var dictRepo = new JdbcUserDictionaryRepository(db.dataSource());
-        final var docSrcRepo = new JdbcDocumentSourceRepository(db.dataSource());
+        final var docMetaRepo = new JdbcDocumentMetadataRepository(db.dataSource());
         final var globalCfg = GlobalConfig.defaults();
         final var globalProvider = new GlobalConfigProvider(globalCfg);
         final EmbeddingProvider embedding = new HashEmbeddingProvider(128);
@@ -67,7 +67,7 @@ class SearchableLibraryBuilderTest {
                 .namespaceRepository(nsRepo)
                 .indexMetadataRepository(metaRepo)
                 .dictionaryRepository(dictRepo)
-                .documentSourceRepository(docSrcRepo)
+                .documentMetadataRepository(docMetaRepo)
                 .globalConfig(globalCfg)
                 .globalConfigProvider(globalProvider)
                 .embeddingProvider(embedding)
@@ -81,7 +81,7 @@ class SearchableLibraryBuilderTest {
             assertThat(lib.namespaceRepository()).isSameAs(nsRepo);
             assertThat(lib.indexMetadataRepository()).isSameAs(metaRepo);
             assertThat(lib.dictionaryRepository()).isSameAs(dictRepo);
-            assertThat(lib.documentSourceRepository()).isSameAs(docSrcRepo);
+            assertThat(lib.documentMetadataRepository()).isSameAs(docMetaRepo);
             assertThat(lib.globalConfigProvider()).isNotNull();
             assertThat(lib.indexProvider()).isNotNull();
             assertThat(lib.indexer()).isNotNull();

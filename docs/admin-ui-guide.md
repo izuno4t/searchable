@@ -83,12 +83,19 @@ java -jar searchable-ui-1.0.0-SNAPSHOT.jar \
 
 ### 詳細 (`/indexes/{namespaceId}`)
 
-- メトリクスカード（Documents/Size/Status/Last Updated）
-- ドキュメント一覧（最大20件/ページ）
-  - ID、タイトル、本文スニペット、indexed_at
-  - Delete ボタン（確認ダイアログ付き）
+- メトリクスカード(Documents/Size/Status/Last Updated)
+- ドキュメント一覧(最大20件/ページ) — `DocumentMetadataRepository`
+  ベースで取得しており、チャンク分割による重複表示は発生しない
+  - ID、タイトル、indexed_at(本文スニペットは新スキーマでは非表示)
+  - Delete ボタン(確認ダイアログ付き)
 - ページネーション
-- Rebuild ボタン（全削除して再構築）
+- Rebuild ボタン
+
+> **再構築の挙動**: 検索を停止せず切り替える方式。新しい空のインデックス
+> ディレクトリを用意し、書き込み完了時にディレクトリ名を不可分に
+> リネームして切り替える。旧ディレクトリは 30 秒の猶予期間を置いてから
+> 削除する。再構築の実行中も検索 API は旧バージョンで結果を返し続ける。
+> 詳細は [docs/architecture.md §5.7](architecture.md) を参照。
 
 ### ドキュメントアップロード (`/documents/upload`)
 

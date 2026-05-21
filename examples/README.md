@@ -106,6 +106,22 @@ mvn -B clean install -DskipTests
 そこにアプリの起動・インデックス登録・検索までを 1 本のシナリオで
 記載している。本節では全サンプル共通の前提と選択肢のみを示す。
 
+### 文書 metadata の予約キー(共通)
+
+すべての取込経路で `Document.metadata` に次のキーが設定されることが
+期待される(詳細は [docs/architecture.md §5.7](../docs/architecture.md)):
+
+| キー | 値 | 用途 |
+| --- | --- | --- |
+| `url` | RFC 3986 形式の URI（`file:///` / `http(s)://` / `s3://` 等、スキーム必須） | 検索結果から元文書へのリンク、`SubResult.anchorUrl` の基点 |
+| `contentType` | MIME タイプ（`text/plain` / `text/markdown` / `text/html` / `application/pdf` 等） | UI のレンダリング切替、RAG 連携時の形式情報 |
+| `category` / `lang` / `tags` | string / string array | ファセット集計 |
+
+`searchable-cli` の `ingest`、`examples/webapp` の起動時取込、
+`examples/plugin-datasource-s3` の S3 取込はいずれも上記キーを自動で
+設定する。`examples/api` の REST 取込はクライアント側で設定する
+(`api-specification.ja.md` 参照)。
+
 ### 共通の前準備
 
 1. ライブラリ本体を install（`searchable-core` などのコア JAR をローカル

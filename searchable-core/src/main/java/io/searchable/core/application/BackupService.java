@@ -97,9 +97,15 @@ public final class BackupService {
                     "Failed to flush namespace " + namespaceId + " before backup", e);
             }
         }
-        final Path source = layout.directoryFor(namespaceId);
-        if (!Files.isDirectory(source)) {
-            log.warn("namespace {} has no index directory at {}; skipping", namespaceId, source);
+        // Snapshot only the latest readable version; `.tmp/` builds and
+        // obsolete versions are ignored. The backup directory layout
+        // intentionally does not retain the source version timestamp so
+        // a restore can re-stamp under a fresh timestamp on the target
+        // side (see RestoreService).
+        final Path source = layout.latestReadable(namespaceId).orElse(null);
+        if (source == null || !Files.isDirectory(source)) {
+            log.warn("namespace {} has no readable index version under {}; skipping",
+                namespaceId, layout.namespaceDir(namespaceId));
             return 0L;
         }
         final Path dest = target.resolve("indexes").resolve(namespaceId);

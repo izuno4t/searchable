@@ -13,7 +13,6 @@ import io.searchable.core.infrastructure.lucene.LuceneIndexer;
 import io.searchable.core.infrastructure.persistence.DataSourceFactory;
 import io.searchable.core.infrastructure.persistence.PersistenceConfig;
 import io.searchable.core.infrastructure.persistence.SchemaInitializer;
-import io.searchable.core.infrastructure.persistence.jdbc.JdbcDocumentSourceRepository;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcIndexMetadataRepository;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcNamespaceRepository;
 import org.junit.jupiter.api.Test;

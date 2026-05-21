@@ -262,9 +262,12 @@ class CoverageSweepFinal2Test {
     // ─── LuceneIndexProvider.openReadOnly IOException ───────────────────
     @Test
     void luceneIndexProviderOpenReadOnlyWrapsIoFailure() throws Exception {
-        final Path dir = tempDir.resolve("ro-broken/ns");
-        Files.createDirectories(dir);
-        Files.writeString(dir.resolve("garbage"), "not-a-lucene-segment");
+        // Put a non-Lucene file inside a numeric version directory so
+        // latestReadable picks it up and DirectoryReader.open(...) then
+        // fails, exercising the IOException wrap in openReadOnly.
+        final Path versionDir = tempDir.resolve("ro-broken/ns/100");
+        Files.createDirectories(versionDir);
+        Files.writeString(versionDir.resolve("garbage"), "not-a-lucene-segment");
         try (LuceneIndexProvider p = new LuceneIndexProvider(
                 new IndexLayout(tempDir.resolve("ro-broken")),
                 AnalyzerFactory.japanese(), true)) {

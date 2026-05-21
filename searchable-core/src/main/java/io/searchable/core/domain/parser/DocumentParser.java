@@ -21,6 +21,17 @@ public interface DocumentParser {
     List<String> supportedExtensions();
 
     /**
+     * MIME type produced by this parser, used as the value of the
+     * {@code metadata.contentType} reserved key (see
+     * {@code docs/architecture.md} §5.7). Defaults to
+     * {@code application/octet-stream} for parsers that do not provide a
+     * more specific value.
+     */
+    default String contentType() {
+        return "application/octet-stream";
+    }
+
+    /**
      * Parse the given source text.
      *
      * @param source         document content as text

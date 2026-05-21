@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.searchable.core.domain.document.DocumentMetadataRecord;
 import io.searchable.core.domain.document.DocumentMetadataRepository;
+import io.searchable.core.domain.document.DocumentSource;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -12,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -31,24 +33,25 @@ public final class JdbcDocumentMetadataRepository implements DocumentMetadataRep
 
     private static final String UPSERT_SQL = """
         MERGE INTO DOCUMENT_METADATA
-            (NAMESPACE_ID, DOCUMENT_ID, TITLE, METADATA_JSON, INDEXED_AT)
+            (NAMESPACE_ID, DOCUMENT_ID, TITLE, METADATA_JSON, INDEXED_AT,
+             SOURCE_TYPE, SOURCE_LOCATION, CONTENT_HASH, SOURCE_UPDATED)
         KEY (NAMESPACE_ID, DOCUMENT_ID)
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
-    private static final String SELECT_BY_ID = """
-        SELECT NAMESPACE_ID, DOCUMENT_ID, TITLE, METADATA_JSON, INDEXED_AT
-          FROM DOCUMENT_METADATA
-         WHERE NAMESPACE_ID = ? AND DOCUMENT_ID = ?
+    private static final String SELECT_COLUMNS = """
+        NAMESPACE_ID, DOCUMENT_ID, TITLE, METADATA_JSON, INDEXED_AT,
+        SOURCE_TYPE, SOURCE_LOCATION, CONTENT_HASH, SOURCE_UPDATED
         """;
 
-    private static final String LIST_SQL = """
-        SELECT NAMESPACE_ID, DOCUMENT_ID, TITLE, METADATA_JSON, INDEXED_AT
-          FROM DOCUMENT_METADATA
-         WHERE NAMESPACE_ID = ?
-         ORDER BY INDEXED_AT DESC, DOCUMENT_ID
-         LIMIT ? OFFSET ?
-        """;
+    private static final String SELECT_BY_ID =
+        "SELECT " + SELECT_COLUMNS
+        + " FROM DOCUMENT_METADATA WHERE NAMESPACE_ID = ? AND DOCUMENT_ID = ?";
+
+    private static final String LIST_SQL =
+        "SELECT " + SELECT_COLUMNS
+        + " FROM DOCUMENT_METADATA WHERE NAMESPACE_ID = ?"
+        + " ORDER BY INDEXED_AT DESC, DOCUMENT_ID LIMIT ? OFFSET ?";
 
     private static final String COUNT_SQL =
         "SELECT COUNT(*) FROM DOCUMENT_METADATA WHERE NAMESPACE_ID = ?";
@@ -77,6 +80,26 @@ public final class JdbcDocumentMetadataRepository implements DocumentMetadataRep
             ps.setString(3, record.title());
             ps.setString(4, serializeMetadata(record.metadata()));
             ps.setTimestamp(5, Timestamp.from(record.indexedAt()));
+            final DocumentSource source = record.source();
+            if (source == null) {
+                ps.setNull(6, Types.VARCHAR);
+                ps.setNull(7, Types.VARCHAR);
+                ps.setNull(8, Types.VARCHAR);
+                ps.setNull(9, Types.TIMESTAMP_WITH_TIMEZONE);
+            } else {
+                ps.setString(6, source.type());
+                ps.setString(7, source.location());
+                if (source.contentHash() == null) {
+                    ps.setNull(8, Types.VARCHAR);
+                } else {
+                    ps.setString(8, source.contentHash());
+                }
+                if (source.sourceUpdated() == null) {
+                    ps.setNull(9, Types.TIMESTAMP_WITH_TIMEZONE);
+                } else {
+                    ps.setTimestamp(9, Timestamp.from(source.sourceUpdated()));
+                }
+            }
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new IllegalStateException(
@@ -116,10 +139,9 @@ public final class JdbcDocumentMetadataRepository implements DocumentMetadataRep
             return List.of();
         }
         final String placeholders = String.join(", ", java.util.Collections.nCopies(ids.size(), "?"));
-        final String sql = """
-            SELECT NAMESPACE_ID, DOCUMENT_ID, TITLE, METADATA_JSON, INDEXED_AT
-              FROM DOCUMENT_METADATA
-             WHERE NAMESPACE_ID = ? AND DOCUMENT_ID IN (""" + placeholders + ")";
+        final String sql = "SELECT " + SELECT_COLUMNS
+            + " FROM DOCUMENT_METADATA"
+            + " WHERE NAMESPACE_ID = ? AND DOCUMENT_ID IN (" + placeholders + ")";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, namespaceId);
@@ -218,8 +240,16 @@ public final class JdbcDocumentMetadataRepository implements DocumentMetadataRep
         final String title = rs.getString("TITLE");
         final Map<String, Object> metadata = deserializeMetadata(rs.getString("METADATA_JSON"));
         final Timestamp indexedAt = rs.getTimestamp("INDEXED_AT");
+        final String sourceType = rs.getString("SOURCE_TYPE");
+        final String sourceLocation = rs.getString("SOURCE_LOCATION");
+        final String contentHash = rs.getString("CONTENT_HASH");
+        final Timestamp sourceUpdated = rs.getTimestamp("SOURCE_UPDATED");
+        final DocumentSource source = (sourceType == null || sourceLocation == null)
+            ? null
+            : new DocumentSource(sourceType, sourceLocation, contentHash,
+                sourceUpdated == null ? null : sourceUpdated.toInstant());
         return new DocumentMetadataRecord(namespaceId, documentId, title, metadata,
-            indexedAt.toInstant());
+            indexedAt.toInstant(), source);
     }
 
     private String serializeMetadata(final Map<String, Object> metadata) {

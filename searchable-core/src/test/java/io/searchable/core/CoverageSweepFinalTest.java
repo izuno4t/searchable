@@ -4,7 +4,8 @@ import io.searchable.core.application.IndexService;
 import io.searchable.core.application.config.GlobalConfig;
 import io.searchable.core.application.NamespaceService;
 import io.searchable.core.domain.document.Document;
-import io.searchable.core.domain.document.DocumentSourceRepository;
+import io.searchable.core.domain.document.DocumentMetadataRecord;
+import io.searchable.core.domain.document.DocumentMetadataRepository;
 import io.searchable.core.domain.embedding.EmbeddingProvider;
 import io.searchable.core.domain.index.IndexMetadata;
 import io.searchable.core.domain.index.IndexMetadataRepository;
@@ -110,23 +111,27 @@ class CoverageSweepFinalTest {
     }
 
     @Test
-    void indexIfChangedHandlesMissingDocumentSourceRepository() throws Exception {
-        // documentSources != null + previous != null + hash same -> skip branch.
+    void indexIfChangedSkipsWhenStoredHashMatches() throws Exception {
+        // documentMetadata != null + previous metadata record's source hash
+        // matches the upcoming hash -> skip branch.
         final NamespaceRepository nsRepo = mock(NamespaceRepository.class);
         when(nsRepo.exists("ns")).thenReturn(true);
         final IndexMetadataRepository mdRepo = mock(IndexMetadataRepository.class);
         final LuceneIndexProvider provider = mock(LuceneIndexProvider.class);
         final LuceneIndexer indexer = mock(LuceneIndexer.class);
-        final DocumentSourceRepository sources = mock(DocumentSourceRepository.class);
+        final DocumentMetadataRepository docMeta = mock(DocumentMetadataRepository.class);
         // previous source matches the upcoming hash; service should short-circuit.
         final var doc = Document.builder().id("d").namespaceId("ns")
             .title("t").content("c").build();
         final String hash = io.searchable.core.domain.document.ContentHashes.hash(doc);
-        when(sources.findByDocumentId(anyString(), anyString()))
-            .thenReturn(Optional.of(new io.searchable.core.domain.document.DocumentSource(
-                "inline", "d", hash, null)));
+        when(docMeta.findById(anyString(), anyString()))
+            .thenReturn(Optional.of(new DocumentMetadataRecord(
+                "ns", "d", "t", java.util.Map.of(),
+                java.time.Instant.parse("2026-05-15T00:00:00Z"),
+                new io.searchable.core.domain.document.DocumentSource(
+                    "inline", "d", hash, null))));
 
-        final IndexService svc = new IndexService(nsRepo, mdRepo, provider, indexer, sources, CLOCK);
+        final IndexService svc = new IndexService(nsRepo, mdRepo, provider, indexer, docMeta, CLOCK);
         assertThat(svc.indexIfChanged(doc)).isFalse();
     }
 

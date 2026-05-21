@@ -45,10 +45,10 @@ class BackupRestoreIoErrorTest {
 
     @Test
     void snapshotOneWrapsCopyDirectoryFailure() throws Exception {
-        // Pre-seed a real source dir so we get past the Files.isDirectory
-        // check and into the copy attempt.
+        // Pre-seed a readable version (<root>/<ns>/<ts>/) so latestReadable
+        // resolves and the service gets into the copy attempt.
         final IndexLayout layout = new IndexLayout(tempDir.resolve("src"));
-        Files.createDirectories(layout.directoryFor("ns"));
+        Files.createDirectories(layout.namespaceDir("ns").resolve("100"));
         final LuceneIndexProvider provider = mock(LuceneIndexProvider.class);
         when(provider.isOpen("ns")).thenReturn(false);
 

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -28,10 +29,18 @@ public final class RestoreService {
 
     private final LuceneIndexProvider indexProvider;
     private final IndexLayout layout;
+    private final Clock clock;
 
     public RestoreService(final LuceneIndexProvider indexProvider, final IndexLayout layout) {
+        this(indexProvider, layout, Clock.systemUTC());
+    }
+
+    public RestoreService(final LuceneIndexProvider indexProvider,
+                          final IndexLayout layout,
+                          final Clock clock) {
         this.indexProvider = Objects.requireNonNull(indexProvider);
         this.layout = Objects.requireNonNull(layout);
+        this.clock = Objects.requireNonNull(clock);
     }
 
     /** Restore every namespace present in the backup directory. */
@@ -72,14 +81,18 @@ public final class RestoreService {
             throw new IllegalStateException(
                 "Failed to clear existing index for " + namespaceId, e);
         }
-        final Path target = layout.directoryFor(namespaceId);
+        // Restore into a fresh build directory, then promote so the
+        // namespace's latestReadable points at the recovered version.
+        final Path buildDir = layout.newBuild(namespaceId, clock);
         try {
-            Files.createDirectories(target.getParent());
-            FileUtils.copyDirectory(backupDir.toFile(), target.toFile());
+            FileUtils.copyDirectory(backupDir.toFile(), buildDir.toFile());
         } catch (IOException e) {
+            // Best-effort cleanup so we don't leave a half-copied .tmp.
+            layout.deleteRecursively(buildDir);
             throw new IllegalStateException(
-                "Failed to copy backup for " + namespaceId + " to " + target, e);
+                "Failed to copy backup for " + namespaceId + " to " + buildDir, e);
         }
-        log.info("restored namespace {} from {}", namespaceId, backupDir);
+        final Path promoted = layout.promote(buildDir);
+        log.info("restored namespace {} from {} into {}", namespaceId, backupDir, promoted);
     }
 }

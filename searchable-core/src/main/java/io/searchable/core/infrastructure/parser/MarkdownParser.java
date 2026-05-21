@@ -50,6 +50,11 @@ public final class MarkdownParser implements DocumentParser {
     }
 
     @Override
+    public String contentType() {
+        return "text/markdown";
+    }
+
+    @Override
     public ParsedDocument parse(final String source, final String fallbackTitle) {
         Objects.requireNonNull(source, "source must not be null");
         final String title = extractTitle(source, fallbackTitle);

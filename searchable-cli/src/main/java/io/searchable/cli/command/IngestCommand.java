@@ -73,14 +73,15 @@ public final class IngestCommand implements Callable<Integer> {
                     .namespaceId(namespace)
                     .title(parsed.title())
                     .content(parsed.content())
-                    // `url` is the reserved metadata key for the document
-                    // origin (see docs/architecture.md §5.7). Use the
-                    // file URI so SearchHit.metadata.url can be opened
-                    // directly from the UI and SubResult.anchorUrl can
-                    // append heading slugs to it.
+                    // `url` and `contentType` are reserved metadata keys
+                    // (see docs/architecture.md §5.7). Use the file URI
+                    // so SearchHit.metadata.url can be opened directly
+                    // from the UI, and the parser's MIME so UIs can
+                    // decide how to render the original document.
                     .metadata(Map.of(
                         "url", absolute.toUri().toString(),
-                        "path", absolute.toString()))
+                        "path", absolute.toString(),
+                        "contentType", parser.contentType()))
                     .indexedAt(Instant.now())
                     .build();
                 library.indexService().index(doc);

@@ -212,22 +212,13 @@ public class SearchableConfiguration {
     }
 
     @Bean
-    public io.searchable.core.domain.document.DocumentSourceRepository documentSourceRepository(
-            final DataSource dataSource,
-            final SchemaInitializer init) {
-        return new io.searchable.core.infrastructure.persistence.jdbc.JdbcDocumentSourceRepository(
-            dataSource);
-    }
-
-    @Bean
     public IndexService indexService(final NamespaceRepository nr,
                                      final IndexMetadataRepository imr,
                                      final LuceneIndexProvider provider,
                                      final LuceneIndexer indexer,
-                                     final io.searchable.core.domain.document.DocumentSourceRepository dsr,
                                      final io.searchable.core.domain.document.DocumentMetadataRepository dmr,
                                      final Clock clock) {
-        return new IndexService(nr, imr, provider, indexer, dsr, dmr, clock);
+        return new IndexService(nr, imr, provider, indexer, dmr, clock);
     }
 
     @Bean(destroyMethod = "close")

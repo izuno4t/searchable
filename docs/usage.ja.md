@@ -83,6 +83,7 @@ indexService.indexDocument("project-a", document);
 | キー | 値 | 用途 |
 | --- | --- | --- |
 | `url` | **URI**(RFC 3986)、スキーム必須 | 文書の origin 参照。`file:///abs/path`、`http(s)://...`、`ftp://...`、`s3://bucket/key` 等。生パス(`/abs/path`)は禁止 |
+| `contentType` | **MIME type** | 文書の元フォーマット。`text/plain` / `text/markdown` / `text/html` / `text/asciidoc` / `application/pdf` 等。Office 系 MIME も使用可。詳細は [architecture.md §5.7](architecture.md) |
 | `category` | string | facet 用 |
 | `lang` | string | facet 用 |
 | `tags` | string or string[] | facet 用 |

@@ -5,7 +5,6 @@ import io.searchable.core.domain.document.Document;
 import io.searchable.core.domain.document.DocumentMetadataRecord;
 import io.searchable.core.domain.document.DocumentMetadataRepository;
 import io.searchable.core.domain.document.DocumentSource;
-import io.searchable.core.domain.document.DocumentSourceRepository;
 import io.searchable.core.domain.index.IndexMetadata;
 import io.searchable.core.domain.index.IndexMetadataRepository;
 import io.searchable.core.domain.index.IndexStatus;
@@ -39,7 +38,6 @@ public final class IndexService {
     private final IndexMetadataRepository indexMetadata;
     private final LuceneIndexProvider indexProvider;
     private final LuceneIndexer indexer;
-    private final DocumentSourceRepository documentSources;
     private final DocumentMetadataRepository documentMetadata;
     private final Clock clock;
 
@@ -48,30 +46,19 @@ public final class IndexService {
                         final LuceneIndexProvider indexProvider,
                         final LuceneIndexer indexer,
                         final Clock clock) {
-        this(namespaces, indexMetadata, indexProvider, indexer, null, null, clock);
+        this(namespaces, indexMetadata, indexProvider, indexer, null, clock);
     }
 
     public IndexService(final NamespaceRepository namespaces,
                         final IndexMetadataRepository indexMetadata,
                         final LuceneIndexProvider indexProvider,
                         final LuceneIndexer indexer,
-                        final DocumentSourceRepository documentSources,
-                        final Clock clock) {
-        this(namespaces, indexMetadata, indexProvider, indexer, documentSources, null, clock);
-    }
-
-    public IndexService(final NamespaceRepository namespaces,
-                        final IndexMetadataRepository indexMetadata,
-                        final LuceneIndexProvider indexProvider,
-                        final LuceneIndexer indexer,
-                        final DocumentSourceRepository documentSources,
                         final DocumentMetadataRepository documentMetadata,
                         final Clock clock) {
         this.namespaces = Objects.requireNonNull(namespaces);
         this.indexMetadata = Objects.requireNonNull(indexMetadata);
         this.indexProvider = Objects.requireNonNull(indexProvider);
         this.indexer = Objects.requireNonNull(indexer);
-        this.documentSources = documentSources;
         this.documentMetadata = documentMetadata;
         this.clock = Objects.requireNonNull(clock);
     }
@@ -80,8 +67,7 @@ public final class IndexService {
         Objects.requireNonNull(document, "document must not be null");
         requireNamespaceExists(document.namespaceId());
         indexer.index(document);
-        recordSource(document);
-        recordMetadata(document);
+        recordMetadata(document, effectiveHash(document));
         refreshMetadata(document.namespaceId(), IndexStatus.READY);
     }
 
@@ -89,30 +75,31 @@ public final class IndexService {
      * Index the document only if its content has changed since the last
      * ingest. Change detection compares the SHA-256 content hash supplied
      * via {@code document.source().contentHash()} (or computed on the fly)
-     * against the value stored by the {@link DocumentSourceRepository}.
+     * against the value stored alongside the document's metadata.
      *
      * @return {@code true} when the document was actually written to the index
      */
     public boolean indexIfChanged(final Document document) {
         Objects.requireNonNull(document, "document must not be null");
         requireNamespaceExists(document.namespaceId());
-        if (documentSources == null) {
+        if (documentMetadata == null) {
             // No repository configured -- behave like {@link #index(Document)}.
             index(document);
             return true;
         }
         final String newHash = effectiveHash(document);
-        final Optional<DocumentSource> previous = documentSources.findByDocumentId(
-            document.namespaceId(), document.id());
-        if (previous.isPresent()
-            && previous.get().contentHash() != null
-            && previous.get().contentHash().equals(newHash)) {
+        final Optional<String> previousHash = documentMetadata
+            .findById(document.namespaceId(), document.id())
+            .map(DocumentMetadataRecord::source)
+            .filter(s -> s != null)
+            .map(DocumentSource::contentHash)
+            .filter(h -> h != null);
+        if (previousHash.isPresent() && previousHash.get().equals(newHash)) {
             log.debug("skipping unchanged document {} (hash={})", document.id(), newHash);
             return false;
         }
         indexer.index(document);
-        recordSource(document, newHash);
-        recordMetadata(document);
+        recordMetadata(document, newHash);
         refreshMetadata(document.namespaceId(), IndexStatus.READY);
         return true;
     }
@@ -124,38 +111,25 @@ public final class IndexService {
         return ContentHashes.hash(document);
     }
 
-    private void recordSource(final Document document) {
-        if (documentSources == null) {
-            return;
-        }
-        recordSource(document, effectiveHash(document));
-    }
-
-    private void recordSource(final Document document, final String hash) {
-        if (documentSources == null) {
-            return;
-        }
-        final DocumentSource existing = document.source();
-        final DocumentSource source = existing == null
-            ? new DocumentSource("inline", document.id(), hash, null)
-            : new DocumentSource(existing.type(), existing.location(), hash,
-                existing.sourceUpdated());
-        documentSources.save(document.namespaceId(), document.id(), source);
-    }
-
-    private void recordMetadata(final Document document) {
+    private void recordMetadata(final Document document, final String hash) {
         if (documentMetadata == null) {
             return;
         }
         final Instant indexedAt = document.indexedAt() == null
             ? clock.instant()
             : document.indexedAt();
+        final DocumentSource existing = document.source();
+        final DocumentSource source = existing == null
+            ? new DocumentSource("inline", document.id(), hash, null)
+            : new DocumentSource(existing.type(), existing.location(), hash,
+                existing.sourceUpdated());
         documentMetadata.save(new DocumentMetadataRecord(
             document.namespaceId(),
             document.id(),
             document.title(),
             document.metadata(),
-            indexedAt));
+            indexedAt,
+            source));
     }
 
     public void indexBatch(final String namespaceId, final List<Document> documents) {
@@ -167,7 +141,7 @@ public final class IndexService {
         try {
             indexer.indexBatch(namespaceId, documents);
             for (final Document d : documents) {
-                recordMetadata(d);
+                recordMetadata(d, effectiveHash(d));
             }
             refreshMetadata(namespaceId, IndexStatus.READY);
         } catch (RuntimeException e) {
@@ -194,7 +168,26 @@ public final class IndexService {
         Objects.requireNonNull(namespaceId, "namespaceId must not be null");
         requireNamespaceExists(namespaceId);
         markStatus(namespaceId, IndexStatus.INDEXING);
-        indexer.deleteAll(namespaceId);
+        // Zero-downtime path: replace the namespace's Lucene segments by
+        // promoting an empty build directory. The live searcher continues
+        // to serve queries from the previous version until completeBuild()
+        // atomically swaps the context (and the old version is scheduled
+        // for retirement after the grace period).
+        if (indexProvider.backend() == io.searchable.core.infrastructure.lucene.StorageBackend.FILESYSTEM
+                && !indexProvider.isReadOnly()) {
+            final var handle = indexProvider.beginBuild(namespaceId);
+            try {
+                // An empty build directory promoted as-is leaves the
+                // namespace with zero documents; no further write needed.
+                indexProvider.completeBuild(handle);
+            } catch (RuntimeException e) {
+                indexProvider.cancelBuild(handle);
+                markStatus(namespaceId, IndexStatus.ERROR);
+                throw e;
+            }
+        } else {
+            indexer.deleteAll(namespaceId);
+        }
         if (documentMetadata != null) {
             documentMetadata.deleteByNamespace(namespaceId);
         }

@@ -36,6 +36,11 @@ public final class PdfParser implements DocumentParser {
     }
 
     @Override
+    public String contentType() {
+        return "application/pdf";
+    }
+
+    @Override
     public ParsedDocument parse(final String source, final String fallbackTitle) {
         throw new UnsupportedOperationException(
             "PDF parser requires the binary parse(InputStream, ...) overload");

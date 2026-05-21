@@ -263,6 +263,7 @@
 | キー | 値 | 用途 |
 | --- | --- | --- |
 | `url` | RFC 3986 形式の **URI(スキーム必須)**。`file:///abs/path`, `https://...`, `s3://bucket/key` 等。生パス(`/abs/path`)は不可。 | 検索結果から元ドキュメントへの直リンク。セクション単位ヒット (`SubResult.anchorUrl`) の base としても利用 |
+| `contentType` | **MIME type**(RFC 2046)。`text/plain` / `text/markdown` / `text/html` / `text/asciidoc` / `application/pdf` / Office 系 MIME | UI でのレンダリング切替、RAG 連携時の形式情報 |
 | `category` / `lang` / `tags` | string / string array | facet 用 |
 
 これら以外の任意キーはそのまま保存・返却される(`author` 等)。

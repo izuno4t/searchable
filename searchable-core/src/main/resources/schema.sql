@@ -44,35 +44,18 @@ CREATE TABLE IF NOT EXISTS INDEX_METADATA (
         FOREIGN KEY (NAMESPACE_ID) REFERENCES NAMESPACE (ID) ON DELETE CASCADE
 );
 
--- Change-detection registry. Records WHERE each indexed document came
--- from (SOURCE_TYPE + SOURCE_LOCATION, e.g. "file" + an absolute path,
--- or "plugin:my-plugin" + a plugin-defined locator), the CONTENT_HASH
--- captured at ingest time, and the source-side mtime. A re-ingest
--- compares these values against the live source and skips documents
--- whose hash/mtime has not changed.
+-- Authoritative per-document registry. Holds:
+--   * User-facing attributes (TITLE, free-form METADATA_JSON, INDEXED_AT)
+--     that used to live as Lucene stored fields on every chunk
+--   * Provenance / change-detection state (SOURCE_TYPE, SOURCE_LOCATION,
+--     CONTENT_HASH, SOURCE_UPDATED) that used to live in a separate
+--     DOCUMENT_SOURCE table
 --
--- Responsibility is *provenance only*. The document payload (tokens,
--- vectors) lives in the Lucene index; the document's user-facing
--- attributes (title, metadata) live in DOCUMENT_METADATA.
-CREATE TABLE IF NOT EXISTS DOCUMENT_SOURCE (
-    NAMESPACE_ID     VARCHAR(64)  NOT NULL,
-    DOCUMENT_ID      VARCHAR(128) NOT NULL,
-    SOURCE_TYPE      VARCHAR(64)  NOT NULL,
-    SOURCE_LOCATION  VARCHAR(2048) NOT NULL,
-    CONTENT_HASH     VARCHAR(128),
-    SOURCE_UPDATED   TIMESTAMP WITH TIME ZONE,
-    INDEXED_AT       TIMESTAMP WITH TIME ZONE NOT NULL,
-    PRIMARY KEY (NAMESPACE_ID, DOCUMENT_ID),
-    CONSTRAINT FK_DOCUMENT_SOURCE_NAMESPACE
-        FOREIGN KEY (NAMESPACE_ID) REFERENCES NAMESPACE (ID) ON DELETE CASCADE
-);
-
--- Authoritative per-document registry. Holds the document-level
--- attributes (TITLE, free-form METADATA_JSON, INDEXED_AT) that used to
--- live as Lucene stored fields on every chunk. Pulling them out keeps
--- the Lucene index focused on search-time data (tokens, vectors,
--- chunk-specific fields) and lets document listing / facet
--- aggregation be answered with plain SQL.
+-- The two responsibilities were merged because both are keyed on
+-- (NAMESPACE_ID, DOCUMENT_ID) and the split previously allowed
+-- IndexService.delete() / rebuild() to clear the metadata side while
+-- leaving source rows orphaned, causing indexIfChanged() to silently
+-- skip re-ingestion of documents whose Lucene record had been deleted.
 --
 -- Keyed by the natural composite (NAMESPACE_ID, DOCUMENT_ID) -- no
 -- surrogate id. See docs/architecture.md §5.7 and
@@ -85,6 +68,10 @@ CREATE TABLE IF NOT EXISTS DOCUMENT_METADATA (
     TITLE            VARCHAR(1024) NOT NULL,
     METADATA_JSON    CLOB,
     INDEXED_AT       TIMESTAMP WITH TIME ZONE NOT NULL,
+    SOURCE_TYPE      VARCHAR(64),
+    SOURCE_LOCATION  VARCHAR(2048),
+    CONTENT_HASH     VARCHAR(128),
+    SOURCE_UPDATED   TIMESTAMP WITH TIME ZONE,
     PRIMARY KEY (NAMESPACE_ID, DOCUMENT_ID),
     CONSTRAINT FK_DOCUMENT_METADATA_NAMESPACE
         FOREIGN KEY (NAMESPACE_ID) REFERENCES NAMESPACE (ID) ON DELETE CASCADE

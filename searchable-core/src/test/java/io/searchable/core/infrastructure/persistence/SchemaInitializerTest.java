@@ -48,7 +48,7 @@ class SchemaInitializerTest {
             }
         }
 
-        assertThat(tables).contains("NAMESPACE", "INDEX_METADATA", "DOCUMENT_SOURCE");
+        assertThat(tables).contains("NAMESPACE", "INDEX_METADATA", "DOCUMENT_METADATA");
     }
 
     @Test

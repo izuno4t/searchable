@@ -399,9 +399,14 @@ Lucene のチャンク stored field には保存しない。
 
 | 種別 | 保存先 | 主キー |
 | --- | --- | --- |
-| 文書レベル metadata | metadata DB(`DocumentMetadataRepository`) | `(namespace_id, document_id)` |
-| チャンク固有 metadata | Lucene stored field (`CHUNK_METADATA_JSON`) | `(namespace_id, parent_id, chunk_ordinal)` |
-| origin 識別子 / change-detection | metadata DB(`DocumentSourceRepository`) | `(namespace_id, document_id)` |
+| 文書レベル属性(タイトル / `metadata` / indexedAt / 出自情報) | メタデータ DB(`DocumentMetadataRepository`、`DOCUMENT_METADATA` テーブル) | `(namespace_id, document_id)` |
+| チャンク固有メタデータ(heading / level / weight 等) | Lucene stored field (`CHUNK_METADATA_JSON`) | `(namespace_id, parent_id, chunk_ordinal)` |
+
+出自情報(取得元の種別 / 場所 / コンテンツハッシュ / 元データの更新時刻)は
+変更検知用に `DocumentMetadataRecord.source` として同じ行に統合され、
+旧 `DOCUMENT_SOURCE` テーブルは廃止された。これにより `IndexService.delete()` /
+`rebuild()` が片方だけ消すことによる「変更検知で全件スキップ」の不具合は
+構造的に解消されている。
 
 主キーは自然キー `(namespace_id, document_id)` のみを使い、surrogate key
 (global id 等)は採らない。namespace は Lucene Directory 単位で物理的に
@@ -421,12 +426,34 @@ Lucene のチャンク stored field には保存しない。
 | キー | 必須 | 値 | 用途 |
 | --- | --- | --- | --- |
 | `url` | 推奨 | **URI**(RFC 3986)、**スキーム必須** | 文書のオリジン参照。`file:///abs/path`, `http(s)://...`, `ftp://...`, `s3://bucket/key` 等。生パスは禁止 |
+| `contentType` | 推奨 | **MIME type**(RFC 2046) | 文書の元フォーマット。下表参照。UI でのレンダリング切替や RAG 連携時の形式情報として利用 |
 | `category` | 任意 | string | facet 用 |
 | `lang` | 任意 | string | facet 用 |
 | `tags` | 任意 | string or string[] | facet 用 |
 
 `metadata.url` は `SubResult.anchorUrl` の base URL としても使われる
 (セクション slug を `#` で連結する)。
+
+#### `metadata.contentType` の MIME type 一覧
+
+ingest 経路は文書のフォーマットを判別したら下表の MIME を `contentType`
+に設定する。MIME は標準形(RFC 2046 / IANA media types)とし、独自拡張は
+`application/vnd.searchable.xxx` 名前空間を使う。
+
+| フォーマット | MIME type | 備考 |
+| --- | --- | --- |
+| プレーンテキスト | `text/plain` | `.txt` / `.text` / `.log` |
+| Markdown | `text/markdown` | `.md` / `.markdown` (RFC 7763) |
+| HTML | `text/html` | `.html` / `.htm` / `.xhtml` |
+| AsciiDoc | `text/asciidoc` | `.adoc` / `.asciidoc` |
+| PDF | `application/pdf` | `.pdf` |
+| Word(.docx) | `application/vnd.openxmlformats-officedocument.wordprocessingml.document` | 将来対応(BACKLOG-001) |
+| Word(.doc) | `application/msword` | 将来対応 |
+| Excel(.xlsx) | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` | 将来対応 |
+| Excel(.xls) | `application/vnd.ms-excel` | 将来対応 |
+| PowerPoint(.pptx) | `application/vnd.openxmlformats-officedocument.presentationml.presentation` | 将来対応 |
+| PowerPoint(.ppt) | `application/vnd.ms-powerpoint` | 将来対応 |
+| 不明 / 不特定 | `application/octet-stream` | デフォルト |
 
 #### 検索結果での enrichment
 
@@ -472,55 +499,75 @@ anchor が無くても元文書に飛べる)。
 | サンプル: MCP | `examples/mcp` | MCP サンプル(API Key 認証対応、軽度本番利用可) |
 | 開発支援 | `searchable-testkit` | テスト共通基盤。core / plugins / ai / ui / cli を対象としたフィクスチャ・Fake・Testcontainers ヘルパ |
 
-### 6.2 Mavenマルチモジュール構成
+### 6.2 Maven マルチモジュール構成(本体)
+
+ルート `pom.xml` の `<modules>` に含まれるのは本体ライブラリ群と
+運用ツールのみ。`examples/` 配下はすべて **本体リアクターの外側に置く
+スタンドアロン Maven プロジェクト** とし、§6.4 で別に扱う。
 
 ```text
 searchable/
-├── pom.xml                          # 親POM
+├── pom.xml                          # 親 POM(本体リアクター)
 ├── searchable-plugins/              # プラグイン SPI
-│   └── src/main/java/com/searchable/plugin/
+│   └── src/main/java/io/searchable/plugin/
 ├── searchable-core/                 # コアライブラリ
-│   └── src/main/java/com/searchable/core/
+│   └── src/main/java/io/searchable/core/
 │       ├── domain/
 │       ├── application/
 │       └── infrastructure/
 ├── searchable-ai/                   # AI 要約・統合
-│   └── src/main/java/com/searchable/ai/
+│   └── src/main/java/io/searchable/ai/
 ├── searchable-testkit/              # テスト共通基盤(test scope)
-│   └── src/main/java/com/searchable/testkit/
+│   └── src/main/java/io/searchable/testkit/
 ├── searchable-cli/                  # CLI
-│   └── src/main/java/com/searchable/cli/
-├── searchable-admin/                   # 設定・運用 Web(Thymeleaf)
-│   ├── src/main/java/com/searchable/ui/
-│   └── src/main/resources/templates/
-├── examples/webapp/               # Web アプリサンプル(library 組み込み)
-│   └── src/main/java/io/searchable/example/webapp/
-├── examples/api/                  # REST WebAPI サンプル
-│   └── src/main/java/io/searchable/example/api/
-├── examples/search-ui/            # API クライアント(Vanilla HTML+JS)
-│   ├── index.html
-│   └── src/{js,css}/
-└── examples/mcp/                  # MCP サンプル
-    └── src/main/java/io/searchable/example/mcp/
+│   └── src/main/java/io/searchable/cli/
+└── searchable-admin/                # 設定・運用 Web(Thymeleaf)
+    ├── src/main/java/io/searchable/admin/
+    └── src/main/resources/templates/
 ```
 
-### 6.3 モジュール依存関係
+### 6.3 本体モジュールの依存関係
 
 ```text
 searchable-admin  ─────────────┐
-examples/api ─────────────┤
-examples/mcp ─────────────┤
-searchable-cli ─────────────┼─▶ searchable-core ─▶ searchable-plugins
-examples/search-ui ───────┤            ▲
-searchable-ai ──────────────┘            │
-                                          │
-searchable-testkit (test scope) ─────────┘
+searchable-cli ────────────────┼─▶ searchable-core ─▶ searchable-plugins
+searchable-ai  ────────────────┘            ▲
+                                            │
+searchable-testkit (test scope) ────────────┘
    ▲
-   └── api / mcp / ui / cli / ai が test scope で依存
+   └── 本体各モジュールが test scope で依存
 ```
 
-- `searchable-ai` は core と独立しており、利用側 (`examples/api`, `examples/mcp`, `searchable-admin` 等) が必要に応じて依存
-- `examples/search-ui` は HTTP 越しに `examples/api` を呼ぶ前提で、ビルド時の Maven 依存は持たない(または最小)
+- `searchable-ai` は core と独立しており、利用側が必要に応じて依存
+- `searchable-testkit` はテスト用 fixture を提供(本番依存なし)
+
+### 6.4 サンプルアプリケーション(リアクター外)
+
+`examples/` 配下は **それぞれ独立した Maven プロジェクト** で、本体の
+`<modules>` には含まれない。`mvn install` で本体を `~/.m2` に配置した後、
+個別に `mvn -f examples/<name>/pom.xml package` でビルドする。
+
+```text
+examples/
+├── webapp/               # Spring Boot + Thymeleaf 単一プロセス
+│   └── src/main/java/io/searchable/example/webapp/
+├── api/                  # REST API サーバー(Spring Boot)
+│   └── src/main/java/io/searchable/example/api/
+├── search-ui/            # API クライアント(Vanilla HTML+JS、ビルド不要)
+│   ├── index.html
+│   └── src/{js,css}/
+├── mcp/                  # MCP サーバー(stdio JSON-RPC)
+│   └── src/main/java/io/searchable/example/mcp/
+└── plugin-datasource-s3/ # DataSourcePlugin のリファレンス実装
+    └── src/main/java/io/searchable/example/plugin/s3/
+```
+
+- それぞれ `searchable-core`(あるいは合わせて `searchable-plugins`)を
+  通常の Maven 依存として参照する。本体リアクターでなくても良いのは、
+  サンプルが本体のリリースサイクルから独立してフォーク・改変できる
+  ようにするため。
+- `examples/search-ui` は HTTP 越しに `examples/api` を呼ぶ前提で、ビルド
+  時の Maven 依存はゼロ(静的ファイルのみ)。
 
 ---
 
@@ -541,6 +588,39 @@ searchable-testkit (test scope) ─────────┘
 選択は設定値(例: `searchable.storage.backend=filesystem|memory`)で切替。永続性 / DR は
 TASK-071 / TASK-072 の **インデックススナップショット** (S3 等への保存に対応)で確保し、
 ライブインデックス自体をオブジェクトストレージに置く構成は採用しない。
+
+#### バージョン付きディレクトリと無停止再構築
+
+ファイルシステムバックエンドでは、namespace ごとのインデックスを
+**ミリ秒タイムスタンプを名前にしたバージョンディレクトリ** として
+管理する。`IndexLayout` がこの命名規約と昇進処理を一手に担う:
+
+```text
+<root>/<namespaceId>/
+├── 1747700000000/              # 完成版(検索が読みに行く対象)
+├── 1747700050000/              # より新しい完成版(latestReadable)
+└── 1747700100000.tmp/          # 構築中(検索からは見えない)
+```
+
+- 検索は常に最新の `<timestamp>/` を開く。`.tmp` 付きディレクトリは
+  完成までは無視される。
+- 取込時は `.tmp` の名前で書き出し、書き込み完了時にファイルシステムの
+  不可分なリネーム(`Files.move(..., ATOMIC_MOVE)`)で `.tmp` を取り去って
+  確定版に切り替える。これにより検索側が「壊れかけのインデックス」を
+  開いてしまうウィンドウが存在しない。
+- タイムスタンプは壁時計の巻き戻り対策として「直前のタイムスタンプ + 1ms
+  ≤ 新タイムスタンプ」となるよう単調に補正する。
+- 旧バージョンディレクトリは `LuceneIndexProvider` の `SearcherManager`
+  が抱える参照と、設定可能な猶予期間(既定 30 秒)を経過してから物理削除
+  される。これにより `rebuild` 中も検索クエリは旧バージョンで結果を
+  返し続け、無停止で再構築できる。
+- プロセスがクラッシュして残った `.tmp` ディレクトリは、次回起動時に
+  「最終更新が一定時間(既定 5 分)以上経過 **かつ** Lucene の
+  `write.lock` を取得できる」という条件を満たす場合だけ自動削除する。
+  動作中の取込ジョブを誤って巻き込まないようにするための AND 条件。
+- バックアップは最新の完成版だけを対象にする(`.tmp` および古い完成版は
+  含めない)。リストアは新しい `.tmp` に書き戻してから昇進させるので、
+  既存のバージョンを壊さない。
 
 #### メタデータ DB のバックエンド (JDBC 抽象)
 

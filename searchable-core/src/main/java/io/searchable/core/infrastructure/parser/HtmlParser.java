@@ -32,6 +32,11 @@ public final class HtmlParser implements DocumentParser {
     }
 
     @Override
+    public String contentType() {
+        return "text/html";
+    }
+
+    @Override
     public ParsedDocument parse(final String source, final String fallbackTitle) {
         Objects.requireNonNull(source, "source must not be null");
         final Document doc = Jsoup.parse(source);

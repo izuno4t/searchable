@@ -13,7 +13,8 @@ import io.searchable.core.infrastructure.lucene.LuceneIndexer;
 import io.searchable.core.infrastructure.persistence.DataSourceFactory;
 import io.searchable.core.infrastructure.persistence.PersistenceConfig;
 import io.searchable.core.infrastructure.persistence.SchemaInitializer;
-import io.searchable.core.infrastructure.persistence.jdbc.JdbcDocumentSourceRepository;
+import io.searchable.core.domain.document.DocumentMetadataRecord;
+import io.searchable.core.infrastructure.persistence.jdbc.JdbcDocumentMetadataRepository;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcIndexMetadataRepository;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcNamespaceRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -39,7 +40,7 @@ class IndexServiceContentHashTest {
     private LuceneIndexProvider provider;
     private IndexService service;
     private NamespaceService namespaceService;
-    private JdbcDocumentSourceRepository sources;
+    private JdbcDocumentMetadataRepository metadataRepo;
 
     @BeforeEach
     void setUp() {
@@ -50,11 +51,11 @@ class IndexServiceContentHashTest {
             new IndexLayout(tempDir.resolve("indexes")), AnalyzerFactory.japanese());
         final var namespaces = new JdbcNamespaceRepository(dataSource);
         final var metadata = new JdbcIndexMetadataRepository(dataSource);
-        sources = new JdbcDocumentSourceRepository(dataSource);
+        metadataRepo = new JdbcDocumentMetadataRepository(dataSource);
         final EmbeddingProvider embedding = new HashEmbeddingProvider(128);
         final LuceneIndexer indexer = new LuceneIndexer(provider, embedding);
         final Clock clock = Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC);
-        service = new IndexService(namespaces, metadata, provider, indexer, sources, clock);
+        service = new IndexService(namespaces, metadata, provider, indexer, metadataRepo, clock);
         namespaceService = new NamespaceService(namespaces, metadata, provider,
             GlobalConfig.defaults(), clock);
         namespaceService.create("ch_ns", "CH", null);
@@ -72,9 +73,10 @@ class IndexServiceContentHashTest {
     void firstIngestStoresHashAndIndexesDocument() {
         final Document doc = doc("doc-1", "title", "本文1");
         assertThat(service.indexIfChanged(doc)).isTrue();
-        assertThat(sources.findByDocumentId("ch_ns", "doc-1"))
+        assertThat(metadataRepo.findById("ch_ns", "doc-1"))
             .isPresent()
             .get()
+            .extracting(DocumentMetadataRecord::source)
             .extracting(DocumentSource::contentHash)
             .isEqualTo(ContentHashes.hash(doc));
     }
@@ -92,7 +94,7 @@ class IndexServiceContentHashTest {
         final Document v2 = doc("doc-3", "title", "v2");
         assertThat(service.indexIfChanged(v1)).isTrue();
         assertThat(service.indexIfChanged(v2)).isTrue();
-        assertThat(sources.findByDocumentId("ch_ns", "doc-3").orElseThrow().contentHash())
+        assertThat(metadataRepo.findById("ch_ns", "doc-3").orElseThrow().source().contentHash())
             .isEqualTo(ContentHashes.hash(v2));
     }
 

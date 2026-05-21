@@ -49,10 +49,20 @@ curl -X POST http://localhost:8080/api/v1/index/documents \
     "document": {
       "id": "doc-1",
       "title": "Searchable について",
-      "content": "Searchable は日本語形態素解析に対応した全文検索ライブラリです。"
+      "content": "Searchable は日本語形態素解析に対応した全文検索ライブラリです。",
+      "metadata": {
+        "url": "https://docs.example.com/doc-1",
+        "contentType": "text/markdown"
+      }
     }
   }'
 ```
+
+`metadata` accepts the reserved keys `url` (RFC 3986 URI) and
+`contentType` (MIME); see [docs/architecture.md §5.7](../../docs/architecture.md)
+for the full list. They are optional but recommended — the search UI
+follows `metadata.url` to link back to the source and uses
+`metadata.contentType` to decide how to render hits.
 
 For larger imports use `POST /api/v1/index/batch` (see
 [`api-specification.ja.md`](./api-specification.ja.md)).

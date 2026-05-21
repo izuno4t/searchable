@@ -28,7 +28,7 @@ import io.searchable.core.infrastructure.lucene.LuceneVectorSearcher;
 import io.searchable.core.infrastructure.persistence.DataSourceFactory;
 import io.searchable.core.infrastructure.persistence.PersistenceConfig;
 import io.searchable.core.infrastructure.persistence.SchemaInitializer;
-import io.searchable.core.infrastructure.persistence.jdbc.JdbcDocumentSourceRepository;
+import io.searchable.core.infrastructure.persistence.jdbc.JdbcDocumentMetadataRepository;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcIndexMetadataRepository;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcNamespaceRepository;
 import org.junit.jupiter.api.Test;
@@ -241,11 +241,11 @@ class CoverageSweepFinal4Test {
                 new IndexLayout(tempDir.resolve("ic")), AnalyzerFactory.japanese())) {
             final var nsRepo = new JdbcNamespaceRepository(ds);
             final var mdRepo = new JdbcIndexMetadataRepository(ds);
-            final var sources = new JdbcDocumentSourceRepository(ds);
+            final var docMetaRepo = new JdbcDocumentMetadataRepository(ds);
             new NamespaceService(nsRepo, mdRepo, provider, GlobalConfig.defaults(), CLOCK)
                 .create("ic", "IC", null);
             final var indexer = new LuceneIndexer(provider, new HashEmbeddingProvider(64));
-            final var svc = new IndexService(nsRepo, mdRepo, provider, indexer, sources, CLOCK);
+            final var svc = new IndexService(nsRepo, mdRepo, provider, indexer, docMetaRepo, CLOCK);
             // First ingest with explicit source hash.
             final var src1 = new io.searchable.core.domain.document.DocumentSource(
                 "file", "/a", "HASH-1", null);

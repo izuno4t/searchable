@@ -11,29 +11,45 @@ import java.util.Objects;
  *
  * <p>Keyed by the natural composite key {@code (namespaceId, documentId)} —
  * the project deliberately does not introduce a surrogate id. The record
- * holds document-level attributes (title, free-form metadata, indexed-at
- * timestamp) that used to live as Lucene stored fields on every chunk.
- * Holding them once in the DB lets the Lucene index stay focused on
- * search-time data (tokens, vectors, chunk-specific fields) and lets
- * document listings / facet aggregation be answered by SQL.
+ * holds two related groups of fields:
+ *
+ * <ul>
+ *   <li><b>User-facing attributes</b> ({@code title}, {@code metadata},
+ *       {@code indexedAt}) — what a search response and a document-listing
+ *       UI need.</li>
+ *   <li><b>Provenance / change-detection state</b> ({@code source}) —
+ *       where the document came from and the content hash captured at
+ *       ingest time, used by {@code IndexService.indexIfChanged} to skip
+ *       documents that have not changed.</li>
+ * </ul>
+ *
+ * <p>The two groups were unified after both used the same composite key
+ * and the previous split left orphaned source rows after {@code delete()}
+ * / {@code rebuild()}, causing change detection to wrongly skip
+ * re-ingestion.
  *
  * @param namespaceId namespace identifier (FK to {@code NAMESPACE.ID})
  * @param documentId  document identifier unique within the namespace
  * @param title       human-readable document title (must not be null;
  *                    pass an empty string if the source has no title)
  * @param metadata    free-form metadata map; reserved keys
- *                    ({@code url}, {@code category}, {@code lang},
- *                    {@code tags}) follow the rules documented in
- *                    {@code docs/architecture.md} §5.7
+ *                    ({@code url}, {@code contentType}, {@code category},
+ *                    {@code lang}, {@code tags}) follow the rules
+ *                    documented in {@code docs/architecture.md} §5.7
  * @param indexedAt   timestamp of the last successful indexing of the
  *                    document; never null
+ * @param source      origin descriptor (type / location / contentHash /
+ *                    sourceUpdated) used for change detection; may be
+ *                    {@code null} when the document was supplied inline
+ *                    without provenance metadata
  */
 public record DocumentMetadataRecord(
     String namespaceId,
     String documentId,
     String title,
     Map<String, Object> metadata,
-    Instant indexedAt
+    Instant indexedAt,
+    DocumentSource source
 ) {
 
     public DocumentMetadataRecord {
@@ -50,5 +66,14 @@ public record DocumentMetadataRecord(
         metadata = metadata == null
             ? Map.of()
             : Collections.unmodifiableMap(new LinkedHashMap<>(metadata));
+    }
+
+    /** Backwards-compatible 5-arg constructor (no source attached). */
+    public DocumentMetadataRecord(final String namespaceId,
+                                  final String documentId,
+                                  final String title,
+                                  final Map<String, Object> metadata,
+                                  final Instant indexedAt) {
+        this(namespaceId, documentId, title, metadata, indexedAt, null);
     }
 }
