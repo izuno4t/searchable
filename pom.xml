@@ -35,8 +35,12 @@
         <onnxruntime.version>1.20.0</onnxruntime.version>
         <pdfbox.version>3.0.3</pdfbox.version>
         <jsoup.version>1.18.3</jsoup.version>
+        <poi.version>5.5.1</poi.version>
         <slf4j.version>2.0.16</slf4j.version>
         <logback.version>1.5.12</logback.version>
+        <!-- Matches the log4j-api version transitively pulled by Apache POI;
+             the bridge routes POI's Log4j 2 API calls to SLF4J/Logback. -->
+        <log4j.version>2.24.3</log4j.version>
         <jackson.version>2.18.2</jackson.version>
         <snakeyaml.version>2.3</snakeyaml.version>
         <commons-io.version>2.18.0</commons-io.version>
@@ -146,7 +150,7 @@
                 <version>${onnxruntime.version}</version>
             </dependency>
 
-            <!-- Document parsers (PDF / HTML) -->
+            <!-- Document parsers (PDF / HTML / Office) -->
             <dependency>
                 <groupId>org.apache.pdfbox</groupId>
                 <artifactId>pdfbox</artifactId>
@@ -156,6 +160,18 @@
                 <groupId>org.jsoup</groupId>
                 <artifactId>jsoup</artifactId>
                 <version>${jsoup.version}</version>
+            </dependency>
+            <!-- Apache POI: OOXML (.docx/.xlsx/.pptx) pulls in poi (core,
+                 incl. HSSF=.xls); poi-scratchpad adds HWPF=.doc / HSLF=.ppt. -->
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-scratchpad</artifactId>
+                <version>${poi.version}</version>
             </dependency>
 
             <!-- Logging -->
@@ -168,6 +184,12 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${logback.version}</version>
+            </dependency>
+            <!-- Bridge: route Apache POI's Log4j 2 API logging to SLF4J. -->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-to-slf4j</artifactId>
+                <version>${log4j.version}</version>
             </dependency>
 
             <!-- JSON / YAML -->

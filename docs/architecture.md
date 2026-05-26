@@ -447,12 +447,12 @@ ingest 経路は文書のフォーマットを判別したら下表の MIME を 
 | HTML | `text/html` | `.html` / `.htm` / `.xhtml` |
 | AsciiDoc | `text/asciidoc` | `.adoc` / `.asciidoc` |
 | PDF | `application/pdf` | `.pdf` |
-| Word(.docx) | `application/vnd.openxmlformats-officedocument.wordprocessingml.document` | 将来対応(BACKLOG-001) |
-| Word(.doc) | `application/msword` | 将来対応 |
-| Excel(.xlsx) | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` | 将来対応 |
-| Excel(.xls) | `application/vnd.ms-excel` | 将来対応 |
-| PowerPoint(.pptx) | `application/vnd.openxmlformats-officedocument.presentationml.presentation` | 将来対応 |
-| PowerPoint(.ppt) | `application/vnd.ms-powerpoint` | 将来対応 |
+| Word(.docx) | `application/vnd.openxmlformats-officedocument.wordprocessingml.document` | Apache POI (XWPF) |
+| Word(.doc) | `application/msword` | Apache POI (HWPF) |
+| Excel(.xlsx) | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` | Apache POI (XSSF)。シート名+セル値を行単位で抽出 |
+| Excel(.xls) | `application/vnd.ms-excel` | Apache POI (HSSF) |
+| PowerPoint(.pptx) | `application/vnd.openxmlformats-officedocument.presentationml.presentation` | Apache POI (XSLF) |
+| PowerPoint(.ppt) | `application/vnd.ms-powerpoint` | Apache POI (HSLF) |
 | 不明 / 不特定 | `application/octet-stream` | デフォルト |
 
 #### 検索結果での enrichment

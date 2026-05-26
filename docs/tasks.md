@@ -200,6 +200,7 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-174 | ✅ | `metadata.contentType` を MIME type の予約キーとして仕様策定(`text/plain` / `text/markdown` / `text/html` / `text/asciidoc` / `application/pdf` / 将来 Office 系 MIME)。`docs/architecture.md` §5.7 と `docs/usage.ja.md` の予約キー表に追加 | TASK-157 |
 | TASK-175 | ✅ | `DocumentParser` インタフェースに `contentType()` メソッドを追加(デフォルト `application/octet-stream`)、既存 5 パーサー(plain/markdown/asciidoc/pdf/html)が正しい MIME を返すよう実装 | TASK-174 |
 | TASK-176 | ✅ | `searchable-cli` `IngestCommand` と `examples/webapp` `StartupIngestRunner` で `metadata.contentType = parser.contentType()` を自動設定。`examples/api` OpenAPI / `api-specification.ja.md` の reserved key 表に追加。`examples/plugin-datasource-s3` の既存 `contentType` キーを規約に合わせる(`url` の隣に置く) | TASK-175 |
+| TASK-177 | ✅ | Office 系(Word/Excel/PowerPoint)パーサ対応(旧 BACKLOG-001)。Apache POI 採用で `.docx`/`.doc`/`.xlsx`/`.xls`/`.pptx`/`.ppt` の6形式を `OfficeDocumentParser` で抽出し `ParserRegistry.defaults()` に登録。`metadata.contentType` を形式別 MIME(architecture.md §5.7)に設定 | TASK-175,TASK-176 |
 
 ## タスク詳細
 
@@ -387,9 +388,37 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
   そのまま動作する。本格的な分散運用(複数ノードが同一物理インデックス
   を共有書込)はスコープ外。
 
+### TASK-177
+
+- 経緯: BACKLOG-001「Office 系パーサ対応」をタスク化して実施。MIME は
+  TASK-174 で architecture.md §5.7 に予約済み(当時「将来対応」注記)。
+- 採用ライブラリ: **Apache POI 5.5.1**(2025-11-30 リリース、公式
+  ダウンロードページで確認)。既存の「形式ごとに専用ライブラリ」方針
+  (PDFBox / Jsoup)と一致。`poi-ooxml`(OOXML: .docx/.xlsx/.pptx、
+  推移的に core の HSSF=.xls を含む)+ `poi-scratchpad`(HWPF=.doc /
+  HSLF=.ppt)を追加。
+- 実装方式: 形式別 MIME が必要で現行 `DocumentParser.contentType()` は
+  「1 パーサ = 1 MIME」モデルのため、設定可能な単一クラス
+  `OfficeDocumentParser(name, extension, contentType)` を 6 拡張子分
+  `ParserRegistry.defaults()` に登録。抽出本体は全形式共通で
+  `org.apache.poi.extractor.ExtractorFactory.createExtractor(...)`
+  により modern/legacy・形式を自動判別。インタフェース変更は不要。
+- Excel: POI の Excel エクストラクタが既定でシート名+行単位(列=タブ)
+  のテキストを出力。テストで挙動を確認済み。
+- テスト: `.docx`/`.xlsx`/`.pptx`/`.xls`/`.ppt` は POI で書き出し可能な
+  ため `OfficeDocumentParserTest` でフィクスチャをプログラム生成して
+  往復検証(PdfParserTest と同方式)。**.doc(HWPF)は POI が新規書き
+  出し未サポート**のため、登録・MIME・拡張子解決のみ検証(抽出は他の
+  OLE2 形式と同じ `ExtractorFactory` 経路を共有)。
+- 既知の事象: POI は log4j-api を使うため、ロギングプロバイダ未設定時に
+  `Log4j API could not find a logging provider` が一度標準エラーに出る。
+  動作影響なし。アプリ側で SLF4J へ橋渡しする場合は `log4j-to-slf4j` を
+  検討(本タスクのスコープ外)。
+- スコープ外: 画像 OCR、PowerPoint ノート分離、Word 見出しの構造
+  ブースト、パスワード付きファイル対応。
+
 | ID | ステータス | 概要 | 依存関係 |
 | --- | --- | --- | --- |
-| BACKLOG-001 | ⏳ | Office 系(Word/Excel/PowerPoint)パーサ対応 | - |
 | BACKLOG-002 | ⏳ | Google Docs / Apple Pages 連携(PDF 変換経由) | - |
 | BACKLOG-003 | ⏳ | ユーザー/ロール管理(認可)実装 | - |
 | BACKLOG-004 | ⏳ | インデックスデータの暗号化保存 | - |

@@ -12,9 +12,9 @@ import java.util.Optional;
 /**
  * Dispatches to the appropriate {@link DocumentParser} based on file extension.
  *
- * <p>Built-in parsers (Plain Text, Markdown, AsciiDoc, HTML, PDF) are
- * registered by {@link #defaults()}; additional parsers can be added via
- * {@link #register}.
+ * <p>Built-in parsers (Plain Text, Markdown, AsciiDoc, HTML, PDF, and Office
+ * Word/Excel/PowerPoint) are registered by {@link #defaults()}; additional
+ * parsers can be added via {@link #register}.
  */
 public final class ParserRegistry {
 
@@ -28,6 +28,21 @@ public final class ParserRegistry {
         registry.register(new AsciiDocParser());
         registry.register(new HtmlParser());
         registry.register(new PdfParser());
+        // Office formats (docs/architecture.md §5.7). Each extension maps to a
+        // distinct MIME type, so one configurable parser is registered per
+        // extension rather than per family.
+        registry.register(new OfficeDocumentParser("word-docx", ".docx",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
+        registry.register(new OfficeDocumentParser("word-doc", ".doc",
+            "application/msword"));
+        registry.register(new OfficeDocumentParser("excel-xlsx", ".xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        registry.register(new OfficeDocumentParser("excel-xls", ".xls",
+            "application/vnd.ms-excel"));
+        registry.register(new OfficeDocumentParser("powerpoint-pptx", ".pptx",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation"));
+        registry.register(new OfficeDocumentParser("powerpoint-ppt", ".ppt",
+            "application/vnd.ms-powerpoint"));
         return registry;
     }
 

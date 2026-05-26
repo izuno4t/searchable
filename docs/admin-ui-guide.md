@@ -106,6 +106,9 @@ java -jar searchable-ui-1.0.0-SNAPSHOT.jar \
 - AsciiDoc: `.adoc`, `.asciidoc`
 - HTML: `.html`, `.htm`, `.xhtml`
 - PDF: `.pdf`
+- Word: `.docx`, `.doc`
+- Excel: `.xlsx`, `.xls`
+- PowerPoint: `.pptx`, `.ppt`
 
 最大ファイルサイズ: 64MB（`application.properties`で変更可）。
 

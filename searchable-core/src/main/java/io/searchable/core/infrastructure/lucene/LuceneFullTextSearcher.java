@@ -1,6 +1,5 @@
 package io.searchable.core.infrastructure.lucene;
 
-import io.searchable.core.application.AnchorUrls;
 import io.searchable.core.domain.search.SearchHit;
 import io.searchable.core.domain.search.SearchRequest;
 import io.searchable.core.domain.search.SearchResult;

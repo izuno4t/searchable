@@ -83,6 +83,24 @@
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
         </dependency>
+        <!-- Office formats: poi-ooxml (.docx/.xlsx/.pptx, transitively poi
+             core for .xls) + poi-scratchpad (.doc/.ppt) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-scratchpad</artifactId>
+        </dependency>
+        <!-- Route POI's Log4j 2 API logging to SLF4J so it flows through the
+             project's Logback setup instead of warning about a missing
+             provider. Runtime-only: no compile-time API is used. -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-slf4j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
 
         <!-- JSON / YAML -->
         <dependency>

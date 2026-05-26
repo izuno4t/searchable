@@ -56,7 +56,9 @@ public final class FacetFilter {
         }
         if (actual instanceof List<?> list) {
             for (final Object item : list) {
-                if (item == null) continue;
+                if (item == null) {
+                    continue;
+                }
                 for (final Object e : expected) {
                     if (item.toString().equals(toStr(e))) {
                         return true;
