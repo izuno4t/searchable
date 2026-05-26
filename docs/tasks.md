@@ -201,6 +201,7 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | TASK-175 | ✅ | `DocumentParser` インタフェースに `contentType()` メソッドを追加(デフォルト `application/octet-stream`)、既存 5 パーサー(plain/markdown/asciidoc/pdf/html)が正しい MIME を返すよう実装 | TASK-174 |
 | TASK-176 | ✅ | `searchable-cli` `IngestCommand` と `examples/webapp` `StartupIngestRunner` で `metadata.contentType = parser.contentType()` を自動設定。`examples/api` OpenAPI / `api-specification.ja.md` の reserved key 表に追加。`examples/plugin-datasource-s3` の既存 `contentType` キーを規約に合わせる(`url` の隣に置く) | TASK-175 |
 | TASK-177 | ✅ | Office 系(Word/Excel/PowerPoint)パーサ対応(旧 BACKLOG-001)。Apache POI 採用で `.docx`/`.doc`/`.xlsx`/`.xls`/`.pptx`/`.ppt` の6形式を `OfficeDocumentParser` で抽出し `ParserRegistry.defaults()` に登録。`metadata.contentType` を形式別 MIME(architecture.md §5.7)に設定 | TASK-175,TASK-176 |
+| TASK-178 | ⏳ | Spring Boot 3.4.1 → 4.0.x メジャーアップグレード(依存脆弱性対応)。影響範囲は `searchable-admin` と `examples/*`(webapp/api/mcp)のみ。`searchable-core` は Spring 非依存で無関係。独立した移行プロジェクトとして計画・実施 | - |
 
 ## タスク詳細
 
@@ -409,13 +410,31 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
   ため `OfficeDocumentParserTest` でフィクスチャをプログラム生成して
   往復検証(PdfParserTest と同方式)。**.doc(HWPF)は POI が新規書き
   出し未サポート**のため、登録・MIME・拡張子解決のみ検証(抽出は他の
-  OLE2 形式と同じ `ExtractorFactory` 経路を共有)。
+  OLE2 形式と同じ `ExtractorFactory` 経路を共有)。.doc 実抽出テストは
+  BACKLOG-014 で別途対応。
 - 既知の事象: POI は log4j-api を使うため、ロギングプロバイダ未設定時に
   `Log4j API could not find a logging provider` が一度標準エラーに出る。
   動作影響なし。アプリ側で SLF4J へ橋渡しする場合は `log4j-to-slf4j` を
   検討(本タスクのスコープ外)。
 - スコープ外: 画像 OCR、PowerPoint ノート分離、Word 見出しの構造
   ブースト、パスワード付きファイル対応。
+
+### TASK-178
+
+- 背景: 依存脆弱性スキャン(Red Hat Dependency Analytics)で Spring Boot
+  3.4.1 の各スターターに多数の推移的脆弱性(spring-boot-starter-web で
+  critical 6 / high 15 等)。最新 GA は 4.0.6(2026-05 時点、spring.io で
+  確認)。リリースは年2回・マイナーは最低12か月 OSS サポートの方針から、
+  3.4.x / 3.5.x は OSS サポート終了または終了間際と推定(正確な EOL 日は
+  移行計画時に要確認)。
+- 影響範囲: `searchable-admin` と `examples/*`(webapp / api / mcp)のみ。
+  `searchable-core` は Spring 非依存のため無関係。
+- 注意: 3.x → 4.0 はメジャーアップで Spring Framework 7 ベース、破壊的
+  変更を伴う。Java baseline・削除/変更 API・`jakarta` 系の差分を移行前に
+  一次情報で確認すること。段階移行(まず最新 3.x → 4.0)も検討。
+- 進め方: 独立した移行プロジェクトとして brainstorming → plan → 実装 →
+  全モジュールのテスト/起動確認のサイクルで実施する。着手は現行 Office
+  パーサ作業(TASK-177)の完了後。
 
 | ID | ステータス | 概要 | 依存関係 |
 | --- | --- | --- | --- |
@@ -431,8 +450,23 @@ Goal: 要件書 v3.3 を充足する Searchable 一式(ライブラリ・運用 
 | BACKLOG-011 | ⏳ | 取込ジョブのスケジューラ(cron)機能 | - |
 | BACKLOG-012 | ⏳ | 取込チェックポイント永続化による中断再開機能 | - |
 | BACKLOG-013 | ⏳ | 並列ワーカープールによる並列取込 | - |
+| BACKLOG-014 | ⏳ | レガシー `.doc`(HWPF)パーサの実抽出テスト整備 | TASK-177 |
 
 ## バックログ詳細
+
+### BACKLOG-014
+
+- 背景: TASK-177 で `.doc` は POI が新規書き出し未サポートのため、現状
+  `OfficeDocumentParserTest` では登録・MIME・拡張子解決のみ検証し、実抽出
+  は同じ `ExtractorFactory` 経路の `.xls`/`.ppt` で間接カバーに留めている。
+- 目的: 実 `.doc` バイナリをフィクスチャとして HWPF 抽出経路を直接検証
+  する。
+- 注意: フィクスチャは **ライセンスがクリア(自作 or 再配布可能)** かつ
+  **小さい(数 KB)** ものを用意する。`.docx` をリネームしただけは
+  `ExtractorFactory` がファイルマジックで OOXML と判定するため不可
+  (本物の Word 97-2003 / OLE2 バイナリが必要)。
+- 備考: POI 単体では生成不可。LibreOffice headless(`soffice --convert-to
+  doc`)等で生成するか、自作の最小 `.doc` を同梱する。
 
 ### BACKLOG-003
 
