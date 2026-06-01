@@ -37,6 +37,9 @@ Goal: AI 統合機能(LLM プロバイダ連携・検索結果要約・管理画
 | TASK-006 | ⏳ | AI 統合設定モデルと application.properties 取込(プロバイダ選択・API キー・モデル・タイムアウト) | TASK-004 |
 | TASK-007 | ⏳ | AI 統合ユニットテスト(スタブプロバイダによる API 非依存テスト) | TASK-004,TASK-005 |
 | TASK-008 | ⏳ | searchable-admin に AI 統合設定画面追加(プロバイダ・API キー・モデル選択 UI) | TASK-006 |
+| TASK-009 | ✅ | 設定パスの解決基準を `data-directory` ベースに改修(現状は JVM CWD 基準で CLI/webapp の起動ディレクトリ差で別 index を見にいく footgun)。ADR-0002 を併設(M1 残務) | - |
+| TASK-010 | ✅ | `searchable ingest` で未対応拡張子(`.DS_Store` 等)に当たると `IllegalArgumentException` で全体中断する問題を WARN ログ + skip カウンタで継続するように修正(M1 残務) | - |
+| TASK-011 | ✅ | `searchable ingest --namespace X` で `X` 未登録時に `NoSuchElementException` でスタックトレース終了する UX を改善。TTY なら対話プロンプト、`--create-namespace` フラグで非対話自動作成、非 TTY + フラグ無しなら案内付きエラーで `exit 1`(M1 残務) | - |
 
 ## タスク詳細
 
@@ -69,6 +72,27 @@ Goal: AI 統合機能(LLM プロバイダ連携・検索結果要約・管理画
 
 - 補足: M1 で実装済の `searchable-admin`(TASK-103)に AI 統合設定画面を追加。プロバイダ選択 / API キー入力 / モデル選択 / タイムアウト設定の UI
 - 注意: API キーは画面表示時にマスクし、保存時のみ平文受領。永続化形式は TASK-006 と整合
+
+### TASK-009
+
+- 背景: `ConfigLoader` は YAML をデシリアライズするだけで path 正規化を一切しない。`ApplicationConfig` / `IndexConfig` / `PersistenceConfig` が保持する `Path` は relative のまま `Files.*` / `MMapDirectory` / H2 JDBC URL に渡るため、`user.dir`(JVM CWD)基準で解決される。CLI(リポジトリルートから起動)と webapp(任意ディレクトリから起動)を別 CWD で動かすと index/DB が分裂する
+- 提案する解決順序:
+  1. `data-directory` 自身: 絶対なら as-is、相対なら **config ファイルの親ディレクトリ基準** で解決(Spring Boot 経由の webapp で config ファイル不在なら CWD を fallback)
+  2. `index.directory`(未設定時のデフォルト `<data-directory>/indexes`): 絶対なら as-is、相対なら **`data-directory` 基準**
+  3. `plugins.directory`: 同じく `data-directory` 基準
+  4. H2 JDBC URL: URL 内のファイルパスが相対なら `data-directory` 基準で絶対化してから H2 に渡す。または `persistence.directory` を新設し、デフォルトを `<data-directory>` にしてテンプレート展開する設計を検討
+  5. 起動時に正規化後の絶対パスを INFO ログ出力(運用診断)
+- 実装範囲:
+  - `searchable-core/.../application/config/ConfigLoader.java` で post-deserialize 正規化
+  - `ApplicationConfig` の path フィールドは「正規化後の絶対 Path」を契約とする(`normalize(Path base)` factory を導入)
+  - `examples/webapp/SearchableWebappApplication` の Spring Boot binding でも同じ resolver を通すよう変更
+  - 起動ログに正規化済み絶対パスを INFO 出力
+  - 起動済 path が直接 `MMapDirectory` / `Files.newOutputStream` に渡る前提を満たすよう、`LuceneIndexProvider` / `JdbcDocumentMetadataRepository` 側で `toAbsolutePath()` 呼び出しに依存していたら整理
+- 後方互換:
+  - 既存 config(`./data/webapp` 系)は意味が変わる(CWD 基準 → config 親ディレクトリ基準)。`docs/getting-started.ja.md` で導入した `$HOME/searchable-data` の workaround は本タスク完了後に「自然な相対パス」へ書き換え可能
+  - 移行注記を `docs/setup-guide.md` に追加
+- 関連 ADR: 新規 ADR-0002 を作成(`data-directory` を path 解決の anchor とする方針、H2 URL 書換、ログ出力義務などの設計判断を記録)
+- 関連 docs: `docs/getting-started.ja.md` / `examples/webapp/README.md` / `docs/setup-guide.md` / `docs/cli-guide.ja.md`
 
 ## バックログ
 

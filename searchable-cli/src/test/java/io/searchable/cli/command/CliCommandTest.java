@@ -36,13 +36,16 @@ class CliCommandTest {
     private PrintStream originalOut;
     private PrintStream originalErr;
     private ByteArrayOutputStream stdoutBuffer;
+    private ByteArrayOutputStream stderrBuffer;
 
     @BeforeEach
     void captureStdio() {
         originalOut = System.out;
         originalErr = System.err;
         stdoutBuffer = new ByteArrayOutputStream();
+        stderrBuffer = new ByteArrayOutputStream();
         System.setOut(new PrintStream(stdoutBuffer, true, StandardCharsets.UTF_8));
+        System.setErr(new PrintStream(stderrBuffer, true, StandardCharsets.UTF_8));
     }
 
     @AfterEach
@@ -73,8 +76,11 @@ class CliCommandTest {
             "--id-prefix", "p-", doc.toString());
 
         assertThat(code).isZero();
-        assertThat(stdoutBuffer.toString(StandardCharsets.UTF_8))
-            .contains("Indexed 1 document(s) into cli-ns");
+        final String out = stripAnsi(stdoutBuffer.toString(StandardCharsets.UTF_8));
+        assertThat(out)
+            .contains("INGEST COMPLETE")
+            .contains("namespace: cli-ns")
+            .contains("Indexed      : 1 documents");
     }
 
     @Test
@@ -89,8 +95,72 @@ class CliCommandTest {
         final int code = run(config, "ingest", "--namespace", "ns-dir", docsDir.toString());
 
         assertThat(code).isZero();
-        assertThat(stdoutBuffer.toString(StandardCharsets.UTF_8))
-            .contains("Indexed 2 document(s) into ns-dir");
+        final String out = stripAnsi(stdoutBuffer.toString(StandardCharsets.UTF_8));
+        assertThat(out)
+            .contains("namespace: ns-dir")
+            .contains("Indexed      : 2 documents");
+    }
+
+    @Test
+    void ingestSkipsFilesWithoutRegisteredParser() throws Exception {
+        // Mixed directory: one parseable file and one OS metadata file
+        // (.DS_Store) that no parser claims. The unsupported file must be
+        // skipped with a warning, not abort the whole batch.
+        final Path config = writeConfig();
+        createNamespace(config, "skip-ns");
+        final Path docsDir = tempDir.resolve("mixed");
+        Files.createDirectories(docsDir);
+        Files.writeString(docsDir.resolve("note.txt"), "alpha document");
+        Files.write(docsDir.resolve(".DS_Store"), new byte[]{0, 1, 2, 3});
+
+        final int code = run(config, "ingest", "--namespace", "skip-ns", docsDir.toString());
+
+        assertThat(code).isZero();
+        final String out = stripAnsi(stdoutBuffer.toString(StandardCharsets.UTF_8));
+        assertThat(out)
+            .contains("namespace: skip-ns")
+            .contains("Indexed      : 1 documents")
+            .contains("Skipped      : 1 files");
+        assertThat(stderrBuffer.toString(StandardCharsets.UTF_8))
+            .contains("WARN")
+            .contains(".DS_Store");
+    }
+
+    @Test
+    void ingestErrorsHelpfullyWhenNamespaceMissingAndNoFlag() throws Exception {
+        // No TTY in tests + no --create-namespace flag => exit non-zero with
+        // a message that points the user at the flag (no stack trace).
+        final Path config = writeConfig();
+        final Path doc = tempDir.resolve("hello.txt");
+        Files.writeString(doc, "content");
+
+        final int code = run(config, "ingest", "--namespace", "ghost",
+            doc.toString());
+
+        assertThat(code).isNotZero();
+        assertThat(stderrBuffer.toString(StandardCharsets.UTF_8))
+            .contains("Namespace 'ghost' does not exist")
+            .contains("--create-namespace");
+    }
+
+    @Test
+    void ingestAutoCreatesNamespaceWithFlag() throws Exception {
+        // --create-namespace bypasses the prompt and creates the namespace
+        // with defaults before ingesting.
+        final Path config = writeConfig();
+        final Path doc = tempDir.resolve("hello.txt");
+        Files.writeString(doc, "content");
+
+        final int code = run(config, "ingest", "--namespace", "auto-ns",
+            "--create-namespace", doc.toString());
+
+        assertThat(code).isZero();
+        assertThat(stderrBuffer.toString(StandardCharsets.UTF_8))
+            .contains("Created namespace 'auto-ns'");
+        final String out = stripAnsi(stdoutBuffer.toString(StandardCharsets.UTF_8));
+        assertThat(out)
+            .contains("namespace: auto-ns")
+            .contains("Indexed      : 1 documents");
     }
 
     @Test
@@ -188,6 +258,14 @@ class CliCommandTest {
         assertThat(stdoutBuffer.toString(StandardCharsets.UTF_8))
             .contains("Restored ")
             .contains("namespace(s) from");
+    }
+
+    /**
+     * Drop ANSI SGR escape sequences so assertions can match the human-visible
+     * text in {@link io.searchable.cli.command.IngestCommand}'s banner output.
+     */
+    private static String stripAnsi(final String s) {
+        return s.replaceAll("\\x1b\\[[0-9;]*m", "");
     }
 
     private int run(final Path config, final String... commandAndArgs) {

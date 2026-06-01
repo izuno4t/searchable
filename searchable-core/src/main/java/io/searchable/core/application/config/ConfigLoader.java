@@ -32,7 +32,12 @@ public final class ConfigLoader {
     public ApplicationConfig load(final Path file) {
         Objects.requireNonNull(file, "file must not be null");
         try (InputStream in = Files.newInputStream(file)) {
-            return load(in);
+            final ApplicationConfig raw = load(in);
+            // Resolve all path-typed fields against the config file's parent
+            // directory (see ADR-0002). Without this, every relative path
+            // would be silently resolved against the JVM CWD.
+            final Path base = file.toAbsolutePath().getParent();
+            return ApplicationConfig.normalize(raw, base);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read config from " + file, e);
         }

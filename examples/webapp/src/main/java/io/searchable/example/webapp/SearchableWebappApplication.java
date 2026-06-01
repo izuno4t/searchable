@@ -32,12 +32,16 @@ public class SearchableWebappApplication {
     public SearchableLibrary searchableLibrary(
             @Value("${searchable.data-directory:./data}") final Path dataDirectory,
             @Value("${searchable.persistence.url:jdbc:h2:./data/webapp;MODE=PostgreSQL}") final String dbUrl) {
-        final ApplicationConfig config = new ApplicationConfig(
+        final ApplicationConfig raw = new ApplicationConfig(
             dataDirectory,
             new PersistenceConfig("H2", dbUrl, "sa", ""),
             new IndexConfig(dataDirectory.resolve("indexes")),
             PluginsConfig.classpathOnly(),
             GlobalConfig.defaults());
+        // Resolve relative paths against the JVM CWD because no config-file
+        // anchor exists when paths come from Spring `@Value` injection.
+        // See docs/adr/0002-data-directory-relative-path-resolution.md.
+        final ApplicationConfig config = ApplicationConfig.normalize(raw, Path.of("").toAbsolutePath());
         return SearchableLibrary.fromConfig(config);
     }
 

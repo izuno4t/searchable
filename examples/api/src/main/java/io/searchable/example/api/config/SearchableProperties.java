@@ -1,14 +1,23 @@
 package io.searchable.example.api.config;
 
+import io.searchable.core.application.config.ApplicationConfig;
+import jakarta.annotation.PostConstruct;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.nio.file.Path;
 
 /**
  * Maps {@code searchable.*} properties from {@code application.properties}.
+ *
+ * <p>Resolves all path-typed fields against {@link #dataDirectory} after
+ * Spring binding completes (see
+ * {@code docs/adr/0002-data-directory-relative-path-resolution.md}).
  */
 @ConfigurationProperties(prefix = "searchable")
 public class SearchableProperties {
+
+    private static final Path DEFAULT_INDEX_DIR = Path.of("./data/indexes");
+    private static final Path DEFAULT_DICTIONARY_DIR = Path.of("./data/dictionaries");
 
     private Path dataDirectory = Path.of("./data");
     private Persistence persistence = new Persistence();
@@ -41,6 +50,46 @@ public class SearchableProperties {
     public void setApi(final Api v) { this.api = v; }
     public Cors getCors() { return cors; }
     public void setCors(final Cors v) { this.cors = v; }
+
+    /**
+     * Resolve all path-typed fields to absolute paths. {@code dataDirectory}
+     * is resolved against the JVM working directory; sub-paths (index,
+     * dictionary, plugins, embedding model, H2 URL) are resolved against the
+     * absolute {@code dataDirectory}. Default values such as
+     * {@code ./data/indexes} are replaced with the data-directory-relative
+     * equivalent.
+     */
+    @PostConstruct
+    public void normalizePaths() {
+        final Path cwd = Path.of("").toAbsolutePath();
+        this.dataDirectory = resolveAgainst(this.dataDirectory, cwd);
+
+        final Path idxDir = index.getDirectory();
+        if (DEFAULT_INDEX_DIR.equals(idxDir)) {
+            index.setDirectory(dataDirectory.resolve("indexes"));
+        } else if (idxDir != null) {
+            index.setDirectory(resolveAgainst(idxDir, dataDirectory));
+        }
+
+        final Path dictDir = dictionary.getDirectory();
+        if (DEFAULT_DICTIONARY_DIR.equals(dictDir)) {
+            dictionary.setDirectory(dataDirectory.resolve("dictionaries"));
+        } else if (dictDir != null) {
+            dictionary.setDirectory(resolveAgainst(dictDir, dataDirectory));
+        }
+
+        if (plugins.getDirectory() != null) {
+            plugins.setDirectory(resolveAgainst(plugins.getDirectory(), dataDirectory));
+        }
+        if (embedding.getModelPath() != null) {
+            embedding.setModelPath(resolveAgainst(embedding.getModelPath(), dataDirectory));
+        }
+        persistence.setUrl(ApplicationConfig.normalizeH2Url(persistence.getUrl(), dataDirectory));
+    }
+
+    private static Path resolveAgainst(final Path p, final Path base) {
+        return p.isAbsolute() ? p.normalize() : base.resolve(p).normalize();
+    }
 
     /** Persistence DB connection settings. */
     public static class Persistence {

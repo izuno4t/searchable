@@ -56,7 +56,7 @@ cd searchable
 ./mvnw -B -f examples/api/pom.xml package
 ```
 
-成果物: `examples/api/target/api-example-1.0.0-SNAPSHOT.jar`(Spring Boot fat jar)
+成果物: `examples/api/target/api-example-1.0.0-SNAPSHOT.jar`
 
 ### A.2 起動する
 
@@ -137,14 +137,13 @@ curl -X POST http://localhost:8080/api/v1/search \
 
 成果物:
 
-- `searchable-cli/target/searchable-cli-1.0.0-SNAPSHOT.jar`(依存全部入りの executable fat jar、shade で生成)
-- `examples/webapp/target/webapp-example-1.0.0-SNAPSHOT.jar`(Spring Boot fat jar)
-
-> CLI を fat jar 化している理由・設定方針は
-> [docs/adr/0001-cli-executable-jar-with-shade-plugin.md](adr/0001-cli-executable-jar-with-shade-plugin.md)
-> を参照。
+- `searchable-cli/target/searchable-cli-1.0.0-SNAPSHOT.jar`
+- `examples/webapp/target/webapp-example-1.0.0-SNAPSHOT.jar`
 
 ### B.2 ドキュメントを用意する
+
+> 既に手元のドキュメントディレクトリ(例: `~/Documents/handbook`)を使う場合は
+> 本節をスキップして、B.3 のパスを差し替えればよい。
 
 検索したいドキュメントを任意のディレクトリに置く。本ガイドでは動作確認用に
 最小サンプルを作成する。
@@ -169,34 +168,28 @@ EOF
 対応形式: Markdown / プレーンテキスト / HTML / AsciiDoc / PDF /
 Office(Word・Excel・PowerPoint)。ファイル拡張子で自動判別される。
 
-> 既に手元のドキュメントディレクトリ(例: `~/Documents/handbook`)を使う場合は
-> 本節をスキップして、B.3 のパスを差し替えればよい。
-
 ### B.3 CLI でインデックスを作成する
 
 #### 設定ファイル
 
-リポジトリルートに `searchable.yaml` を作成する。`data-directory` は
-**インデックスとメタデータ DB の保存先** で、webapp のデフォルト
-(`./data/webapp`)に揃えておくと B.4 の起動が追加設定なしで済む。
+`searchable.yaml` を作成する。`data-directory` がインデックスとメタデータ DB の
+**保存先のルート** になる。`searchable-core` は YAML 内の相対パスを **設定
+ファイルの親ディレクトリ** を基準に解決するので、設定ファイルと一緒に持ち運べる:
 
 ```yaml
-# searchable.yaml - CLI と webapp が共有する index/DB の置き場所
-data-directory: ./data/webapp
+# searchable.yaml と同じディレクトリ配下に index / DB を作成
+data-directory: ./data
 
 persistence:
   type: H2
-  url: "jdbc:h2:./data/webapp/metadata;MODE=PostgreSQL"
+  url: "jdbc:h2:./data/metadata;MODE=PostgreSQL"
   username: sa
   password: ""
-
-index:
-  directory: ./data/webapp/indexes
 ```
 
-> ここで指定するパスは **保存先**(webapp が所有する領域)。前節の
-> `~/sample-docs` は **ソース** で、`ingest` の引数として別途渡す。
-> 両者は無関係のディレクトリで構わない。
+> パス解決の方針は [ADR-0002](adr/0002-data-directory-relative-path-resolution.md)
+> を参照。絶対パスを書けば常にそこが使われる。`index.directory` を省略すると
+> `<data-directory>/indexes` が自動で採用される。
 
 #### ingest 実行
 
@@ -209,10 +202,12 @@ java -jar searchable-cli/target/searchable-cli-1.0.0-SNAPSHOT.jar \
   ~/sample-docs
 ```
 
-完了すると以下が生成される:
+> Namespace が未作成の場合は対話的に「Create it? [Y/n]」が出る。CI 等の非対話
+> 環境では `--create-namespace` フラグで自動作成する。
 
-- `./data/webapp/indexes/default/<timestamp>/` — Lucene インデックス
-- `./data/webapp/metadata.mv.db` — メタデータ DB(H2)
+完了すると、`searchable.yaml` と同じディレクトリの `./data/` 配下に
+インデックス(`./data/indexes/default/<timestamp>/`)とメタデータ DB
+(`./data/metadata.mv.db`)が作られる。
 
 #### 取込結果の確認
 
@@ -226,24 +221,24 @@ java -jar searchable-cli/target/searchable-cli-1.0.0-SNAPSHOT.jar \
 ### B.4 webapp を起動する
 
 webapp はデフォルトで H2 を組込みモードで開く(シングルライター)。
-CLI の `ingest` が終わってから起動する。
+CLI の `ingest` が終わってから起動する。`searchable.yaml` を作ったディレクトリ
+から webapp を起動すると、同じ `./data` を見にいく。
 
 ```bash
 java -jar examples/webapp/target/webapp-example-1.0.0-SNAPSHOT.jar
 ```
 
-ログに `Started SearchableApplication` が出れば
-`http://localhost:8080` で待ち受け開始。webapp の
-`application.properties` のデフォルトが `./data/webapp` を指しているため、
-追加設定なしで B.3 のインデックスを読み込む。
-
-別の場所に置いた場合は明示する:
+別ディレクトリから起動したい場合は webapp 側にも明示する:
 
 ```bash
 java -jar examples/webapp/target/webapp-example-1.0.0-SNAPSHOT.jar \
-  --searchable.data-directory=./data/webapp \
-  --searchable.persistence.url="jdbc:h2:./data/webapp/metadata;MODE=PostgreSQL"
+  --searchable.data-directory=/absolute/path/to/data
 ```
+
+ログに `Started SearchableApplication` が出れば
+`http://localhost:8080` で待ち受け開始。`SearchableLibrary initialized` の
+INFO ログに解決された絶対パスが出るので、CLI が書き込んだのと同じ場所を
+見ているか確認できる。
 
 ### B.5 ブラウザで検索する
 
