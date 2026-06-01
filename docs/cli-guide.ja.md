@@ -13,18 +13,31 @@
 ## 2. ビルドと配布
 
 ```bash
-mvn -pl searchable-cli -am clean package
+mvn -B -f searchable-cli/pom.xml clean package
 # 生成物:
-#   searchable-cli/target/searchable-cli-1.0.0-SNAPSHOT.jar
-#   searchable-cli/target/lib/        (依存 JAR)
-#   searchable-cli/src/main/scripts/searchable  (起動シェル)
+#   searchable-cli/target/searchable-cli-1.0.0-SNAPSHOT.jar          (executable fat jar)
+#   searchable-cli/target/original-searchable-cli-1.0.0-SNAPSHOT.jar (shade 前のオリジナル、参照用)
+#   searchable-cli/src/main/scripts/searchable                       (起動シェル)
 ```
 
-起動シェルは以下のパスから classpath を探索する:
+CLI は `maven-shade-plugin` で単一の executable fat jar として配布される
+(設計判断は [docs/adr/0001-cli-executable-jar-with-shade-plugin.md](adr/0001-cli-executable-jar-with-shade-plugin.md)
+を参照)。jar 単体で `java -jar` から起動可能で、隣に `lib/` を置く必要はない。
 
-1. `$SEARCHABLE_HOME/lib/*`
-2. シェルと同階層の `lib/`
-3. 開発チェックアウト時は `target/classes` + `target/lib/*`
+直接起動:
+
+```bash
+java -jar searchable-cli/target/searchable-cli-1.0.0-SNAPSHOT.jar \
+  --config /path/to/searchable.yaml <subcommand> [args]
+```
+
+同梱の起動シェル `searchable-cli/src/main/scripts/searchable` を使う場合、
+シェルは以下の順で fat jar を解決する。最初に見つかったものを使う。
+
+1. `$SEARCHABLE_HOME/searchable-cli.jar`
+2. シェルと同階層の `searchable-cli.jar`
+3. 開発チェックアウト時は `searchable-cli/target/searchable-cli-*.jar`
+   (shade が残す `original-*.jar` は除外)
 
 ## 3. 共通オプション
 

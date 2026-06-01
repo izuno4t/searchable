@@ -137,8 +137,12 @@ curl -X POST http://localhost:8080/api/v1/search \
 
 成果物:
 
-- `searchable-cli/target/searchable-cli-1.0.0-SNAPSHOT.jar` と `searchable-cli/target/lib/`
+- `searchable-cli/target/searchable-cli-1.0.0-SNAPSHOT.jar`(依存全部入りの executable fat jar、shade で生成)
 - `examples/webapp/target/webapp-example-1.0.0-SNAPSHOT.jar`(Spring Boot fat jar)
+
+> CLI を fat jar 化している理由・設定方針は
+> [docs/adr/0001-cli-executable-jar-with-shade-plugin.md](adr/0001-cli-executable-jar-with-shade-plugin.md)
+> を参照。
 
 ### B.2 ドキュメントを用意する
 

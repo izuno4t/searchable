@@ -2,36 +2,50 @@
 # Launcher for the Searchable CLI.
 #
 # Usage:
-#   bin/searchable --config /path/to/searchable.yaml <subcommand> [args]
+#   searchable --config /path/to/searchable.yaml <subcommand> [args]
 #
-# Resolution order:
-#   1. SEARCHABLE_HOME (if set) → expects $SEARCHABLE_HOME/lib/* on classpath
-#   2. Co-located ./lib/* (next to this script, the layout produced by
-#      mvn package + maven-dependency-plugin copy-dependencies)
-#   3. Built target tree (./target/classes + ./target/lib/* when invoked
-#      from within a developer checkout)
+# Resolution order (the first match wins):
+#   1. $SEARCHABLE_HOME/searchable-cli.jar (installed distribution)
+#   2. ${self_dir}/searchable-cli.jar (jar placed next to this script)
+#   3. searchable-cli/target/searchable-cli-*.jar (developer checkout
+#      after `mvn -B -f searchable-cli/pom.xml package`)
+#
+# The CLI ships as a single self-contained fat jar (built with
+# maven-shade-plugin; see docs/adr/0001-cli-executable-jar-with-shade-plugin.md),
+# so no sibling lib/ directory is needed.
 set -euo pipefail
 
 self_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-resolve_classpath() {
-  if [[ -n "${SEARCHABLE_HOME:-}" && -d "${SEARCHABLE_HOME}/lib" ]]; then
-    printf '%s' "${SEARCHABLE_HOME}/lib/*"
+resolve_jar() {
+  if [[ -n "${SEARCHABLE_HOME:-}" && -f "${SEARCHABLE_HOME}/searchable-cli.jar" ]]; then
+    printf '%s' "${SEARCHABLE_HOME}/searchable-cli.jar"
     return
   fi
-  if [[ -d "${self_dir}/lib" ]]; then
-    printf '%s' "${self_dir}/lib/*"
+  if [[ -f "${self_dir}/searchable-cli.jar" ]]; then
+    printf '%s' "${self_dir}/searchable-cli.jar"
     return
   fi
-  local module_root="${self_dir}/.."
-  if [[ -d "${module_root}/target/classes" && -d "${module_root}/target/lib" ]]; then
-    printf '%s' "${module_root}/target/classes:${module_root}/target/lib/*"
-    return
+  # Dev checkout: scripts live at searchable-cli/src/main/scripts/, target/
+  # is three levels up.
+  local target_dir="${self_dir}/../../../target"
+  if [[ -d "${target_dir}" ]]; then
+    local jar
+    for jar in "${target_dir}"/searchable-cli-*.jar; do
+      local base="${jar##*/}"
+      # Skip the non-shaded "original-" artifact that shade keeps as backup.
+      if [[ "${base}" != original-* && -f "${jar}" ]]; then
+        printf '%s' "${jar}"
+        return
+      fi
+    done
   fi
-  echo "searchable: cannot locate runtime classpath." >&2
-  echo "Set SEARCHABLE_HOME or run from a built distribution." >&2
+  echo "searchable: cannot locate searchable-cli executable jar." >&2
+  echo "  - Set SEARCHABLE_HOME to a directory containing searchable-cli.jar," >&2
+  echo "  - place the jar next to this script, or" >&2
+  echo "  - run 'mvn -B -f searchable-cli/pom.xml package' first." >&2
   exit 2
 }
 
-cp="$(resolve_classpath)"
-exec "${JAVA:-java}" ${SEARCHABLE_OPTS:-} -cp "${cp}" io.searchable.cli.SearchableCli "$@"
+jar="$(resolve_jar)"
+exec "${JAVA:-java}" ${SEARCHABLE_OPTS:-} -jar "${jar}" "$@"

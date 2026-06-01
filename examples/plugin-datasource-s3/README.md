@@ -83,14 +83,17 @@ flow using [`searchable-cli`](../../searchable-cli/) as the host
 ```bash
 mvn -B clean install -DskipTests                                # core
 mvn -B -f examples/plugin-datasource-s3/pom.xml package         # plugin
-mvn -pl searchable-cli -am clean package                        # host
+mvn -B -f searchable-cli/pom.xml clean package                  # host (CLI fat jar)
 ```
 
 ### Step 2. Put the plugin on the classpath
 
-Copy the plugin JAR (plus its `aws-sdk` transitive dependencies under
-`target/lib/`) into the CLI's `lib/` directory or into a directory
-referenced by the host's `plugins.directory`:
+The CLI itself ships as a single shaded fat jar (see
+[docs/adr/0001-cli-executable-jar-with-shade-plugin.md](../../docs/adr/0001-cli-executable-jar-with-shade-plugin.md))
+and no longer exposes a `lib/` directory, so plugins must be loaded
+through the `plugins.directory` mechanism. Copy the plugin JAR and its
+`aws-sdk` transitive dependencies into the directory referenced by the
+host's `plugins.directory`:
 
 ```bash
 mkdir -p ./plugins
