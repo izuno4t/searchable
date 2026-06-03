@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -9,21 +9,21 @@
 <body>
 <header>
     <h1>Searchable</h1>
-    <p class="muted">REST API クライアントのサンプル UI</p>
+    <p class="muted">Sample UI client for the REST API</p>
 </header>
 
 <main>
     <form id="search-form" autocomplete="off">
         <input id="search-input" type="search" name="q"
-               placeholder="検索クエリを入力 (例: 全文検索)" autofocus required/>
-        <button type="submit">検索</button>
+               placeholder="Enter a query (e.g. full-text search)" autofocus required/>
+        <button type="submit">🔍 Search</button>
     </form>
 
     <section class="layout">
         <aside id="facets" hidden>
-            <h2>絞り込み</h2>
+            <h2>Filters</h2>
             <div id="facet-list"></div>
-            <button id="facet-clear" type="button">クリア</button>
+            <button id="facet-clear" type="button">Clear</button>
         </aside>
 
         <section id="results">
@@ -37,7 +37,7 @@
 <footer>
     <p class="muted">
         API endpoint: <code id="api-endpoint">/api/v1/search</code>
-        <button id="config-btn" type="button">変更</button>
+        <button id="config-btn" type="button">Change</button>
     </p>
 </footer>
 

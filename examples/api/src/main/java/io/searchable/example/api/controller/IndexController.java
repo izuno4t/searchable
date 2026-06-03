@@ -8,6 +8,7 @@ import io.searchable.example.api.controller.response.IndexMetadataResponse;
 import io.searchable.example.api.controller.response.IndexedDocumentResponse;
 import io.searchable.core.application.IndexService;
 import io.searchable.core.domain.document.Document;
+import io.searchable.core.infrastructure.runtime.PidRegistry;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,10 +33,13 @@ public class IndexController {
 
     private final IndexService service;
     private final Clock clock;
+    private final PidRegistry pidRegistry;
 
-    public IndexController(final IndexService service, final Clock clock) {
+    public IndexController(final IndexService service, final Clock clock,
+                           final PidRegistry pidRegistry) {
         this.service = service;
         this.clock = clock;
+        this.pidRegistry = pidRegistry;
     }
 
     @PostMapping("/documents")
@@ -43,6 +47,7 @@ public class IndexController {
     public IndexedDocumentResponse index(@Valid @RequestBody final IndexDocumentRequest req) {
         final Document doc = req.document().toDomain(req.namespaceId());
         service.index(doc);
+        pidRegistry.broadcastSighup();
         return IndexedDocumentResponse.of(req.namespaceId(), doc.id(), clock.instant());
     }
 
@@ -51,6 +56,7 @@ public class IndexController {
         final List<Document> docs = req.documents().stream()
             .map(d -> d.toDomain(req.namespaceId())).toList();
         service.indexBatch(req.namespaceId(), docs);
+        pidRegistry.broadcastSighup();
         final List<BatchIndexResult> results = new ArrayList<>();
         for (final Document d : docs) {
             results.add(BatchIndexResult.ok(d.id()));
@@ -61,7 +67,11 @@ public class IndexController {
     @DeleteMapping("/documents/{documentId}")
     public ResponseEntity<Void> delete(@PathVariable final String documentId,
                                        @RequestParam("namespaceId") final String namespaceId) {
-        return service.delete(namespaceId, documentId)
+        final boolean removed = service.delete(namespaceId, documentId);
+        if (removed) {
+            pidRegistry.broadcastSighup();
+        }
+        return removed
             ? ResponseEntity.noContent().build()
             : ResponseEntity.notFound().build();
     }
@@ -73,6 +83,7 @@ public class IndexController {
             throw new IllegalArgumentException("namespaceId is required");
         }
         service.rebuild(namespaceId);
+        pidRegistry.broadcastSighup();
         return Map.of("namespaceId", namespaceId, "status", "REBUILT");
     }
 

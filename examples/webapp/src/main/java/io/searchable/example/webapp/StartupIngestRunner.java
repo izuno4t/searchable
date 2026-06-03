@@ -47,6 +47,12 @@ public class StartupIngestRunner implements CommandLineRunner {
             log.info("startup ingest disabled");
             return;
         }
+        if (library.isReadOnly()) {
+            log.warn("startup ingest requested but library is read-only "
+                + "(typical when the webapp shares the data directory with "
+                + "the CLI ingest workflow); skipping");
+            return;
+        }
         if (library.namespaceService().findById(namespaceId).isEmpty()) {
             library.namespaceService().create(namespaceId, namespaceId,
                 NamespaceConfigPatch.empty());

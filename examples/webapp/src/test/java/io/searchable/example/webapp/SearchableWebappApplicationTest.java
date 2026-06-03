@@ -39,7 +39,7 @@ class SearchableWebappApplicationTest {
     void homePageRendersSearchForm() {
         final ResponseEntity<String> r = rest.getForEntity(url("/"), String.class);
         assertThat(r.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(r.getBody()).contains("Searchable Webapp").contains("検索");
+        assertThat(r.getBody()).contains("Searchable Webapp").contains("Search");
     }
 
     @Test

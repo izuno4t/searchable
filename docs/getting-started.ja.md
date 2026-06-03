@@ -256,24 +256,53 @@ URL 直叩きでも実行可:
 curl 'http://localhost:8080/?q=%E5%BD%A2%E6%85%8B%E7%B4%A0%E8%A7%A3%E6%9E%90'
 ```
 
-### B.6 ドキュメントを追加する
+### B.6 ドキュメントを追加する(無停止反映)
 
-新しいファイルを `~/sample-docs/` に置き、B.3 の `ingest` を再実行すれば
-差分が取り込まれる(コンテンツハッシュで変更検知)。**実行前に webapp を
-停止する** こと(H2 組込みモードのため)。
+新しいファイルを `~/sample-docs/` に置き、`ingest` を再実行すれば
+差分が取り込まれる(コンテンツハッシュで変更検知)。
+**webapp や MCP サーバーを止める必要はない**:
 
 ```bash
-# 1) webapp を停止 (Ctrl+C)
-# 2) 再 ingest
 java -jar searchable-cli/target/searchable-cli-1.0.0-SNAPSHOT.jar \
   --config ./searchable.yaml \
-  ingest --namespace default --source-type file ~/sample-docs
-# 3) webapp 再起動
-java -jar examples/webapp/target/webapp-example-1.0.0-SNAPSHOT.jar
+  ingest --namespace default ~/sample-docs
 ```
 
-> CLI と webapp を同時稼働させたい場合は永続化を PostgreSQL か H2 サーバー
-> モード(TCP)に切り替える。詳細は [setup-guide.md](setup-guide.md)。
+ingest 完了時、CLI は同じ data-directory 下に登録されている各アプリの
+PID 宛に `SIGHUP` を送る。受信したアプリ(webapp / mcp / api)は
+Lucene 検索ハンドルを `maybeRefresh()` し、再起動なしで新ドキュメントが
+検索ヒットするようになる。CLI の標準出力に
+`Notified N running app(s) via SIGHUP -> hot reload.` と表示されれば
+反映完了。
+
+仕組みの内訳:
+
+- **H2 メタデータ DB**: `ApplicationConfig.normalizeH2Url` が file モード URL に
+  `AUTO_SERVER=TRUE` を自動付与するので、CLI とアプリが同じ DB ファイルを
+  並行に使える(H2 が裏で TCP サーバーを立てる)。
+- **Lucene インデックス**: 各アプリは `<data-directory>/pids/<app>.pid` に
+  自プロセスの PID を書き出す。CLI ingest が commit 直後にその PID 一覧へ
+  `SIGHUP` を投げ、受信側は `SearcherManager.maybeRefresh()` で最新セグメントを
+  読み直す。
+
+#### API 経由でリアルタイム更新する
+
+検索 UI のような対話的用途では、CLI ingest の代わりに API の
+`POST /api/v1/index/documents` で 1 件ずつ投入することもできる。API も
+ingest 成功時に同じ仕組みで `SIGHUP` を broadcast する。
+
+```bash
+curl -X POST http://localhost:8080/api/v1/index/documents \
+  -H 'Content-Type: application/json' \
+  -d '{"namespaceId":"default","document":{"id":"new-1","title":"...","content":"..."}}'
+```
+
+> 制限: API は Lucene の `IndexWriter` を持続保持するため、API 稼働中は
+> CLI ingest が `write.lock` を取れず失敗する(逆も同じ)。実運用では
+> CLI 主体・API は補助、と役割分担すること。
+>
+> Windows 上では `SIGHUP` が利用できないため、自動反映は無効化される
+> (起動時 WARN ログで通知)。手動でアプリを再起動して反映する。
 
 ---
 
@@ -289,11 +318,9 @@ java -jar examples/webapp/target/webapp-example-1.0.0-SNAPSHOT.jar
 
 | 症状 | 対処 |
 | --- | --- |
-| ポート 8080 が使用中 | `--server.port=8081` を起動引数に追加 |
 | ビルド失敗 | `java -version` が 21 以上か確認、`~/.m2` の `searchable-core` インストールを再実行 |
-| webapp/API 起動時の H2 ロックエラー | 同じ DB を握る別プロセス(CLI / もう一方のサーバー)を停止してから再起動 |
+| API 起動中に CLI ingest が `LockObtainFailedException` | API の `IndexWriter` がロック保持中。API を止めるか、API 経由で投入する(B.6) |
 | 検索結果が 0 件 | ケース A は登録 curl のレスポンス、ケース B は `status` でドキュメント数を確認 |
-| 文字化け | ターミナルと application.properties の文字コード(UTF-8)を確認 |
 
 それ以外は [setup-guide.md](setup-guide.md) のトラブルシューティング節を参照。
 

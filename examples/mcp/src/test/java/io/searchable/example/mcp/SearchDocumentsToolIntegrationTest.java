@@ -124,7 +124,7 @@ class SearchDocumentsToolIntegrationTest {
 
         final var response = json.readTree(out.toString(StandardCharsets.UTF_8).trim());
         final var content = response.get("result").get("content");
-        assertThat(content.get(0).get("text").asText()).contains("検索結果").contains("d1");
+        assertThat(content.get(0).get("text").asText()).contains("Results").contains("d1");
     }
 
     @Test

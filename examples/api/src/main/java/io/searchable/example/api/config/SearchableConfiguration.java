@@ -39,6 +39,12 @@ import io.searchable.core.infrastructure.persistence.SchemaInitializer;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcIndexMetadataRepository;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcNamespaceRepository;
 import io.searchable.core.infrastructure.plugin.PluginLoader;
+import io.searchable.core.infrastructure.runtime.PidFile;
+import io.searchable.core.infrastructure.runtime.PidRegistry;
+import io.searchable.core.infrastructure.runtime.SighupListener;
+import jakarta.annotation.PreDestroy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -236,5 +242,52 @@ public class SearchableConfiguration {
                                        final io.searchable.core.domain.document.DocumentMetadataRepository dmr) {
         return new SearchService(nr, fullText, vector, hybrid,
             new io.searchable.core.application.SearchResultEnricher(dmr));
+    }
+
+    @Bean
+    public PidRegistry pidRegistry(final SearchableProperties props) {
+        return new PidRegistry(props.getDataDirectory());
+    }
+
+    @Bean
+    public ApiIndexHotReloadBridge apiIndexHotReloadBridge(
+            final LuceneIndexProvider provider,
+            final SearchableProperties props) {
+        return new ApiIndexHotReloadBridge(provider, props.getDataDirectory());
+    }
+
+    /**
+     * Owns the {@code api.pid} file and the {@code SIGHUP} handler that
+     * triggers a refresh of every open Lucene context. The API itself
+     * doesn't strictly need to refresh (its writer-attached searcher is
+     * NRT) but the same hook lets it react when another process — e.g.
+     * the CLI or a second API instance — commits.
+     */
+    public static final class ApiIndexHotReloadBridge implements AutoCloseable {
+        private static final Logger log = LoggerFactory.getLogger(ApiIndexHotReloadBridge.class);
+        private static final String APP_NAME = "api";
+        private final LuceneIndexProvider provider;
+        private final PidFile pidFile;
+        private final SighupListener listener;
+
+        ApiIndexHotReloadBridge(final LuceneIndexProvider provider, final java.nio.file.Path dataDirectory) {
+            this.provider = provider;
+            this.pidFile = PidFile.open(dataDirectory, APP_NAME);
+            this.listener = SighupListener.install(() -> {
+                final int n = provider.refresh();
+                log.info("SIGHUP received: refreshed {} namespace(s)", n);
+            });
+            if (!listener.isInstalled()) {
+                log.warn("api will not auto-refresh on CLI ingest "
+                    + "(SIGHUP unavailable on this platform)");
+            }
+        }
+
+        @PreDestroy
+        @Override
+        public void close() {
+            listener.uninstall();
+            pidFile.close();
+        }
     }
 }

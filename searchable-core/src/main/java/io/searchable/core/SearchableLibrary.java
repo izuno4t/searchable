@@ -161,6 +161,20 @@ public final class SearchableLibrary implements AutoCloseable {
         return readOnly;
     }
 
+    /**
+     * Refresh every currently-open Lucene namespace so its searcher
+     * view picks up segments other processes have committed.
+     *
+     * <p>Wired to {@code SIGHUP} in read-only apps so the CLI can
+     * trigger a hot reload after an ingest commit. See
+     * {@link io.searchable.core.infrastructure.runtime.SighupListener}.
+     *
+     * @return number of namespaces whose refresh succeeded
+     */
+    public int refresh() {
+        return indexProvider.refresh();
+    }
+
     public IndexStatisticsService indexStatisticsService() {
         return statisticsService;
     }

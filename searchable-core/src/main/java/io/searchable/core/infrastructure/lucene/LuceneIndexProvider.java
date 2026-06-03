@@ -131,6 +131,52 @@ public final class LuceneIndexProvider implements AutoCloseable {
     }
 
     /**
+     * Refresh every currently-open namespace's searcher view so it
+     * reflects segments the CLI (or API) has just committed.
+     *
+     * <p>Typically invoked from a {@code SIGHUP} handler in read-only
+     * apps so they pick up new documents without restarting. In
+     * read-write mode the writer's SearcherManager is already NRT, so
+     * the call is effectively a no-op but is still safe.
+     *
+     * <p>Caveat: this picks up incremental writes to the
+     * <em>currently open</em> version directory. After a full rebuild
+     * promotes a new {@code <ts>/}, the app must be restarted to switch
+     * to that version.
+     *
+     * @return number of namespaces whose refresh succeeded
+     */
+    public int refresh() {
+        int n = 0;
+        for (final String namespaceId : contexts.keySet()) {
+            if (refresh(namespaceId)) {
+                n++;
+            }
+        }
+        return n;
+    }
+
+    /**
+     * Refresh the searcher view for a single open namespace.
+     *
+     * @return {@code true} when the namespace has an open context and
+     *         the refresh succeeded; {@code false} otherwise
+     */
+    public boolean refresh(final String namespaceId) {
+        final LuceneIndexContext ctx = contexts.get(namespaceId);
+        if (ctx == null) {
+            return false;
+        }
+        try {
+            ctx.refresh();
+            return true;
+        } catch (IOException e) {
+            log.warn("Failed to refresh searcher for namespace {}", namespaceId, e);
+            return false;
+        }
+    }
+
+    /**
      * Reopen the live context so that a refreshed {@link AnalyzerFactory}
      * (e.g. after a user-dictionary update) takes effect immediately.
      * Existing on-disk segments are kept; only the in-memory writer /

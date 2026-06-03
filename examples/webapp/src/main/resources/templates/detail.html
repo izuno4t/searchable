@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
     <title th:text="${document.title}">Document</title>
@@ -10,7 +10,7 @@
     </style>
 </head>
 <body>
-<nav><a href="/">&larr; 検索に戻る</a></nav>
+<nav><a href="/">&larr; Back to search</a></nav>
 <h1 th:text="${document.title}">Title</h1>
 <p>
     <strong>Namespace:</strong> <span th:text="${document.namespaceId}"></span><br/>
@@ -18,7 +18,7 @@
     <strong>Indexed at:</strong> <span th:text="${document.indexedAt}"></span>
 </p>
 <p th:if="${originUrl}">
-    <strong>元ファイル:</strong>
+    <strong>Source:</strong>
     <a th:href="${originUrl}" th:text="${originUrl}" target="_blank" rel="noopener">link</a>
 </p>
 <pre th:text="${document.snippet}">body</pre>

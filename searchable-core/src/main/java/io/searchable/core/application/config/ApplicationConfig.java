@@ -3,6 +3,7 @@ package io.searchable.core.application.config;
 import io.searchable.core.infrastructure.persistence.PersistenceConfig;
 
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -114,11 +115,19 @@ public record ApplicationConfig(
     };
 
     /**
-     * Rewrite an H2 JDBC URL so that any embedded relative file path is
-     * resolved against {@code absoluteBase}. URLs in non-file modes
-     * ({@code mem:}, {@code tcp:}, {@code ssl:}, {@code zip:}, {@code nio*:},
-     * {@code memFS:}, {@code memLZF:}) and tilde-prefixed paths are returned
-     * unchanged. Non-H2 URLs are also returned unchanged.
+     * Rewrite an H2 JDBC URL so that:
+     * <ol>
+     *   <li>any embedded relative file path is resolved against
+     *       {@code absoluteBase}, and</li>
+     *   <li>{@code AUTO_SERVER=TRUE} is appended (unless already present)
+     *       so a second process — typically the CLI running an ingest —
+     *       can open the same file while an app holds it.</li>
+     * </ol>
+     * URLs in non-file modes ({@code mem:}, {@code tcp:}, {@code ssl:},
+     * {@code zip:}, {@code nio*:}, {@code memFS:}, {@code memLZF:}) are
+     * returned untouched. Non-H2 URLs are also returned unchanged.
+     * Tilde-prefixed paths keep H2's native tilde handling but still get
+     * {@code AUTO_SERVER=TRUE} appended.
      *
      * <p>Exposed for use by other property-binding sites (e.g. Spring Boot
      * {@code @ConfigurationProperties}) that need the same rewriting rule
@@ -149,15 +158,30 @@ public record ApplicationConfig(
             }
         }
         final String pathPart = paramIdx < 0 ? body : body.substring(0, paramIdx);
-        final String params = paramIdx < 0 ? "" : body.substring(paramIdx);
-        if (pathPart.isEmpty() || pathPart.startsWith("~")) {
+        String params = paramIdx < 0 ? "" : body.substring(paramIdx);
+        if (pathPart.isEmpty()) {
             return url;
         }
-        final Path path = Path.of(pathPart);
-        if (path.isAbsolute()) {
-            return url;
+        final String finalPath;
+        if (pathPart.startsWith("~")) {
+            finalPath = pathPart;
+        } else {
+            final Path path = Path.of(pathPart);
+            finalPath = path.isAbsolute()
+                ? pathPart
+                : absoluteBase.resolve(path).normalize().toString();
         }
-        final Path resolved = absoluteBase.resolve(path).normalize();
-        return prefix + filePrefix + resolved + params;
+        if (!h2ParamPresent(params, "AUTO_SERVER")) {
+            params = (params.isEmpty() ? ";" : params + ";") + "AUTO_SERVER=TRUE";
+        }
+        return prefix + filePrefix + finalPath + params;
+    }
+
+    private static boolean h2ParamPresent(final String params, final String key) {
+        if (params.isEmpty()) {
+            return false;
+        }
+        return params.toUpperCase(Locale.ROOT)
+            .contains(";" + key.toUpperCase(Locale.ROOT) + "=");
     }
 }

@@ -4,27 +4,17 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import io.searchable.core.application.HybridSearchOrchestrator;
-import io.searchable.core.application.SearchService;
+import io.searchable.core.SearchableLibrary;
 import io.searchable.core.application.config.ApplicationConfig;
 import io.searchable.core.application.config.ConfigLoader;
-import io.searchable.core.domain.embedding.EmbeddingProvider;
-import io.searchable.core.infrastructure.embedding.HashEmbeddingProvider;
-import io.searchable.core.infrastructure.lucene.AnalyzerFactory;
-import io.searchable.core.infrastructure.lucene.IndexLayout;
-import io.searchable.core.infrastructure.lucene.LuceneFullTextSearcher;
-import io.searchable.core.infrastructure.lucene.LuceneIndexProvider;
-import io.searchable.core.infrastructure.lucene.LuceneVectorSearcher;
-import io.searchable.core.infrastructure.persistence.DataSourceFactory;
-import io.searchable.core.infrastructure.persistence.SchemaInitializer;
-import io.searchable.core.infrastructure.persistence.jdbc.JdbcNamespaceRepository;
+import io.searchable.core.infrastructure.runtime.PidFile;
+import io.searchable.core.infrastructure.runtime.SighupListener;
 import io.searchable.example.mcp.config.McpCapabilitiesConfig;
 import io.searchable.example.mcp.config.McpCapabilitiesLoader;
 import io.searchable.example.mcp.tool.SearchDocumentsTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,13 +23,17 @@ import java.util.List;
 /**
  * Main entry point for the Searchable MCP server (stdio transport).
  *
- * <p>Wires the core services manually (no Spring) and runs the MCP
- * read/dispatch loop. Configuration is read from a YAML file specified by
+ * <p>Opens the library in read-only mode and registers a {@code SIGHUP}
+ * handler so the CLI can hot-swap the index after an ingest without
+ * the server being restarted.
+ *
+ * <p>Configuration is read from a YAML file specified by
  * {@code --config <path>} (defaults to {@code ./searchable.yaml}).
  */
 public final class SearchableMcpApplication {
 
     private static final Logger log = LoggerFactory.getLogger(SearchableMcpApplication.class);
+    private static final String APP_NAME = "mcp";
 
     private SearchableMcpApplication() { }
 
@@ -50,37 +44,34 @@ public final class SearchableMcpApplication {
 
         final McpCapabilitiesConfig capabilities = loadCapabilities(args);
 
-        final DataSource dataSource = DataSourceFactory.create(config.persistence());
-        new SchemaInitializer(dataSource).initialize();
+        try (SearchableLibrary library = SearchableLibrary.builder()
+                .applicationConfig(config)
+                .readOnly(true)
+                .build();
+             PidFile pidFile = PidFile.open(config.dataDirectory(), APP_NAME)) {
 
-        try (LuceneIndexProvider provider = new LuceneIndexProvider(
-                new IndexLayout(config.index().directory()), AnalyzerFactory.japanese());
-             EmbeddingProvider embedding = new HashEmbeddingProvider(384);
-             HybridSearchOrchestrator hybrid = new HybridSearchOrchestrator(
-                 new LuceneFullTextSearcher(provider),
-                 new LuceneVectorSearcher(provider, embedding))) {
-
-            final io.searchable.core.domain.document.DocumentMetadataRepository metadataRepo =
-                new io.searchable.core.infrastructure.persistence.jdbc.JdbcDocumentMetadataRepository(
-                    dataSource);
-
-            final SearchService searchService = new SearchService(
-                new JdbcNamespaceRepository(dataSource),
-                new LuceneFullTextSearcher(provider),
-                new LuceneVectorSearcher(provider, embedding),
-                hybrid,
-                new io.searchable.core.application.SearchResultEnricher(metadataRepo));
+            final SighupListener listener = SighupListener.install(() -> {
+                final int n = library.refresh();
+                log.info("SIGHUP received: refreshed {} namespace(s)", n);
+            });
+            if (!listener.isInstalled()) {
+                log.warn("mcp will not auto-refresh on CLI ingest "
+                    + "(SIGHUP unavailable on this platform)");
+            }
 
             final ObjectMapper objectMapper = newObjectMapper();
-            final io.searchable.core.application.DocumentBrowser documentBrowser =
-                new io.searchable.core.application.DocumentBrowser(metadataRepo);
             final McpServer server = new McpServer(objectMapper, List.of(
-                new SearchDocumentsTool(searchService, objectMapper),
-                new io.searchable.example.mcp.tool.GetDocumentTool(documentBrowser, objectMapper)),
+                new SearchDocumentsTool(library.searchService(), objectMapper),
+                new io.searchable.example.mcp.tool.GetDocumentTool(
+                    library.documentBrowser(), objectMapper)),
                 capabilities);
 
-            log.info("searchable-mcp ready (stdio)");
-            server.serve(System.in, System.out);
+            try {
+                log.info("searchable-mcp ready (stdio, pid={})", pidFile.pid());
+                server.serve(System.in, System.out);
+            } finally {
+                listener.uninstall();
+            }
         }
     }
 

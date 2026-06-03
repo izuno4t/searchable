@@ -49,7 +49,10 @@ class ConfigLoaderExtraTest {
         // resolve to <tempDir>/data and <tempDir>/data/x respectively.
         final Path expectedData = tempDir.toAbsolutePath().normalize().resolve("data");
         assertThat(cfg.dataDirectory()).isEqualTo(expectedData);
-        assertThat(cfg.persistence().url()).isEqualTo("jdbc:h2:" + expectedData.resolve("x"));
+        // normalize() now also appends AUTO_SERVER=TRUE so the CLI can write
+        // while an app holds the same H2 file open for reads.
+        assertThat(cfg.persistence().url())
+            .isEqualTo("jdbc:h2:" + expectedData.resolve("x") + ";AUTO_SERVER=TRUE");
     }
 
     @Test

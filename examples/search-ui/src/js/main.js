@@ -30,7 +30,7 @@
 
     configBtn.addEventListener("click", () => {
         const value = window.prompt(
-            "API エンドポイント URL を入力してください",
+            "Enter the API endpoint URL",
             SearchableApi.endpoint()
         );
         if (value !== null) {
@@ -72,7 +72,7 @@
             activeController.abort();
         }
         activeController = new AbortController();
-        status.textContent = "検索中...";
+        status.textContent = "Searching...";
 
         try {
             const result = await SearchableApi.search({
@@ -94,7 +94,7 @@
     function render(result) {
         const total = result.totalHits ?? 0;
         const took = result.tookMs ?? 0;
-        status.textContent = `${total} 件ヒット (${took} ms)`;
+        status.textContent = `${total} hit(s) (${took} ms)`;
 
         hits.innerHTML = "";
         for (const hit of result.hits ?? []) {
@@ -124,7 +124,7 @@
 
         const meta = document.createElement("div");
         meta.className = "meta";
-        meta.textContent = `${hit.namespaceId} / ${hit.documentId}  ・  score ${(hit.score ?? 0).toFixed(4)}`;
+        meta.textContent = `${hit.namespaceId} / ${hit.documentId}  ·  score ${(hit.score ?? 0).toFixed(4)}`;
 
         const snippet = document.createElement("p");
         snippet.className = "snippet";

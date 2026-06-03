@@ -104,7 +104,7 @@ class ApplicationConfigNormalizeTest {
     }
 
     @Test
-    void h2EmbeddedUrlRelativePathIsRewritten() {
+    void h2EmbeddedUrlRelativePathIsRewrittenAndAutoServerAdded() {
         final ApplicationConfig in = raw(Path.of("./data"),
             new PersistenceConfig("H2", "jdbc:h2:./data/metadata;MODE=PostgreSQL", "sa", ""),
             new IndexConfig(Path.of("idx")),
@@ -114,11 +114,11 @@ class ApplicationConfigNormalizeTest {
 
         final Path expected = out.dataDirectory().resolve("data/metadata");
         assertThat(out.persistence().url())
-            .isEqualTo("jdbc:h2:" + expected + ";MODE=PostgreSQL");
+            .isEqualTo("jdbc:h2:" + expected + ";MODE=PostgreSQL;AUTO_SERVER=TRUE");
     }
 
     @Test
-    void h2EmbeddedUrlAbsolutePathLeftAlone() {
+    void h2EmbeddedUrlAbsolutePathPreservedButAutoServerAdded() {
         final String url = "jdbc:h2:/var/lib/searchable/metadata";
         final ApplicationConfig in = raw(Path.of("./data"),
             new PersistenceConfig("H2", url, "sa", ""),
@@ -127,7 +127,8 @@ class ApplicationConfigNormalizeTest {
 
         final ApplicationConfig out = ApplicationConfig.normalize(in, tempDir);
 
-        assertThat(out.persistence().url()).isEqualTo(url);
+        assertThat(out.persistence().url())
+            .isEqualTo("jdbc:h2:/var/lib/searchable/metadata;AUTO_SERVER=TRUE");
     }
 
     @Test
@@ -157,9 +158,10 @@ class ApplicationConfigNormalizeTest {
     }
 
     @Test
-    void h2TildeUrlLeftAloneSoH2HandlesExpansion() {
+    void h2TildePathIsPreservedButAutoServerAdded() {
         // H2 has its own tilde-expansion logic; intercepting it locally would
-        // confuse users. Verify normalize() does not touch ~-prefixed paths.
+        // confuse users. The path part stays untouched, but AUTO_SERVER=TRUE
+        // is still appended so the CLI can co-write while an app is reading.
         final String url = "jdbc:h2:~/searchable/metadata";
         final ApplicationConfig in = raw(Path.of("./data"),
             new PersistenceConfig("H2", url, "sa", ""),
@@ -168,7 +170,8 @@ class ApplicationConfigNormalizeTest {
 
         final ApplicationConfig out = ApplicationConfig.normalize(in, tempDir);
 
-        assertThat(out.persistence().url()).isEqualTo(url);
+        assertThat(out.persistence().url())
+            .isEqualTo("jdbc:h2:~/searchable/metadata;AUTO_SERVER=TRUE");
     }
 
     @Test
@@ -185,7 +188,7 @@ class ApplicationConfigNormalizeTest {
     }
 
     @Test
-    void h2FilePrefixedUrlIsRewritten() {
+    void h2FilePrefixedUrlIsRewrittenAndAutoServerAdded() {
         final ApplicationConfig in = raw(Path.of("./data"),
             new PersistenceConfig("H2", "jdbc:h2:file:./db;DB_CLOSE_DELAY=-1", "sa", ""),
             new IndexConfig(Path.of("idx")),
@@ -195,6 +198,21 @@ class ApplicationConfigNormalizeTest {
 
         final Path expected = out.dataDirectory().resolve("db");
         assertThat(out.persistence().url())
-            .isEqualTo("jdbc:h2:file:" + expected + ";DB_CLOSE_DELAY=-1");
+            .isEqualTo("jdbc:h2:file:" + expected + ";DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE");
+    }
+
+    @Test
+    void h2UrlAlreadyContainingAutoServerIsNotDoubled() {
+        final String url = "jdbc:h2:./db;AUTO_SERVER=TRUE;MODE=PostgreSQL";
+        final ApplicationConfig in = raw(Path.of("./data"),
+            new PersistenceConfig("H2", url, "sa", ""),
+            new IndexConfig(Path.of("idx")),
+            PluginsConfig.classpathOnly());
+
+        final ApplicationConfig out = ApplicationConfig.normalize(in, tempDir);
+
+        final Path expected = out.dataDirectory().resolve("db");
+        assertThat(out.persistence().url())
+            .isEqualTo("jdbc:h2:" + expected + ";AUTO_SERVER=TRUE;MODE=PostgreSQL");
     }
 }

@@ -7,6 +7,7 @@ import io.searchable.core.domain.namespace.NamespaceConfigPatch;
 import io.searchable.core.domain.parser.DocumentParser;
 import io.searchable.core.domain.parser.ParsedDocument;
 import io.searchable.core.infrastructure.parser.ParserRegistry;
+import io.searchable.core.infrastructure.runtime.PidRegistry;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -111,7 +112,9 @@ public final class IngestCommand implements Callable<Integer> {
                 indexed++;
                 byExt.merge(extensionOf(fileName), 1, Integer::sum);
             }
-            printSummary(indexed, skipped, byExt, System.nanoTime() - startNanos);
+            final int notified = new PidRegistry(library.configuration().dataDirectory())
+                .broadcastSighup();
+            printSummary(indexed, skipped, byExt, System.nanoTime() - startNanos, notified);
             return 0;
         }
     }
@@ -123,7 +126,8 @@ public final class IngestCommand implements Callable<Integer> {
     }
 
     private void printSummary(final int indexed, final int skipped,
-                              final Map<String, Integer> byExt, final long elapsedNanos) {
+                              final Map<String, Integer> byExt, final long elapsedNanos,
+                              final int notifiedApps) {
         final double elapsedSec = elapsedNanos / 1_000_000_000.0;
         final String breakdown = byExt.isEmpty() ? "(none)"
             : byExt.entrySet().stream()
@@ -151,6 +155,10 @@ public final class IngestCommand implements Callable<Integer> {
                     skipOn, skipped, skipOff,
                     elapsedSec,
                     breakdown));
+        if (notifiedApps > 0) {
+            System.out.printf("  [32mNotified %d running app(s) via SIGHUP -> hot reload.[0m%n%n",
+                notifiedApps);
+        }
     }
 
     private List<Path> collectFiles(final Path root) throws Exception {

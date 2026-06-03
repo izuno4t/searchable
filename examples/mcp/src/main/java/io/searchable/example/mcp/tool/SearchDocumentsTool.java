@@ -107,7 +107,7 @@ public final class SearchDocumentsTool implements McpTool {
             return "0 hits.";
         }
         final StringBuilder sb = new StringBuilder();
-        sb.append("検索結果: ").append(result.totalHits()).append("件ヒット (")
+        sb.append("Results: ").append(result.totalHits()).append(" hit(s) (")
             .append(result.tookMs()).append(" ms)\n\n");
         int rank = 1;
         for (final SearchHit hit : result.hits()) {
