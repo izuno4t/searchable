@@ -53,6 +53,7 @@ namespaces
 ollama
 PARENTID
 Pcoverage
+pids
 Pquality
 Psecurity
 RDBMS
