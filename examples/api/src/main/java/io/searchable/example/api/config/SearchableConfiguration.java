@@ -250,10 +250,17 @@ public class SearchableConfiguration {
     }
 
     @Bean
+    public IndexStatusReporter indexStatusReporter(final IndexStatisticsService statistics,
+                                                   final SearchableProperties props) {
+        return new IndexStatusReporter(statistics, props.getDataDirectory());
+    }
+
+    @Bean
     public ApiIndexHotReloadBridge apiIndexHotReloadBridge(
             final LuceneIndexProvider provider,
-            final SearchableProperties props) {
-        return new ApiIndexHotReloadBridge(provider, props.getDataDirectory());
+            final SearchableProperties props,
+            final IndexStatusReporter reporter) {
+        return new ApiIndexHotReloadBridge(provider, props.getDataDirectory(), reporter);
     }
 
     /**
@@ -267,15 +274,20 @@ public class SearchableConfiguration {
         private static final Logger log = LoggerFactory.getLogger(ApiIndexHotReloadBridge.class);
         private static final String APP_NAME = "api";
         private final LuceneIndexProvider provider;
+        private final IndexStatusReporter reporter;
         private final PidFile pidFile;
         private final SighupListener listener;
 
-        ApiIndexHotReloadBridge(final LuceneIndexProvider provider, final java.nio.file.Path dataDirectory) {
+        ApiIndexHotReloadBridge(final LuceneIndexProvider provider,
+                                final java.nio.file.Path dataDirectory,
+                                final IndexStatusReporter reporter) {
             this.provider = provider;
+            this.reporter = reporter;
             this.pidFile = PidFile.open(dataDirectory, APP_NAME);
             this.listener = SighupListener.install(() -> {
                 final int n = provider.refresh();
                 log.info("SIGHUP received: refreshed {} namespace(s)", n);
+                reporter.reportReload();
             });
             if (!listener.isInstalled()) {
                 log.warn("api will not auto-refresh on CLI ingest "

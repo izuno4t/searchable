@@ -6,6 +6,7 @@ import io.searchable.core.domain.namespace.Namespace;
 import io.searchable.core.domain.namespace.NamespaceRepository;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,25 +26,40 @@ public final class IndexStatisticsService {
     }
 
     public Statistics aggregate() {
+        return snapshot().aggregate();
+    }
+
+    /**
+     * Gather aggregate + per-namespace statistics in a single pass.
+     *
+     * <p>Apps (webapp/mcp/api) use this when rendering a status banner
+     * at startup or after a SIGHUP-triggered refresh. Rendering belongs
+     * in the app layer; this method only returns data.
+     */
+    public StatusSnapshot snapshot() {
         final List<Namespace> all = namespaces.findAll();
         long totalDocs = 0L;
         long totalBytes = 0L;
         Instant lastUpdated = null;
+        final List<NamespaceEntry> entries = new ArrayList<>(all.size());
 
         for (final Namespace ns : all) {
             final Optional<IndexMetadata> md = indexMetadata.findByNamespaceId(ns.id());
-            if (md.isEmpty()) {
-                continue;
-            }
-            totalDocs += md.get().documentCount();
-            totalBytes += md.get().indexSizeBytes();
-            final Instant ts = md.get().lastUpdated();
-            if (lastUpdated == null || ts.isAfter(lastUpdated)) {
-                lastUpdated = ts;
+            final long docs = md.map(IndexMetadata::documentCount).orElse(0L);
+            final long bytes = md.map(IndexMetadata::indexSizeBytes).orElse(0L);
+            final Instant ts = md.map(IndexMetadata::lastUpdated).orElse(null);
+            entries.add(new NamespaceEntry(ns.id(), docs, bytes, ts));
+            if (md.isPresent()) {
+                totalDocs += docs;
+                totalBytes += bytes;
+                if (lastUpdated == null || ts.isAfter(lastUpdated)) {
+                    lastUpdated = ts;
+                }
             }
         }
 
-        return new Statistics(all.size(), totalDocs, totalBytes, lastUpdated);
+        final Statistics aggregate = new Statistics(all.size(), totalDocs, totalBytes, lastUpdated);
+        return new StatusSnapshot(aggregate, List.copyOf(entries));
     }
 
     /**
@@ -56,4 +72,18 @@ public final class IndexStatisticsService {
      */
     public record Statistics(int namespaceCount, long documentCount,
                              long indexSizeBytes, Instant lastUpdated) { }
+
+    /**
+     * Per-namespace counts used by status banners. {@code lastUpdated}
+     * is {@code null} when no {@code IndexMetadata} row exists for the
+     * namespace yet (e.g. created but never ingested).
+     */
+    public record NamespaceEntry(String namespaceId, long documentCount,
+                                 long indexSizeBytes, Instant lastUpdated) { }
+
+    /**
+     * Bundled snapshot returned by {@link #snapshot()}: aggregate
+     * totals plus the per-namespace breakdown, both captured in one pass.
+     */
+    public record StatusSnapshot(Statistics aggregate, List<NamespaceEntry> perNamespace) { }
 }

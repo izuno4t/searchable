@@ -50,9 +50,11 @@ public final class SearchableMcpApplication {
                 .build();
              PidFile pidFile = PidFile.open(config.dataDirectory(), APP_NAME)) {
 
+            final IndexStatusReporter reporter = new IndexStatusReporter(library);
             final SighupListener listener = SighupListener.install(() -> {
                 final int n = library.refresh();
                 log.info("SIGHUP received: refreshed {} namespace(s)", n);
+                reporter.reportReload();
             });
             if (!listener.isInstalled()) {
                 log.warn("mcp will not auto-refresh on CLI ingest "
@@ -68,6 +70,7 @@ public final class SearchableMcpApplication {
 
             try {
                 log.info("searchable-mcp ready (stdio, pid={})", pidFile.pid());
+                reporter.reportStartup();
                 server.serve(System.in, System.out);
             } finally {
                 listener.uninstall();

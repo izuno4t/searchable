@@ -62,8 +62,9 @@ public class SearchableWebappApplication {
     }
 
     @Bean
-    public IndexHotReloadBridge indexHotReloadBridge(final SearchableLibrary library) {
-        return new IndexHotReloadBridge(library);
+    public IndexHotReloadBridge indexHotReloadBridge(final SearchableLibrary library,
+                                                     final IndexStatusReporter reporter) {
+        return new IndexHotReloadBridge(library, reporter);
     }
 
     /** Ensures the library is closed on shutdown so Lucene releases its locks. */
@@ -84,15 +85,18 @@ public class SearchableWebappApplication {
         private static final Logger log = LoggerFactory.getLogger(IndexHotReloadBridge.class);
         private static final String APP_NAME = "webapp";
         private final SearchableLibrary library;
+        private final IndexStatusReporter reporter;
         private final PidFile pidFile;
         private final SighupListener listener;
 
-        IndexHotReloadBridge(final SearchableLibrary library) {
+        IndexHotReloadBridge(final SearchableLibrary library, final IndexStatusReporter reporter) {
             this.library = library;
+            this.reporter = reporter;
             this.pidFile = PidFile.open(library.configuration().dataDirectory(), APP_NAME);
             this.listener = SighupListener.install(() -> {
                 final int n = library.refresh();
                 log.info("SIGHUP received: refreshed {} namespace(s)", n);
+                reporter.reportReload();
             });
             if (!listener.isInstalled()) {
                 log.warn("webapp will not auto-refresh on CLI ingest "
