@@ -3,6 +3,7 @@ package io.searchable.example.api.config;
 import io.searchable.core.application.IndexStatisticsService;
 import io.searchable.core.application.IndexStatisticsService.NamespaceEntry;
 import io.searchable.core.application.IndexStatisticsService.StatusSnapshot;
+import io.searchable.core.util.AnsiText;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class IndexStatusReporter {
 
     private static final Logger log = LoggerFactory.getLogger(IndexStatusReporter.class);
+    private static final String DIVIDER = "=".repeat(60);
 
     private final IndexStatisticsService statistics;
     private final Path dataDirectory;
@@ -48,26 +50,30 @@ public class IndexStatusReporter {
 
         log.info("""
 
-                [32m============================================================[0m
-                  [32m[OK][0m [1m%s[0m  --  data: [1m%s[0m
-                [32m============================================================[0m
-                  Namespaces   : [32m%d[0m
-                  Documents    : [32m%d[0m
-                  Index size   : [32m%s[0m  [2m(%d bytes)[0m
+                %s
+                  %s %s  --  data: %s
+                %s
+                  Namespaces   : %s
+                  Documents    : %s
+                  Index size   : %s  %s
                   Last updated : %s
                 ------------------------------------------------------------
                   Per namespace:
                 %s
-                [32m============================================================[0m
+                %s
                 """.formatted(
-                    banner,
-                    dataDirectory.toString(),
-                    stats.namespaceCount(),
-                    stats.documentCount(),
-                    humanBytes(stats.indexSizeBytes()),
-                    stats.indexSizeBytes(),
+                    AnsiText.green(DIVIDER),
+                    AnsiText.green("[OK]"),
+                    AnsiText.bold(banner),
+                    AnsiText.bold(dataDirectory.toString()),
+                    AnsiText.green(DIVIDER),
+                    AnsiText.green(String.valueOf(stats.namespaceCount())),
+                    AnsiText.green(String.valueOf(stats.documentCount())),
+                    AnsiText.green(humanBytes(stats.indexSizeBytes())),
+                    AnsiText.dim("(" + stats.indexSizeBytes() + " bytes)"),
                     lastUpdated,
-                    perNamespace));
+                    perNamespace,
+                    AnsiText.green(DIVIDER)));
     }
 
     private static String renderPerNamespace(final StatusSnapshot snap) {
