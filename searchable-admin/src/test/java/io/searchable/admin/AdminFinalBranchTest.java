@@ -1,5 +1,6 @@
 package io.searchable.admin;
 
+import io.searchable.admin.config.SearchableTestDataConfig;
 import io.searchable.core.application.IndexService;
 import io.searchable.core.application.NamespaceService;
 import io.searchable.core.domain.namespace.NamespaceConfigPatch;
@@ -7,8 +8,8 @@ import io.searchable.testkit.spring.SearchableSpringBootTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import javax.sql.DataSource;
@@ -22,11 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SearchableSpringBootTest
-@TestPropertySource(properties = {
-    "searchable.data-directory=./build/ui-final",
-    "searchable.persistence.url=jdbc:h2:mem:ui-final;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-    "searchable.index.directory=./build/ui-final/indexes"
-})
+@Import(SearchableTestDataConfig.class)
 class AdminFinalBranchTest {
 
     @Autowired MockMvc mvc;

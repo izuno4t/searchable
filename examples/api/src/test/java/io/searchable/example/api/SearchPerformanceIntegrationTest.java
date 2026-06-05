@@ -1,12 +1,13 @@
 package io.searchable.example.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.searchable.example.api.config.SearchableTestDataConfig;
 import io.searchable.testkit.spring.SearchableSpringBootTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -30,11 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * in TASK-003; the REST overhead adds only the HTTP marshalling cost.
  */
 @SearchableSpringBootTest
-@TestPropertySource(properties = {
-    "searchable.data-directory=./build/perf-test",
-    "searchable.persistence.url=jdbc:h2:mem:perf-it;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-    "searchable.index.directory=./build/perf-test/indexes"
-})
+@Import(SearchableTestDataConfig.class)
 class SearchPerformanceIntegrationTest {
 
     private static final int DOC_COUNT = 5_000;

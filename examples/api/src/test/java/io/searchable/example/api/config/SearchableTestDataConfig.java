@@ -1,4 +1,4 @@
-package io.searchable.admin.config;
+package io.searchable.example.api.config;
 
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.BeansException;
@@ -18,9 +18,10 @@ import java.util.stream.Stream;
  * Forces every test class that imports this configuration onto a freshly
  * created temp directory and a unique in-memory H2 URL. Test-specific
  * properties bound to {@link SearchableProperties} (e.g.
- * {@code searchable.chunking.strategy}) are preserved — only the
- * data-directory, index-directory, and persistence-URL get overridden,
- * via a {@link BeanPostProcessor} that runs after Spring finishes binding.
+ * {@code searchable.dictionary.storage}, {@code searchable.embedding.dimension})
+ * are preserved — only the data-directory, index-directory, and
+ * persistence-URL get overridden, via a {@link BeanPostProcessor} that
+ * runs after Spring finishes binding.
  *
  * <p>Tests opt in with {@code @Import(SearchableTestDataConfig.class)};
  * cleanup runs in {@link #cleanup()} when {@code @DirtiesContext} tears
@@ -33,7 +34,7 @@ public class SearchableTestDataConfig {
 
     public SearchableTestDataConfig() {
         try {
-            this.tempDir = Files.createTempDirectory("searchable-admin-test-");
+            this.tempDir = Files.createTempDirectory("searchable-api-test-");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -70,7 +71,7 @@ public class SearchableTestDataConfig {
                 try {
                     Files.deleteIfExists(p);
                 } catch (IOException ignored) {
-                    // best-effort: state under /tmp accumulates harmlessly
+                    // best-effort
                 }
             });
         }

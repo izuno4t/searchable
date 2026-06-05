@@ -1,10 +1,12 @@
 package io.searchable.example.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.searchable.example.api.config.SearchableTestDataConfig;
 import io.searchable.testkit.spring.SearchableSpringBootTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -23,10 +25,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Integration test for vector and hybrid search via the REST API.
  */
 @SearchableSpringBootTest
+@Import(SearchableTestDataConfig.class)
 @TestPropertySource(properties = {
-    "searchable.data-directory=./build/hybrid-test",
-    "searchable.persistence.url=jdbc:h2:mem:hybrid-it;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-    "searchable.index.directory=./build/hybrid-test/indexes",
     "searchable.embedding.dimension=128"
 })
 class HybridSearchIntegrationTest {

@@ -2,10 +2,12 @@ package io.searchable.admin;
 
 import org.junit.jupiter.api.BeforeEach;
 
+import io.searchable.admin.config.SearchableTestDataConfig;
 import io.searchable.testkit.spring.SearchableSpringBootTest;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -18,10 +20,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @SearchableSpringBootTest
+@Import(SearchableTestDataConfig.class)
 @TestPropertySource(properties = {
-    "searchable.data-directory=./build/ui-dict-test",
-    "searchable.persistence.url=jdbc:h2:mem:ui-dict-it;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-    "searchable.index.directory=./build/ui-dict-test/indexes",
     "searchable.dictionary.storage=db"
 })
 class DictionaryViewControllerTest {

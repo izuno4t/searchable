@@ -6,10 +6,12 @@ import io.searchable.core.domain.dictionary.UserDictionary;
 import io.searchable.core.domain.dictionary.UserDictionaryEntry;
 import io.searchable.core.domain.dictionary.UserDictionaryRepository;
 import io.searchable.core.domain.namespace.NamespaceConfigPatch;
+import io.searchable.admin.config.SearchableTestDataConfig;
 import io.searchable.testkit.spring.SearchableSpringBootTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,10 +29,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * switch + map-fill branches are all exercised.
  */
 @SearchableSpringBootTest
+@Import(SearchableTestDataConfig.class)
 @TestPropertySource(properties = {
-    "searchable.data-directory=./build/ui-dict-branch",
-    "searchable.persistence.url=jdbc:h2:mem:ui-dict-branch;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-    "searchable.index.directory=./build/ui-dict-branch/indexes",
     "searchable.dictionary.storage=db"
 })
 class DictionaryViewControllerBranchTest {

@@ -1,14 +1,15 @@
 package io.searchable.example.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.searchable.example.api.config.SearchableTestDataConfig;
 import io.searchable.testkit.spring.SearchableSpringBootTest;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -23,12 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SearchableSpringBootTest
+@Import(SearchableTestDataConfig.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@TestPropertySource(properties = {
-    "searchable.data-directory=./build/test-data",
-    "searchable.persistence.url=jdbc:h2:mem:test-it;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-    "searchable.index.directory=./build/test-data/indexes"
-})
 class SearchableApiIntegrationTest {
 
     @Autowired MockMvc mvc;

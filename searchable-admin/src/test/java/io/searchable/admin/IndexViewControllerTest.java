@@ -2,12 +2,13 @@ package io.searchable.admin;
 
 import org.junit.jupiter.api.BeforeEach;
 
+import io.searchable.admin.config.SearchableTestDataConfig;
 import io.searchable.testkit.spring.SearchableSpringBootTest;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
@@ -19,11 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SearchableSpringBootTest
-@TestPropertySource(properties = {
-    "searchable.data-directory=./build/ui-idx-test",
-    "searchable.persistence.url=jdbc:h2:mem:ui-idx-it;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-    "searchable.index.directory=./build/ui-idx-test/indexes"
-})
+@Import(SearchableTestDataConfig.class)
 class IndexViewControllerTest {
 
     @Autowired MockMvc mvc;

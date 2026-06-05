@@ -1,6 +1,7 @@
 package io.searchable.admin;
 
 import io.searchable.admin.config.SearchableProperties;
+import io.searchable.admin.config.SearchableTestDataConfig;
 import io.searchable.core.domain.chunking.ChunkingStrategy;
 import io.searchable.core.domain.dictionary.UserDictionaryRepository;
 import io.searchable.core.infrastructure.chunking.FixedSizeChunkingStrategy;
@@ -12,6 +13,7 @@ import io.searchable.testkit.spring.SearchableSpringBootTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,10 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SearchableConfigurationBranchTest {
 
     @SearchableSpringBootTest
+    @Import(SearchableTestDataConfig.class)
     @TestPropertySource(properties = {
-        "searchable.data-directory=./build/ui-cfg-fixed",
-        "searchable.persistence.url=jdbc:h2:mem:cfg-fixed;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-        "searchable.index.directory=./build/ui-cfg-fixed/indexes",
         "searchable.chunking.strategy=fixed",
         "searchable.dictionary.storage=db"
     })
@@ -43,10 +43,8 @@ class SearchableConfigurationBranchTest {
     }
 
     @SearchableSpringBootTest
+    @Import(SearchableTestDataConfig.class)
     @TestPropertySource(properties = {
-        "searchable.data-directory=./build/ui-cfg-sent",
-        "searchable.persistence.url=jdbc:h2:mem:cfg-sent;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-        "searchable.index.directory=./build/ui-cfg-sent/indexes",
         "searchable.chunking.strategy=sentence"
     })
     @Nested
@@ -60,10 +58,8 @@ class SearchableConfigurationBranchTest {
     }
 
     @SearchableSpringBootTest
+    @Import(SearchableTestDataConfig.class)
     @TestPropertySource(properties = {
-        "searchable.data-directory=./build/ui-cfg-para",
-        "searchable.persistence.url=jdbc:h2:mem:cfg-para;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-        "searchable.index.directory=./build/ui-cfg-para/indexes",
         "searchable.chunking.strategy=paragraph"
     })
     @Nested
@@ -77,10 +73,8 @@ class SearchableConfigurationBranchTest {
     }
 
     @SearchableSpringBootTest
+    @Import(SearchableTestDataConfig.class)
     @TestPropertySource(properties = {
-        "searchable.data-directory=./build/ui-cfg-section",
-        "searchable.persistence.url=jdbc:h2:mem:cfg-section;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-        "searchable.index.directory=./build/ui-cfg-section/indexes",
         "searchable.chunking.strategy=section"
     })
     @Nested
