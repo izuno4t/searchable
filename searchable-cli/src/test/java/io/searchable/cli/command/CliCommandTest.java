@@ -212,10 +212,10 @@ class CliCommandTest {
         assertThat(code).isZero();
         final String out = stdoutBuffer.toString(StandardCharsets.UTF_8);
         assertThat(out)
-            .contains("Namespaces:")
-            .contains("Documents :")
-            .contains("Index size:")
-            .contains("Last updated:");
+            .contains("Namespaces   :")
+            .contains("Documents    :")
+            .contains("Index size   :")
+            .contains("Last updated :");
     }
 
     @Test
