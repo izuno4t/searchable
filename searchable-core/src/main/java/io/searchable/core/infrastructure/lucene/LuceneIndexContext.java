@@ -6,9 +6,12 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Holds the per-namespace Lucene resources: {@link Directory},
@@ -59,6 +62,23 @@ public final class LuceneIndexContext implements AutoCloseable {
     public Analyzer analyzer() { return analyzer; }
 
     public boolean isReadOnly() { return readOnly; }
+
+    /**
+     * The on-disk version directory backing this context, when the
+     * underlying {@link Directory} is filesystem-based. Memory-backed
+     * directories (e.g. {@link org.apache.lucene.store.ByteBuffersDirectory})
+     * return {@link Optional#empty()}.
+     *
+     * <p>Used by {@link LuceneIndexProvider#refresh(String)} to detect
+     * when a rebuild has promoted a new {@code <ts>/} so the read-only
+     * context can be reopened against it.
+     */
+    public Optional<Path> versionDir() {
+        if (directory instanceof FSDirectory fs) {
+            return Optional.of(fs.getDirectory());
+        }
+        return Optional.empty();
+    }
 
     public IndexWriter writer() {
         if (readOnly) {

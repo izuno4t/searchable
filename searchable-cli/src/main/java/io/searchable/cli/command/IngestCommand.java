@@ -63,15 +63,18 @@ public final class IngestCommand implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         final long startNanos = System.nanoTime();
+        final int indexed;
+        final int skipped;
+        final Map<String, Integer> byExt = new TreeMap<>();
+        final Path dataDirectory;
         try (SearchableLibrary library = io.searchable.cli.CliRuntime.openLibrary(parent.configPath)) {
             if (!ensureNamespaceExists(library)) {
                 return 1;
             }
             final ParserRegistry registry = ParserRegistry.defaults();
             final List<Path> paths = collectFiles(source);
-            int indexed = 0;
-            int skipped = 0;
-            final Map<String, Integer> byExt = new TreeMap<>();
+            int skippedLocal = 0;
+            final List<Document> docs = new java.util.ArrayList<>();
             for (final Path path : paths) {
                 final String fileName = path.getFileName().toString();
                 // Unknown extensions (e.g. .DS_Store, OS metadata files) are
@@ -79,7 +82,7 @@ public final class IngestCommand implements Callable<Integer> {
                 final Optional<DocumentParser> parserOpt = registry.resolveForFile(fileName);
                 if (parserOpt.isEmpty()) {
                     System.err.printf("WARN: No parser registered for %s -- skipping.%n", path);
-                    skipped++;
+                    skippedLocal++;
                     continue;
                 }
                 final DocumentParser parser = parserOpt.get();
@@ -92,7 +95,7 @@ public final class IngestCommand implements Callable<Integer> {
                     parsed = parser.parse(in, fileName);
                 }
                 final java.nio.file.Path absolute = path.toAbsolutePath();
-                final Document doc = Document.builder()
+                docs.add(Document.builder()
                     .id(idPrefix + fileName)
                     .namespaceId(namespace)
                     .title(parsed.title())
@@ -107,16 +110,24 @@ public final class IngestCommand implements Callable<Integer> {
                         "path", absolute.toString(),
                         "contentType", parser.contentType()))
                     .indexedAt(Instant.now())
-                    .build();
-                library.indexService().index(doc);
-                indexed++;
+                    .build());
                 byExt.merge(extensionOf(fileName), 1, Integer::sum);
             }
-            final int notified = new PidRegistry(library.configuration().dataDirectory())
-                .broadcastSighup();
-            printSummary(indexed, skipped, byExt, System.nanoTime() - startNanos, notified);
-            return 0;
+            skipped = skippedLocal;
+            dataDirectory = library.configuration().dataDirectory();
+            // Rebuild-style ingest: write all parsed docs into a fresh
+            // <ts>.tmp/ then atomically promote. This lets the CLI run
+            // while an app process is holding the IndexWriter on the
+            // previous <ts>/.
+            indexed = library.indexService().rebuildFrom(namespace, docs);
         }
+        // Library is now closed: our IndexWriter on the freshly promoted
+        // <ts>/ has released its write.lock. Only after that do we
+        // broadcast SIGHUP, so the receiving app can open its own
+        // IndexWriter against the new version without contention.
+        final int notified = new PidRegistry(dataDirectory).broadcastSighup();
+        printSummary(indexed, skipped, byExt, System.nanoTime() - startNanos, notified);
+        return 0;
     }
 
     private static String extensionOf(final String fileName) {

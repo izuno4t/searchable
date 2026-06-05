@@ -164,6 +164,43 @@ public final class IndexService {
         return removed;
     }
 
+    /**
+     * Full-rebuild ingest: write the given documents into a fresh build
+     * directory and atomically promote it as the new live version. Used
+     * by the CLI {@code ingest} so it can run concurrently with apps
+     * holding the previous version's {@code IndexWriter} (e.g. the
+     * example API). The namespace's metadata DB rows are replaced to
+     * match the new index contents.
+     *
+     * @return number of documents written
+     */
+    public int rebuildFrom(final String namespaceId, final Iterable<Document> documents) {
+        Objects.requireNonNull(namespaceId, "namespaceId must not be null");
+        Objects.requireNonNull(documents, "documents must not be null");
+        requireNamespaceExists(namespaceId);
+        markStatus(namespaceId, IndexStatus.INDEXING);
+        final java.util.List<Document> materialized = new java.util.ArrayList<>();
+        for (final Document d : documents) {
+            materialized.add(d);
+        }
+        try {
+            indexer.rebuild(namespaceId, materialized);
+        } catch (RuntimeException e) {
+            markStatus(namespaceId, IndexStatus.ERROR);
+            throw e;
+        }
+        if (documentMetadata != null) {
+            documentMetadata.deleteByNamespace(namespaceId);
+            for (final Document d : materialized) {
+                recordMetadata(d, effectiveHash(d));
+            }
+        }
+        refreshMetadata(namespaceId, IndexStatus.READY);
+        log.info("rebuildFrom completed for namespace {} ({} documents)",
+            namespaceId, materialized.size());
+        return materialized.size();
+    }
+
     public void rebuild(final String namespaceId) {
         Objects.requireNonNull(namespaceId, "namespaceId must not be null");
         requireNamespaceExists(namespaceId);

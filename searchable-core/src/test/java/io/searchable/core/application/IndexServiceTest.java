@@ -102,6 +102,29 @@ class IndexServiceTest {
     }
 
     @Test
+    void rebuildFromReplacesIndexWithNewDocuments() {
+        // Seed the live version with two documents via incremental index.
+        indexService.indexBatch("ns-1", List.of(doc("d1", "t", "c"), doc("d2", "t", "c")));
+        assertThat(indexService.getMetadata("ns-1").documentCount()).isEqualTo(2L);
+
+        // Full-rebuild ingest with a different document set.
+        final int written = indexService.rebuildFrom("ns-1",
+            List.of(doc("new-1", "t", "x"), doc("new-2", "t", "y"), doc("new-3", "t", "z")));
+        assertThat(written).isEqualTo(3);
+
+        final IndexMetadata md = indexService.getMetadata("ns-1");
+        assertThat(md.documentCount()).isEqualTo(3L);
+        assertThat(md.status()).isEqualTo(IndexStatus.READY);
+    }
+
+    @Test
+    void rebuildFromOnEmptyInputProducesEmptyIndex() {
+        indexService.indexBatch("ns-1", List.of(doc("d1", "t", "c"), doc("d2", "t", "c")));
+        assertThat(indexService.rebuildFrom("ns-1", List.of())).isZero();
+        assertThat(indexService.getMetadata("ns-1").documentCount()).isZero();
+    }
+
+    @Test
     void unknownNamespaceThrows() {
         assertThatThrownBy(() -> indexService.index(doc("d", "t", "c").toBuilder()
             .namespaceId("missing").build()))

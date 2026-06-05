@@ -100,6 +100,71 @@ class LuceneIndexProviderRebuildTest {
     }
 
     @Test
+    void refreshReopensReadOnlyContextOnPromotedVersion() throws Exception {
+        // Writer-side: seed an initial version, index a doc, capture path.
+        indexer.index(Document.builder()
+            .id("d1").namespaceId("ns").title("t").content("v1").build());
+        final Path initialVersion = provider.getOrCreate("ns").versionDir().orElseThrow();
+
+        // Reader-side: a separate provider opened in read-only mode picks
+        // up the same initial version.
+        try (LuceneIndexProvider reader = new LuceneIndexProvider(
+                new IndexLayout(tempDir),
+                AnalyzerFactory.japanese(),
+                true,
+                StorageBackend.FILESYSTEM,
+                Clock.fixed(Instant.parse("2026-05-20T00:00:00Z"), ZoneOffset.UTC),
+                Duration.ofMillis(50),
+                Duration.ofMinutes(5))) {
+
+            final LuceneIndexContext readerCtx = reader.getOrCreate("ns");
+            assertThat(readerCtx.versionDir()).contains(initialVersion);
+            assertThat(readerCtx.documentCount()).isEqualTo(1L);
+
+            // Writer-side: full rebuild to a fresh <ts>/.
+            final int written = indexer.rebuild("ns", java.util.List.of(
+                Document.builder().id("d2").namespaceId("ns")
+                    .title("t").content("v2").build(),
+                Document.builder().id("d3").namespaceId("ns")
+                    .title("t").content("v3").build()));
+            assertThat(written).isEqualTo(2);
+
+            final Path promotedVersion = provider.getOrCreate("ns").versionDir().orElseThrow();
+            assertThat(promotedVersion).isNotEqualTo(initialVersion);
+
+            // Reader-side refresh: detects the promotion and reopens.
+            assertThat(reader.refresh("ns")).isTrue();
+            final LuceneIndexContext reopened = reader.getOrCreate("ns");
+            assertThat(reopened.versionDir()).contains(promotedVersion);
+            assertThat(reopened.documentCount()).isEqualTo(2L);
+        }
+    }
+
+    @Test
+    void refreshIsNoOpWhenNoPromotionOccurred() throws Exception {
+        indexer.index(Document.builder()
+            .id("d1").namespaceId("ns").title("t").content("v1").build());
+
+        try (LuceneIndexProvider reader = new LuceneIndexProvider(
+                new IndexLayout(tempDir),
+                AnalyzerFactory.japanese(),
+                true,
+                StorageBackend.FILESYSTEM,
+                Clock.fixed(Instant.parse("2026-05-20T00:00:00Z"), ZoneOffset.UTC),
+                Duration.ofMillis(50),
+                Duration.ofMinutes(5))) {
+            final LuceneIndexContext before = reader.getOrCreate("ns");
+            final Path beforeDir = before.versionDir().orElseThrow();
+
+            // No build/promotion between opens: refresh should not swap.
+            assertThat(reader.refresh("ns")).isTrue();
+            final LuceneIndexContext after = reader.getOrCreate("ns");
+            assertThat(after).isSameAs(before);
+            assertThat(after.versionDir()).contains(beforeDir);
+        }
+    }
+
+    @Test
     void cancelBuildDoesNotAffectLiveContext() {
         final LuceneIndexContext before = provider.getOrCreate("ns");
 

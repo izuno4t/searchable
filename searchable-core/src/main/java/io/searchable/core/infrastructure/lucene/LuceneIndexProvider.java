@@ -21,6 +21,7 @@ import java.util.Deque;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -132,17 +133,14 @@ public final class LuceneIndexProvider implements AutoCloseable {
 
     /**
      * Refresh every currently-open namespace's searcher view so it
-     * reflects segments the CLI (or API) has just committed.
+     * reflects segments the CLI (or API) has just committed, and reopens
+     * the context if a rebuild has promoted a new {@code <ts>/}.
      *
      * <p>Typically invoked from a {@code SIGHUP} handler in read-only
-     * apps so they pick up new documents without restarting. In
-     * read-write mode the writer's SearcherManager is already NRT, so
-     * the call is effectively a no-op but is still safe.
-     *
-     * <p>Caveat: this picks up incremental writes to the
-     * <em>currently open</em> version directory. After a full rebuild
-     * promotes a new {@code <ts>/}, the app must be restarted to switch
-     * to that version.
+     * apps so they pick up new documents (or a freshly rebuilt index)
+     * without restarting. In read-write mode the writer's SearcherManager
+     * is already NRT, so the call is effectively a no-op but is still
+     * safe.
      *
      * @return number of namespaces whose refresh succeeded
      */
@@ -159,6 +157,13 @@ public final class LuceneIndexProvider implements AutoCloseable {
     /**
      * Refresh the searcher view for a single open namespace.
      *
+     * <p>If the namespace's {@link IndexLayout#latestReadable latest
+     * readable} version has advanced past the version the open context
+     * is pointing at (i.e. a rebuild has been promoted by another
+     * process), close the current context and reopen it on the new
+     * version. Otherwise just call {@code SearcherManager.maybeRefresh()}
+     * to pick up incremental segment commits.
+     *
      * @return {@code true} when the namespace has an open context and
      *         the refresh succeeded; {@code false} otherwise
      */
@@ -167,6 +172,9 @@ public final class LuceneIndexProvider implements AutoCloseable {
         if (ctx == null) {
             return false;
         }
+        if (maybeReopenAfterPromotion(namespaceId, ctx)) {
+            return true;
+        }
         try {
             ctx.refresh();
             return true;
@@ -174,6 +182,52 @@ public final class LuceneIndexProvider implements AutoCloseable {
             log.warn("Failed to refresh searcher for namespace {}", namespaceId, e);
             return false;
         }
+    }
+
+    private static boolean isSamePath(final Path a, final Path b) {
+        if (a.equals(b)) {
+            return true;
+        }
+        try {
+            return Files.exists(a) && Files.exists(b) && Files.isSameFile(a, b);
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    private boolean maybeReopenAfterPromotion(final String namespaceId,
+                                              final LuceneIndexContext ctx) {
+        if (backend != StorageBackend.FILESYSTEM) {
+            return false;
+        }
+        final Optional<Path> openDir = ctx.versionDir();
+        if (openDir.isEmpty()) {
+            return false;
+        }
+        final Optional<Path> latest;
+        try {
+            latest = layout.latestReadable(namespaceId);
+        } catch (RuntimeException e) {
+            log.warn("Failed to resolve latest version for namespace {}", namespaceId, e);
+            return false;
+        }
+        if (latest.isEmpty() || isSamePath(openDir.get(), latest.get())) {
+            return false;
+        }
+        log.info("rebuild promotion detected for namespace {}: {} -> {}",
+            namespaceId, openDir.get(), latest.get());
+        final LuceneIndexContext fresh;
+        try {
+            fresh = openLiveContext(namespaceId, latest.get());
+        } catch (RuntimeException e) {
+            log.warn("Failed to reopen namespace {} on {}", namespaceId, latest.get(), e);
+            return false;
+        }
+        final LuceneIndexContext previous = contexts.put(namespaceId, fresh);
+        if (previous != null) {
+            scheduleRetirement(namespaceId, previous);
+        }
+        return true;
     }
 
     /**

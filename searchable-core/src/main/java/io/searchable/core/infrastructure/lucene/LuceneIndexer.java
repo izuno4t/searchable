@@ -114,6 +114,47 @@ public final class LuceneIndexer {
         }
     }
 
+    /**
+     * Rebuild the namespace from scratch: open a fresh build directory,
+     * write all provided documents, and atomically promote it as the new
+     * live version. The previous live context is retired by the provider
+     * after its grace period.
+     *
+     * <p>Unlike {@link #indexBatch(String, Iterable)}, this does not touch
+     * the existing {@link IndexWriter} on the current version, so it can
+     * run concurrently with another process holding that writer's
+     * {@code write.lock}.
+     *
+     * @return number of documents written
+     */
+    public int rebuild(final String namespaceId, final Iterable<Document> documents) {
+        Objects.requireNonNull(namespaceId, "namespaceId must not be null");
+        Objects.requireNonNull(documents, "documents must not be null");
+        final LuceneIndexProvider.BuildHandle handle = provider.beginBuild(namespaceId);
+        int count = 0;
+        try {
+            final IndexWriter writer = handle.writer();
+            for (final Document doc : documents) {
+                if (!namespaceId.equals(doc.namespaceId())) {
+                    throw new IllegalArgumentException(
+                        "Document " + doc.id() + " does not belong to namespace " + namespaceId);
+                }
+                writeChunks(writer, doc);
+                count++;
+            }
+        } catch (IOException | RuntimeException e) {
+            provider.cancelBuild(handle);
+            if (e instanceof IOException ioe) {
+                throw new IllegalStateException(
+                    "Failed to write rebuild batch for namespace " + namespaceId, ioe);
+            }
+            throw (RuntimeException) e;
+        }
+        provider.completeBuild(handle);
+        log.info("rebuilt namespace {} with {} documents", namespaceId, count);
+        return count;
+    }
+
     /** Drop all documents in a namespace (keeps the index open). */
     public void deleteAll(final String namespaceId) {
         Objects.requireNonNull(namespaceId, "namespaceId must not be null");
