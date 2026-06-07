@@ -68,6 +68,7 @@
         <spotbugs-plugin.version>4.9.8.3</spotbugs-plugin.version>
         <spotbugs.version>4.9.8</spotbugs.version>
         <dependency-check-plugin.version>12.1.0</dependency-check-plugin.version>
+        <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -407,6 +408,24 @@
                         <failOnError>true</failOnError>
                         <includeFilterFile>${maven.multiModuleProjectDirectory}/config/spotbugs/spotbugs-include.xml</includeFilterFile>
                         <excludeFilterFile>${maven.multiModuleProjectDirectory}/config/spotbugs/spotbugs-exclude.xml</excludeFilterFile>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <!-- Javadoc generation is opt-in: users run
+                         `./mvnw javadoc:javadoc` locally. No default
+                         execution is bound; Javadoc is treated as the
+                         source of truth for the public Java API and
+                         SPI surfaces (see task.md TASK-040). -->
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${maven-javadoc-plugin.version}</version>
+                    <configuration>
+                        <source>21</source>
+                        <quiet>true</quiet>
+                        <failOnError>true</failOnError>
+                        <additionalJOptions>
+                            <additionalJOption>-Xdoclint:none</additionalJOption>
+                        </additionalJOptions>
                     </configuration>
                 </plugin>
                 <plugin>

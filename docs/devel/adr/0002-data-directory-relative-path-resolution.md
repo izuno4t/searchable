@@ -112,6 +112,7 @@
 ## 影響範囲
 
 ### コード
+
 - `searchable-core/src/main/java/io/searchable/core/application/config/ApplicationConfig.java`
   に `normalize(ApplicationConfig, Path)` を追加
 - `ConfigLoader.load(Path file)` に正規化呼び出しを挿入
@@ -123,6 +124,7 @@
   `persistence.url` も出るよう確認
 
 ### ドキュメント
+
 - `docs/public/getting-started.ja.md` の `$HOME/searchable-data` workaround を撤去し
   「config 隣の `./data`」に書き換え
 - `examples/webapp/README.md` の `./data/webapp` 説明を「webapp の
@@ -132,6 +134,7 @@
 - `docs/public/setup-guide.md` にマイグレーションノート
 
 ### テスト
+
 - `ConfigLoader` の正規化テスト
   - 絶対パスは as-is
   - 相対パスは config 親基準で解決

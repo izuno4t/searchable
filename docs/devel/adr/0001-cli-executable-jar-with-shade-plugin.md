@@ -82,6 +82,7 @@
 ## 影響範囲
 
 ### 配布物の変更
+
 - 配布物が `searchable-cli/target/searchable-cli-<version>.jar` のみになる
 - `target/lib/` は生成されなくなる
 - jar サイズが増える(Lucene + ONNX Runtime + Apache POI + PDFBox を含むため
@@ -89,6 +90,7 @@
 - パッケージビルドに数秒〜十数秒上乗せ
 
 ### 追従が必要な箇所
+
 - `searchable-cli/src/main/scripts/searchable` の classpath 解決ロジック
   - 現状は `lib/` 同梱を前提とした 3 経路の resolver。shade 後は
     `target/searchable-cli-*.jar` を見つけて `java -jar` で起動する単純な
@@ -99,6 +101,7 @@
 - `searchable-cli/pom.xml` のテスト設定(`maven-jar-plugin` を簡素化、または除去)
 
 ### 互換性
+
 - ライブラリ API には影響なし
 - CLI のコマンド体系・サブコマンドには影響なし
 - 既存利用者は単に `java -jar searchable-cli-<version>.jar ...` で同じ操作が可能
