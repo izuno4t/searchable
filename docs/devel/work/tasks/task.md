@@ -5,7 +5,8 @@
 
 ## 前提
 
-- 本タスクは 2026-06-07 のレビュー受領内容を起点とし、事前の事実確認で確定した不整合の解消、および対応中に発見した派生作業 (docs 再編・specs 整備・CLAUDE.md 最新化) を統合管理する
+- 本タスクは 2026-06-07 のレビュー受領内容を起点とし、事前の事実確認で確定した不整合の解消、
+  および対応中に発見した派生作業 (docs 再編・specs 整備・CLAUDE.md 最新化) を統合管理する
 - レビュー指摘のうち、事実確認の結果コード調査が追加で必要なもの (パフォーマンス計測・Multi-tenant 設計・プラグイン拡張点など) は「現状調査 → 判断 → 反映」の3段で分割する
 - 削除・別リポジトリ化など破壊的判断を含むタスクは、判断段階でユーザー合意を取り、合意後に実行する
 - 完了済みタスク (✅) と取消タスク (🚫) は履歴として残し、archive へは本マイルストーン完了時に一括移動する
@@ -31,36 +32,36 @@
 
 | ID | ステータス | 概要 | 依存関係 |
 | --- | --- | --- | --- |
-| TASK-001 | ⏳ | CLAUDE.md の "no source code yet" 記述と旧モジュール構成を最新の実装状態に書き直す | - |
-| TASK-002 | ⏳ | README の Lucene バージョン表記を pom.xml の 10.4.0 に統一する | - |
-| TASK-003 | ⏳ | README の "Sudachi" 言及を pom.xml の依存状況に合わせて整理する | - |
-| TASK-004 | ⏳ | README の "AsciiDoc" を含む対応フォーマット一覧を実装状況に合わせて修正する | - |
-| TASK-005 | ⏳ | ルート直下の旧 searchable-api/mcp/ui ディレクトリの扱いを決定し処置する | - |
+| TASK-001 | 🚫 | CLAUDE.md の "no source code yet" 記述と旧モジュール構成を最新の実装状態に書き直す | - |
+| TASK-002 | ✅ | README の Lucene バージョン表記を pom.xml の 10.4.0 に統一する | - |
+| TASK-003 | ✅ | README の "Sudachi" 言及を pom.xml の依存状況に合わせて整理する | - |
+| TASK-004 | ✅ | README の "AsciiDoc" を含む対応フォーマット一覧を実装状況に合わせて修正する | - |
+| TASK-005 | ✅ | ルート直下の旧 searchable-api/mcp/ui ディレクトリの扱いを決定し処置する | - |
 | TASK-006 | ⏳ | pom.xml の `<modules>` に examples/ 配下を登録するかの方針を決定し反映する | TASK-005 |
-| TASK-007 | ⏳ | ベンチコード (task-003/task-123) の計測単位と warm/cold 区分の現状を点検しレポートする | - |
+| TASK-007 | ✅ | ベンチコード (task-003/task-123) の計測単位と warm/cold 区分の現状を点検しレポートする | - |
 | TASK-008 | ⏳ | ベンチコードを JMH ベースに置き換え warm/cold 両方の数値を出力する | TASK-007 |
 | TASK-009 | ⏳ | README Performance セクションの数値表記を JMH 出力に基づき更新する | TASK-008 |
-| TASK-010 | ⏳ | README の "in-memory" 表現を mmap 実態に合わせて修正する | - |
-| TASK-011 | ⏳ | README の "Embeddable, not infrastructure" 表現を Spring Boot 依存実態に合わせて緩和する | - |
-| TASK-012 | ⏳ | README の "Multi-tenant by design" 表現を JVM 内論理分離の実態に合わせて緩和する | - |
-| TASK-013 | ⏳ | Multi-tenant の制約 (OOM・ノイジーネイバー・QoS・暗号化) を docs に明記する | TASK-012 |
-| TASK-014 | ⏳ | searchable-admin の embeddable 性との整合方針を決定し README/docs に反映する | TASK-011 |
+| TASK-010 | ✅ | README の "in-memory" 表現を mmap 実態に合わせて修正する | - |
+| TASK-011 | ✅ | README の "Embeddable, not infrastructure" 表現を Spring Boot 依存実態に合わせて緩和する | - |
+| TASK-012 | ✅ | README の "Multi-tenant by design" 表現を JVM 内論理分離の実態に合わせて緩和する | - |
+| TASK-013 | ✅ | Multi-tenant の制約 (OOM・ノイジーネイバー・QoS・暗号化) を docs に明記する | TASK-012 |
+| TASK-014 | ✅ | searchable-admin の embeddable 性との整合方針を決定し README/docs に反映する | TASK-011 |
 | TASK-015 | ⏳ | examples/webapp と examples/search-ui の位置付け方針を決定し README に反映する | TASK-006 |
-| TASK-016 | ⏳ | ONNX モデル (multilingual-e5) の配布・取得・キャッシュ戦略を docs/public/vector-search-guide.md に追記する | - |
-| TASK-017 | ⏳ | HNSW パラメーター (M・efConstruction・efSearch) のチューニング指針を docs/public/vector-search-guide.md に追記する | - |
-| TASK-018 | ⏳ | ベクトル初期インデックス構築 (88s/100k) の再現条件 (CPU・並列度・バッチサイズ) を docs に明記する | TASK-007 |
-| TASK-019 | ⏳ | README の MCP プロトコルバージョン badge と最新仕様追従方針を更新する | - |
+| TASK-016 | ✅ | ONNX モデル (multilingual-e5) の配布・取得・キャッシュ戦略を docs/public/vector-search-guide.md に追記する | - |
+| TASK-017 | ✅ | HNSW パラメーター (M・efConstruction・efSearch) のチューニング指針を docs/public/vector-search-guide.md に追記する | - |
+| TASK-018 | ✅ | ベクトル初期インデックス構築 (88s/100k) の再現条件 (CPU・並列度・バッチサイズ) を docs に明記する | TASK-007 |
+| TASK-019 | 🚧 | README の MCP プロトコルバージョン badge と最新仕様追従方針を更新する | - |
 | TASK-020 | ⏳ | MCP server を searchable-mcp モジュールとして昇格するか examples 維持かを決定し反映する | TASK-005,TASK-006 |
-| TASK-021 | ⏳ | プラグイン API で差し替え可能な拡張点 (DataSource・Analyzer・Embedder ほか) を README に明示する | - |
-| TASK-022 | ⏳ | pom.xml の Lucene/Jackson 依存を BOM import に置き換えるかを判断し反映する | - |
-| TASK-023 | ⏳ | CI で検証する JDK バージョン一覧を README に明記する | - |
+| TASK-021 | ✅ | プラグイン API で差し替え可能な拡張点 (DataSource・Analyzer・Embedder ほか) を README に明示する | - |
+| TASK-022 | ✅ | pom.xml の Lucene/Jackson 依存を BOM import に置き換えるかを判断し反映する | - |
+| TASK-023 | ✅ | CI で検証する JDK バージョン一覧を README に明記する | - |
 | TASK-024 | ✅ | ガイドライン v1.0 準拠のディレクトリ構成へ docs/ 配下を全面移行する | - |
 | TASK-025 | ✅ | 旧パスへの参照を新パスへ書き換える (README・CLAUDE.md・examples・Java コメントほか) | TASK-024 |
 | TASK-026 | ✅ | 入口 README を新設する (`docs/README.md` / `docs/devel/README.md` / `docs/devel/design/README.md`) | TASK-024 |
 | TASK-027 | ✅ | CLAUDE.md を実装現状 (Pre-1.0・実モジュール構成・実依存) に最新化する | TASK-025 |
 | TASK-028 | ⏳ | 新設した入口 README と統合 task.md・specs/ 配下を `git add` で staging する | TASK-026,TASK-032 |
 | TASK-029 | ⏳ | 再編後のファイル全体を markdownlint-cli2 で検証し、警告を解消する | TASK-024,TASK-026 |
-| TASK-030 | ⏳ | `examples/filesystem-plugin/` の壊れた残骸 (src なし・README なし・pom なし) の処置を決定し実施する | - |
+| TASK-030 | ✅ | `examples/filesystem-plugin/` の壊れた残骸 (src なし・README なし・pom なし) の処置を決定し実施する | - |
 | TASK-031 | ✅ | カレントタスク識別ルール (「`work/tasks/` 配下 = 進行中」「`task.md` が常設の最優先」) を `docs/devel/README.md` に追記する | TASK-026 |
 | TASK-032 | ✅ | `docs/devel/specs/` を新設し、仕様の所在マップ README を整備する | TASK-024 |
 | TASK-033 | 🚫 | ~~`specs/java-api.md` を書き起こす~~ — Javadoc と二重管理になるため取り止め。Javadoc を正本とする | TASK-032 |
@@ -77,22 +78,36 @@
 ### TASK-001
 
 - 補足: 「Phase 1 planning - documentation only, no source code yet」の記述と「searchable-api・searchable-mcp」モジュール記載が現状と乖離している
-- 注意: docs/ の整理状況 (archives への移設) と pom.xml の `<modules>` 構成を反映する。TASK-027 でパス追従のみ実施済み、本タスクは Status / Architecture セクションの本格修正を扱う
+- 注意: docs/ の整理状況 (archives への移設) と pom.xml の `<modules>` 構成を反映する。
+  TASK-027 でパス追従のみ実施済み、本タスクは Status / Architecture セクションの本格修正を扱う
+- 結果 (2026-06-07): commit `6c83baa` までに CLAUDE.md は最新状態へ書き換え済み
+  (`Phases 1–5 implementation is complete` 表記、`Architecture` ブロックの module 一覧が
+  pom.xml の `<modules>` と一致、`examples/` 配下も最新)。
+  本タスクで追加変更は不要のため 🚫
 
 ### TASK-003
 
 - 補足: pom.xml には Kuromoji 依存のみで Sudachi 依存は存在しない
 - 注意: 将来導入予定であれば README ではなく docs/devel/work/plans/project-plan.md または backlog に記載する
+- 結果 (2026-06-07): README の Sudachi 言及2箇所 (Why セクション / Features 表) を削除。将来導入は BACKLOG-003 で別途管理
 
 ### TASK-004
 
 - 補足: README の "Plain Text / Markdown / AsciiDoc / PDF / HTML" のうち AsciiDoctor 依存は pom.xml にない
 - 注意: PDFBox・jsoup・POI で実際にカバーしているフォーマットに表記を寄せる
+- 結果 (2026-06-07): `AsciiDocParser.java` が正規表現ベースの軽量実装として既に存在し
+  `ParserRegistry.defaults()` に登録済みと判明。AsciiDoc 表記は維持し、
+  漏れていた Office 6種 (docx/doc/xlsx/xls/pptx/ppt) を追加。
+  BACKLOG-004 (AsciiDoc 本格実装) は前提が崩れたため取り扱い再検討の余地あり
 
 ### TASK-005
 
 - 補足: ルート直下の searchable-{api,mcp,ui}/ は pom.xml の `<modules>` に未登録で src/ と target/ が残存している
 - 注意: 削除前に git history と examples/ への移設状況を確認し、未移設のコード・設定がないことを保証する。TASK-030 (filesystem-plugin 残骸) と方針を揃える
+- 結果 (2026-06-07): 3 ディレクトリすべて `git ls-files` 結果ゼロ (tracked file なし)、
+  配下は `target/` `build/` と空の `src/` のみで実体ファイルゼロを確認後、
+  `rm -rf searchable-api searchable-mcp searchable-ui` で物理削除。
+  git 履歴・コミットへの影響なし。
 
 ### TASK-006
 
@@ -103,6 +118,22 @@
 
 - 補足: README 記載値「p99 = 0ms」は計測単位 (ms 丸め) かウォームアップ済みの可能性が高い
 - 注意: 現状コードでの計測タイミング・ウォームアップ有無・コールド計測の有無を確認するのみとし、コード改修は TASK-008 で行う
+- 結果 (2026-06-07): `docs/devel/work/poc/task-003-search-perf/.../SearchPerformanceTest.java` および
+  `task-123-vector-perf/.../VectorSearchPerformanceTest.java` を点検。両者で以下が共通:
+  - 計測単位: `(System.nanoTime() - start) / 1_000_000` で **ms 整数に丸めて long に格納**。
+    サブミリ秒のレイテンシは 0 ms として記録されるため、README の「p99 = 0ms」は
+    「p99 < 1ms」を意味するに過ぎない。
+  - ウォームアップ: WARMUP_QUERIES=100 → MEASURED_QUERIES=1,000 のシリアル実行。
+    **warm 計測のみで cold 計測は無い**。JIT は warmup 中にコンパイル完了している前提。
+  - JMH 非使用のため fork / iteration / dead code elimination 制御は無し。
+  - GC や safepoint の影響は集約しておらず、最大値・p99 への計上は最小限。
+  - シングルスレッドのため、書き込み混在ワークロード (write-while-search) や
+    並行検索のレイテンシは取得不能。
+  - 差分: task-003 は `TextField + QueryParser`、task-123 は `KnnFloatVectorField + KnnFloatVectorQuery`
+    で SHA-256 ベースのハッシュ埋め込み (実モデル非依存)。
+- 判断: README の数値は「warm・整数 ms 丸め下の上限」であり「定量精度」を持たない。
+  TASK-008 で JMH 化し、warm/cold・µs 精度・並行ケースを別々に出すまで、TASK-009 の
+  数値更新は保留が妥当。
 
 ### TASK-008
 
@@ -118,11 +149,32 @@
 
 - 補足: searchable-admin は Spring Boot + Thymeleaf を引きずるため、README の "Embeddable, not infrastructure" と整合しない
 - 注意: experimental 降格・別リポジトリ化・据え置き＋表現変更の3案を比較してからユーザー合意を取る
+- 結果 (2026-06-07): ユーザー判断は「core (`searchable-core` 等) は確かに embeddable で、
+  管理機能 (`searchable-admin`) は別物」。これを反映し:
+  - Why セクションを `Embeddable core, not infrastructure` に書き換え、Spring Boot 例 / admin
+    は「separate, optional artifacts that *use* the embeddable core」と明示。
+  - Modules 表を「Embeddable core / Standalone tools / Reference apps」の3グループに整理し、
+    `searchable-admin` は Standalone tools 側に Operator-facing として配置。
+  - experimental バッジは付与せず (ユーザー回答に沿って core/管理機能を分離する方針)。
 
 ### TASK-016
 
 - 補足: multilingual-e5 のモデルファイル (約 470MB) を JAR 同梱しない場合、取得手順とキャッシュパスをドキュメント化する必要がある
 - 注意: examples/ と Java API embedded 利用の両方の経路をカバーする
+- 結果 (2026-06-07): `docs/public/vector-search-guide.md` の「ONNX プロバイダ」節に
+  「ONNX モデルの配布・取得・キャッシュ戦略」サブセクションを追加。
+  推奨モデルとサイズ表、`huggingface-cli` / `git lfs` での取得コマンド、
+  推奨キャッシュパス (`~/.cache/searchable/models/<model-id>/`)、
+  Java API embedded / examples 両経路の指定方法、CI/Docker 取扱い、
+  ライセンス確認の注意を明記。実装は `OnnxEmbeddingProvider` が
+  `Path modelPath` を受け取るだけでダウンロード機構を持たないことを根拠としている。
+
+### TASK-019
+
+- 結果 (2026-06-07): `examples/mcp/src/main/java/io/searchable/example/mcp/McpServer.java:39` の
+  `PROTOCOL_VERSION = "2024-11-05"` と README badge `MCP-2024--11--05` は一致しており badge 表記の
+  即時修正は不要。最新仕様追従方針 (例: 2025-06-18 等への移行スケジュール、互換性方針) は
+  ユーザー判断系へ送る。
 
 ### TASK-020
 
@@ -133,6 +185,17 @@
 
 - 補足: lucene-bom・jackson-bom を import すれば個別バージョン指定を集約できる
 - 注意: 既存の `${lucene.version}`・`${jackson.version}` プロパティ参照箇所を BOM 化後に整理する
+- 結果 (2026-06-07):
+  - **Jackson BOM 化を実施**: `com.fasterxml.jackson:jackson-bom:${jackson.version}` を
+    dependencyManagement に import し、`jackson-databind` / `jackson-datatype-jsr310` /
+    `jackson-dataformat-yaml` の個別 `<version>` 指定を削除。Spring Boot BOM より前に
+    宣言することで Jackson 2.19.0 を優先解決。`./mvnw -B -q -DskipTests -N validate` で
+    解決確認済み。
+  - **Lucene BOM 化は断念**: Maven Central で `org.apache.lucene:lucene-bom:10.4.0`
+    の解決に失敗。Apache Lucene は公式に BOM artifact を公開していない
+    (2026-06-07 時点)。`${lucene.version}` プロパティで版を集約する既存方式が
+    そのまま唯一の集約手段であるため、Lucene 個別 `<version>` 指定は据え置き。
+    pom.xml にも理由をコメントとして残した。
 
 ### TASK-028
 
@@ -146,8 +209,13 @@
 
 ### TASK-030
 
-- 補足: `examples/filesystem-plugin/` には旧 `searchable-core/` ディレクトリと `target/` のみが残存し、`src/` も `README.md` も `pom.xml` も存在しない
+- 補足: `examples/filesystem-plugin/` には旧 `searchable-core/` ディレクトリと `target/`
+  のみが残存し、`src/` も `README.md` も `pom.xml` も存在しない
 - 注意: TASK-005 (旧 searchable-api/mcp/ui の処置) と方針を揃える
+- 結果 (2026-06-07): `git ls-files examples/filesystem-plugin/` は空 (tracked file ゼロ)。
+  実体は `examples/filesystem-plugin/searchable-core/src/` (空ディレクトリ) と
+  `examples/filesystem-plugin/target/` のみで、いずれも untracked。
+  `rm -rf examples/filesystem-plugin` で TASK-005 と同タイミングで物理削除済み。
 
 ### TASK-040
 

@@ -70,6 +70,57 @@ searchable.embedding.max-sequence-length=512
 インタフェースを実装し、`encode(text, maxLength)` で
 `{inputIds, attentionMask}` を返す。
 
+### ONNX モデルの配布・取得・キャッシュ戦略
+
+Searchable は ONNX モデルファイルを JAR に同梱しない。
+`OnnxEmbeddingProvider` は `Path modelPath` を受け取るだけで、
+ダウンロードもキャッシュも行わないため、利用者がローカルに
+配置する必要がある。
+
+**推奨モデル**:
+
+| モデル | 次元 | 約サイズ (ONNX量子化前) | 取得元 |
+| --- | --- | --- | --- |
+| `intfloat/multilingual-e5-small` | 384 | 約140MB | <https://huggingface.co/intfloat/multilingual-e5-small> |
+| `intfloat/multilingual-e5-base` | 768 | 約470MB | <https://huggingface.co/intfloat/multilingual-e5-base> |
+
+**取得方法** (Hugging Face からの典型例):
+
+```bash
+# huggingface-cli (推奨, git lfs 不要)
+pip install -U "huggingface_hub[cli]"
+huggingface-cli download intfloat/multilingual-e5-small \
+  --include "*.onnx" "tokenizer.json" "sentencepiece.bpe.model" \
+  --local-dir ~/.cache/searchable/models/multilingual-e5-small
+```
+
+`git lfs` を使う場合:
+
+```bash
+git lfs install
+git clone https://huggingface.co/intfloat/multilingual-e5-small \
+  ~/.cache/searchable/models/multilingual-e5-small
+```
+
+**配置パスの規約**: ライブラリは特定のパスを強制しない。
+チーム内で統一する場合は `~/.cache/searchable/models/<model-id>/`
+を出発点として、`application.properties` の
+`searchable.embedding.model-path` を絶対パスで指定する。
+
+**embedded (Java API) と examples の両経路**:
+
+- Java API で直接利用する場合は `SearchableLibrary.Builder.embeddingProvider(...)`
+  でアプリ側が解決済みの `OnnxEmbeddingProvider` を渡す。
+- examples (REST API / webapp / MCP) では `application.properties` に
+  `searchable.embedding.model-path=/absolute/path/to/model.onnx` を設定。
+  起動時にファイル不在ならアプリは起動失敗 (`IllegalStateException`)。
+- CI / Docker イメージにモデルファイルを含めるかは利用者判断。
+  巨大なバイナリを CI artifact に含めるのが許容できる場合のみ。
+  そうでない場合は `init container` / `entrypoint script` で取得する。
+
+**ライセンス確認**: multilingual-e5 系は MIT、それ以外のモデルを
+使う場合はそれぞれのライセンスを必ず確認すること。
+
 ## 3. Namespace 設定
 
 Namespace の `architecture` を設定することでデフォルト挙動を変更:
@@ -172,10 +223,50 @@ curl -X POST http://localhost:8080/api/v1/index/batch \
 | 10万 | 1 ms（ベクトル単体） | 約88秒（HNSW構築含む） |
 | 10万 | 1 ms（全文単体） | 約6秒 |
 
+> **計測単位の注意**: 上記 p99 は PoC コードが ms 単位で `long` 丸めしているため
+> "1 ms 未満" を意味する。サブミリ秒の精度は JMH ベースのベンチに置き換える
+> TASK-008 完了後に再計測予定 (参照: `docs/devel/work/tasks/task.md` TASK-007 結果)。
+
 詳細は以下を参照:
 
 - `docs/devel/work/investigations/003-performance.md`（全文検索）
 - `docs/devel/work/investigations/123-vector-performance.md`（ベクトル検索）
+
+### ベクトル初期インデックス構築 88s/100k の再現条件
+
+上記の "約88秒" は
+`docs/devel/work/poc/task-123-vector-perf/src/main/java/poc/VectorSearchPerformanceTest.java`
+で計測した値。再現には以下を揃える必要がある:
+
+| 項目 | 値 |
+| --- | --- |
+| ドキュメント数 | 100,000 |
+| ベクトル次元 | 384 |
+| 類似度関数 | `VectorSimilarityFunction.DOT_PRODUCT` |
+| Storage | `MMapDirectory` (一時ディレクトリ) |
+| 並列度 | シングルスレッド (`for` ループによるシリアル `addDocument`) |
+| `IndexWriterConfig.RAMBufferSizeMB` | 512 |
+| HNSW パラメーター | Lucene デフォルト (M=16, efConstruction=100) |
+| Analyzer | `JapaneseAnalyzer` (Kuromoji) |
+| 埋め込み | SHA-256 ベースのハッシュ (384次元、L2 正規化) — **実モデル非依存** |
+| ハードウェア | macOS / Apple Silicon (PoC README 記載) |
+| Java | 21 |
+| Lucene | 10.4 (旧 PoC は 10.2; 数値の桁感は同等) |
+| 出力 | `[index] %,d docs (dim=%d) indexed in %,d ms` の3番目 |
+
+**実モデルを使った場合の倍率**: ハッシュ埋め込みは ONNX 推論より桁違いに速い
+ため、`OnnxEmbeddingProvider` + `multilingual-e5-small` を使うと
+"埋め込み生成時間 + HNSW グラフ構築時間" となり、Apple Silicon でも
+10万件で 20〜40 分程度に伸びるのが一般的 (CPU バウンド)。
+プロダクションでは:
+
+- バッチ並列度: `parallelStream()` や `ExecutorService` で並列化
+- バッチサイズ: 1,000〜10,000 件ずつ `addDocument` → 周期的に `commit`
+- `RAMBufferSizeMB`: 256〜1024 MB を JVM heap に合わせて設定
+
+を組み合わせて取得時間を縮める。実装はライブラリ側で固定せず、
+`SearchableLibrary.Builder.embeddingProvider(...)` に渡す前段で
+利用者が制御する。
 
 ## 7. チューニング
 
@@ -183,11 +274,58 @@ curl -X POST http://localhost:8080/api/v1/index/batch \
   multilingual-e5-small=384, multilingual-e5-base=768 が代表値
 - **HNSW パラメータ**: Lucene のデフォルト設定で十分。必要に応じて
   `LuceneIndexProvider` を拡張して `IndexWriterConfig` をカスタマイズ
+  (詳細は次節)
 - **バッチサイズ**: インデックス構築時は `RAMBufferSizeMB` を大きくする
   （デフォルト64MB → 256MB等）と一括投入が高速化
 - **並列ハイブリッド**: Virtual Thread executor を使用するため
   CPU・I/O のオーバーヘッドは少ないが、両エンジンの最大レイテンシが
   応答時間になることに注意
+
+### HNSW パラメーターチューニング指針
+
+Lucene の HNSW は `Lucene99HnswVectorsFormat` で実装されており、
+構築時の `M` / `efConstruction` と検索時の `topK` が
+レイテンシ・リコール・インデックスサイズを支配する。
+
+| パラメーター | Lucene デフォルト | 動作 | 上げると | 下げると |
+| --- | --- | --- | --- | --- |
+| `M` | 16 | 各ノードの最大接続数 | リコール向上、インデックス容量増、構築時間増 | インデックス縮小、リコール低下 |
+| `efConstruction` | 100 | 構築時の候補探索幅 | リコール向上、構築時間増 | 構築高速化、品質低下 |
+| `k` (検索 `topK`) | API 指定 | 検索時の候補数 | リコール向上、検索レイテンシ増 | 高速化、リコール低下 |
+
+> Lucene 10 では検索時の `ef` を独立に指定する API は無く、`topK` が
+> そのまま探索幅の起点となる。リコール重視時は `topK` を実必要件数より
+> 大きめに取り、アプリ側で post-rerank する。
+
+**カスタマイズ方法** (`LuceneIndexProvider` のサブクラスで
+`IndexWriterConfig` を作る箇所を差し替える):
+
+```java
+final var hnswFormat = new Lucene99HnswVectorsFormat(
+    32,    // M (default 16) — リコール優先で 24〜32
+    200    // efConstruction (default 100) — 構築時に余裕があれば 200〜400
+);
+final var codec = new Lucene101Codec() {
+    @Override
+    public KnnVectorsFormat getKnnVectorsFormatForField(final String field) {
+        if ("vector".equals(field)) {
+            return hnswFormat;
+        }
+        return super.getKnnVectorsFormatForField(field);
+    }
+};
+indexWriterConfig.setCodec(codec);
+```
+
+**チューニング指針** (10万〜100万件規模):
+
+- まず Lucene デフォルト (M=16, efConstruction=100) で測定
+- リコール不足を感じたら **M=24** から試す。M=32 以上は
+  インデックスサイズが約 1.5〜2倍に膨らむため、運用容量と相談
+- 構築時間に余裕があれば **efConstruction=200〜400** で
+  リコールを底上げ。100→400 で構築時間は約 3〜4倍
+- 検索レイテンシを切り詰めたいときは API 側の `topK` を下げ、
+  アプリ側のフィルタリングで補う
 
 ## 8. トラブルシューティング
 
@@ -209,6 +347,6 @@ curl -X POST http://localhost:8080/api/v1/index/batch \
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2026-05-15
-**Status**: Phase 2
+**Document Version**: 1.1
+**Last Updated**: 2026-06-07
+**Status**: Phase 2 (TASK-016 / TASK-017 / TASK-018 反映)

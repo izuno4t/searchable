@@ -27,17 +27,26 @@ back-ends and AI-tool integrations.
 - 🎯 **Hybrid search built in** — full-text and vector search can be used
   independently, sequentially, or in parallel with score fusion. Strategy
   is configurable per index.
-- 📦 **Embeddable, not infrastructure** — in-memory Lucene-based
-  architecture targets <500ms responses for 100k documents. Ship as a
-  JAR, or run one of the reference apps under [`examples/`](examples/)
-  (Spring Boot webapp, REST API server, MCP server).
+- 📦 **Embeddable core, not infrastructure** — `searchable-core` ships
+  as a single JAR you embed in your application; `MMapDirectory` plus
+  the Lucene engine handle 100k documents in <500ms with no external
+  server to operate. The Spring Boot reference apps under
+  [`examples/`](examples/) (webapp, REST API, MCP) and the
+  `searchable-admin` management UI are **separate, optional artifacts**
+  that *use* the embeddable core — they are not part of the embedded
+  surface itself.
 - 🔒 **Local-first AI** — vector embeddings are generated in-process with
   ONNX Runtime. No external API keys, no data leaving the host.
-- 🏢 **Multi-tenant by design** — Namespaces give each tenant or dataset
-  its own logical index with isolated configuration.
-- 🧩 **Pluggable data sources** — implement the
-  [`DataSourcePlugin`](searchable-plugins/src/main/java/io/searchable/plugin/DataSourcePlugin.java)
-  interface in `searchable-plugins` to ingest from custom sources.
+- 🏢 **Namespace-based logical multi-tenancy** — Namespaces give each
+  tenant or dataset its own logical index with isolated Analyzer,
+  embedding, and persistence configuration **within a single JVM**.
+  This is logical isolation, not process- or cluster-level isolation —
+  see the [Multi-tenancy Guide](docs/public/multi-tenancy-guide.md) for
+  the OOM / noisy-neighbor / QoS / encryption constraints before
+  exposing Namespaces to untrusted tenants.
+- 🧩 **Pluggable internals** — data sources, AI providers, embedding
+  models, parsers, chunking, analyzers, and repository persistence are
+  all behind SPIs; see [Extension Points](#-extension-points-spi) below.
 
 ---
 
@@ -190,20 +199,75 @@ under `examples/search-ui/` is plain HTML + JS.
 
 ---
 
+## 🔌 Extension Points (SPI)
+
+Every cross-cutting concern is behind a small Java interface. Two
+discovery styles are used:
+
+- **ServiceLoader-based** SPIs are picked up automatically from any
+  plugin JAR on the classpath (declare the implementation under
+  `META-INF/services/<interface>`).
+- **Builder-based** SPIs are wired explicitly via
+  [`SearchableLibrary.Builder`](searchable-core/src/main/java/io/searchable/core/SearchableLibrary.java).
+
+| Extension point | Discovery | Default | Typical use |
+| --- | --- | --- | --- |
+| [`DataSourcePlugin`](searchable-plugins/src/main/java/io/searchable/plugin/DataSourcePlugin.java) | ServiceLoader | — | Ingest from external sources (filesystem, S3, Confluence, ...) |
+| [`AiProvider`](searchable-ai/src/main/java/io/searchable/ai/AiProvider.java) | ServiceLoader | — | LLM post-processing (summarize / answer with retrieved hits) |
+| [`EmbeddingProvider`](searchable-core/src/main/java/io/searchable/core/domain/embedding/EmbeddingProvider.java) | Builder | ONNX + multilingual-e5 | Swap the vector-embedding backend |
+| [`DocumentParser`](searchable-core/src/main/java/io/searchable/core/domain/parser/DocumentParser.java) | `ParserRegistry.register(...)` | Plain / Markdown / AsciiDoc / HTML / PDF / Office | Add new file-format extractors |
+| [`ChunkingStrategy`](searchable-core/src/main/java/io/searchable/core/domain/chunking/ChunkingStrategy.java) | Builder | — | Control how long documents are split before embedding |
+| `Analyzer` (via `AnalyzerFactory`) | Per-namespace config | `JapaneseAnalyzer` (Kuromoji) | Drop in a different Lucene `Analyzer` (e.g. Sudachi) |
+| Repository SPIs (`NamespaceRepository`, `IndexMetadataRepository`, `UserDictionaryRepository`, `DocumentMetadataRepository`) | Builder | JDBC (H2 / PostgreSQL) | In-memory or alternative stores for tests / embedded scenarios |
+
+---
+
 ## 🧩 Modules
+
+**Embeddable core** — the JARs you put on your application's classpath:
 
 | Module | Role |
 | --- | --- |
 | `searchable-core` | Core library: indexing, search, namespaces, persistence |
 | `searchable-plugins` | Plugin API (`DataSourcePlugin` and friends) |
 | `searchable-ai` | Embedding / ONNX integration for vector search |
-| `searchable-cli` | Command-line interface for index management |
-| `searchable-admin` | Admin UI (Spring Boot + Thymeleaf) |
 | `searchable-testkit` | Shared test fixtures for downstream apps |
-| `examples/api` | Reference REST API server (Spring Boot) |
-| `examples/mcp` | Reference MCP server (stdio JSON-RPC) |
-| `examples/webapp` | Reference embedded webapp |
+
+**Standalone tools** — operate on the core but run as their own
+process; the embedded surface does not depend on them:
+
+| Module | Role |
+| --- | --- |
+| `searchable-cli` | Command-line interface for index management |
+| `searchable-admin` | Management UI (Spring Boot + Thymeleaf, operator-facing) |
+
+**Reference apps** under [`examples/`](examples/) — Spring Boot /
+static-HTML demos that *use* the embeddable core; package and run
+individually, not part of the root build:
+
+| Path | Role |
+| --- | --- |
+| `examples/api` | REST API server (Spring Boot) |
+| `examples/mcp` | MCP server (stdio JSON-RPC) |
+| `examples/webapp` | Embedded webapp demo |
 | `examples/search-ui` | Static HTML / JS client for the REST API |
+
+---
+
+## 🧪 CI
+
+GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml))
+runs build + unit tests, integration tests, Checkstyle + SpotBugs, and
+docs lint (markdownlint + Spectral + cspell).
+
+| JDK | Distribution | Status |
+| --- | --- | --- |
+| 21 | Eclipse Temurin | All jobs run on this single JDK |
+
+Triggers are currently set to `workflow_dispatch` only while the
+codebase undergoes a large refactor; `push` / `pull_request` triggers
+are commented out and will be restored before 1.0. Multi-JDK matrix
+expansion (e.g. 25 LTS preview) is not yet wired up.
 
 ---
 
@@ -231,6 +295,7 @@ work live in [`docs/devel/work/plans/project-plan.md`](docs/devel/work/plans/pro
 | [Architecture](docs/devel/design/architecture/overview.md) | en | Design rationale and internal structure |
 | [Admin UI Guide](docs/public/admin-ui-guide.md) | en | Operating the `searchable-admin` Spring Boot UI |
 | [Vector Search Guide](docs/public/vector-search-guide.md) | en | Embeddings, HNSW, and hybrid scoring |
+| [Multi-tenancy Guide](docs/public/multi-tenancy-guide.md) | en | What Namespaces do / do not isolate; OOM, QoS, and encryption constraints |
 | [Examples Overview](examples/README.md) | ja | Reference apps: webapp / REST API / MCP / search UI |
 | [Getting Started](docs/public/getting-started.ja.md) | ja | First-time setup in 5–10 minutes |
 | [Usage Guide](docs/public/usage.ja.md) | ja | Day-to-day reference for the Java API, REST API, and MCP server |
