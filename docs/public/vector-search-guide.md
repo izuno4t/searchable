@@ -145,7 +145,7 @@ curl -X POST http://localhost:8080/api/v1/search \
 全文検索限定としている)。ハイブリッド検索(`HYBRID`)の結果は内部で
 full-text とベクトルをマージするため、full-text 経由で見つかった文書には
 `subResults` が付き、ベクトル経由で見つかった文書には付かない。詳細は
-[docs/architecture.md §5.7](architecture.md) 参照。
+[docs/devel/design/architecture/overview.md §5.7](architecture.md) 参照。
 
 ## 5. インデックス構築
 
@@ -174,8 +174,8 @@ curl -X POST http://localhost:8080/api/v1/index/batch \
 
 詳細は以下を参照:
 
-- `docs/research/task-003-performance.md`（全文検索）
-- `docs/research/task-123-vector-performance.md`（ベクトル検索）
+- `docs/devel/work/investigations/003-performance.md`（全文検索）
+- `docs/devel/work/investigations/123-vector-performance.md`（ベクトル検索）
 
 ## 7. チューニング
 

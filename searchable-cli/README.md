@@ -7,13 +7,13 @@ deletion, rebuild, status inspection, backup / restore, plugin
 discovery, and config validation as subcommands.
 
 For the long-form Japanese reference (options, exit codes, examples for
-every subcommand), see [`docs/cli-guide.ja.md`](../docs/cli-guide.ja.md).
+every subcommand), see [`docs/public/cli-guide.ja.md`](../docs/public/cli-guide.ja.md).
 
 ## Requirements
 
 - Java 21 or newer
 - A `searchable.yaml` application config (see
-  [`docs/setup-guide.md`](../docs/setup-guide.md))
+  [`docs/public/setup-guide.md`](../docs/public/setup-guide.md))
 
 ## Build
 
@@ -127,10 +127,10 @@ example `SEARCHABLE_LOG_LEVEL=DEBUG`.
 
 ## Related Documentation
 
-- [`docs/cli-guide.ja.md`](../docs/cli-guide.ja.md) — Detailed reference
+- [`docs/public/cli-guide.ja.md`](../docs/public/cli-guide.ja.md) — Detailed reference
   (Japanese)
-- [`docs/setup-guide.md`](../docs/setup-guide.md) — Config file format
-- [`docs/usage.ja.md`](../docs/usage.ja.md) — Using Searchable as a Java
+- [`docs/public/setup-guide.md`](../docs/public/setup-guide.md) — Config file format
+- [`docs/public/usage.ja.md`](../docs/public/usage.ja.md) — Using Searchable as a Java
   library
-- [`docs/architecture.md`](../docs/architecture.md) — Storage layer and
+- [`docs/devel/design/architecture/overview.md`](../docs/devel/design/architecture/overview.md) — Storage layer and
   module layout

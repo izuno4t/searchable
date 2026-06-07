@@ -16,7 +16,7 @@ import java.util.Objects;
  * {@code persistence.url}) should be resolved to absolute paths before the
  * config is handed to {@code SearchableLibrary}. Use
  * {@link #normalize(ApplicationConfig, Path)} for that.
- * See {@code docs/adr/0002-data-directory-relative-path-resolution.md}.
+ * See {@code docs/devel/adr/0002-data-directory-relative-path-resolution.md}.
  */
 public record ApplicationConfig(
     Path dataDirectory,

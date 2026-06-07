@@ -503,7 +503,7 @@ components:
           additionalProperties: true
           description: |
             Free-form per-document metadata returned by the search
-            backend. Reserved keys (see docs/architecture.md §5.7):
+            backend. Reserved keys (see docs/devel/design/architecture/overview.md §5.7):
 
               * `url`         — origin reference as an RFC 3986 URI with
                                 a scheme (`file:///abs/path`, `https://...`,

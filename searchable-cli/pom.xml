@@ -68,7 +68,7 @@
     <build>
         <plugins>
             <!-- Produce a self-contained executable fat jar. See
-                 docs/adr/0001-cli-executable-jar-with-shade-plugin.md
+                 docs/devel/adr/0001-cli-executable-jar-with-shade-plugin.md
                  for rationale and required transformer configuration. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

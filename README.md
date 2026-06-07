@@ -165,8 +165,8 @@ for the full surface.
 ## ⚡ Performance
 
 Measured on synthetic Japanese corpora; see
-[`docs/research/task-003-performance.md`](docs/research/task-003-performance.md)
-and [`docs/research/task-123-vector-performance.md`](docs/research/task-123-vector-performance.md)
+[`docs/devel/work/investigations/003-performance.md`](docs/devel/work/investigations/003-performance.md)
+and [`docs/devel/work/investigations/123-vector-performance.md`](docs/devel/work/investigations/123-vector-performance.md)
 for the full setups.
 
 | Workload | Scale | p99 | Max | Over 500 ms |
@@ -214,8 +214,8 @@ build against; minor breaking changes are still possible before the 1.0
 tag. Module layout is being tidied as the codebase approaches release.
 
 The Phase 1–5 implementation plans (documented under
-[`docs/archives/`](docs/archives/)) are complete; roadmap and follow-up
-work live in [`docs/project-plan.md`](docs/project-plan.md).
+[`docs/devel/work/archive/`](docs/devel/work/archive/)) are complete; roadmap and follow-up
+work live in [`docs/devel/work/plans/project-plan.md`](docs/devel/work/plans/project-plan.md).
 
 ---
 
@@ -227,18 +227,18 @@ work live in [`docs/project-plan.md`](docs/project-plan.md).
 
 | Document | Language | When to read it |
 | --- | --- | --- |
-| [Setup Guide](docs/setup-guide.md) | en | Detailed installation, configuration, and operational tasks |
-| [Architecture](docs/architecture.md) | en | Design rationale and internal structure |
-| [Admin UI Guide](docs/admin-ui-guide.md) | en | Operating the `searchable-admin` Spring Boot UI |
-| [Vector Search Guide](docs/vector-search-guide.md) | en | Embeddings, HNSW, and hybrid scoring |
+| [Setup Guide](docs/public/setup-guide.md) | en | Detailed installation, configuration, and operational tasks |
+| [Architecture](docs/devel/design/architecture/overview.md) | en | Design rationale and internal structure |
+| [Admin UI Guide](docs/public/admin-ui-guide.md) | en | Operating the `searchable-admin` Spring Boot UI |
+| [Vector Search Guide](docs/public/vector-search-guide.md) | en | Embeddings, HNSW, and hybrid scoring |
 | [Examples Overview](examples/README.md) | ja | Reference apps: webapp / REST API / MCP / search UI |
-| [Getting Started](docs/getting-started.ja.md) | ja | First-time setup in 5–10 minutes |
-| [Usage Guide](docs/usage.ja.md) | ja | Day-to-day reference for the Java API, REST API, and MCP server |
-| [CLI Guide](docs/cli-guide.ja.md) | ja | `searchable-cli` reference for index management |
+| [Getting Started](docs/public/getting-started.ja.md) | ja | First-time setup in 5–10 minutes |
+| [Usage Guide](docs/public/usage.ja.md) | ja | Day-to-day reference for the Java API, REST API, and MCP server |
+| [CLI Guide](docs/public/cli-guide.ja.md) | ja | `searchable-cli` reference for index management |
 | [API Specification](examples/api/api-specification.ja.md) | ja | Full REST / Java / MCP API specification |
 | [OpenAPI](examples/api/openapi.yaml) | — | Machine-readable REST API definition |
-| [Requirements](docs/requirements.md) | en | Functional and non-functional requirements |
-| [Research Reports](docs/research/) | mixed | Background investigations behind key technical decisions |
+| [Requirements](docs/devel/requirements.md) | en | Functional and non-functional requirements |
+| [Research Reports](docs/devel/work/investigations/) | mixed | Background investigations behind key technical decisions |
 
 ---
 

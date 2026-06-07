@@ -28,7 +28,7 @@ public final class ParserRegistry {
         registry.register(new AsciiDocParser());
         registry.register(new HtmlParser());
         registry.register(new PdfParser());
-        // Office formats (docs/architecture.md §5.7). Each extension maps to a
+        // Office formats (docs/devel/design/architecture/overview.md §5.7). Each extension maps to a
         // distinct MIME type, so one configurable parser is registered per
         // extension rather than per family.
         registry.register(new OfficeDocumentParser("word-docx", ".docx",

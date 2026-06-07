@@ -11,7 +11,7 @@ import java.nio.file.Path;
  *
  * <p>Resolves all path-typed fields against {@link #dataDirectory} after
  * Spring binding completes (see
- * {@code docs/adr/0002-data-directory-relative-path-resolution.md}).
+ * {@code docs/devel/adr/0002-data-directory-relative-path-resolution.md}).
  */
 @ConfigurationProperties(prefix = "searchable")
 public class SearchableProperties {

@@ -17,7 +17,7 @@
   `${self_dir}/..` を `module_root` として `target/classes` / `target/lib` を
   探すが、`self_dir` は `searchable-cli/src/main/scripts/` であり実際には
   `searchable-cli/target/` を指せず、開発チェックアウトでは起動できない
-- `docs/getting-started.ja.md` / `docs/cli-guide.ja.md` / `examples/webapp/README.md`
+- `docs/public/getting-started.ja.md` / `docs/public/cli-guide.ja.md` / `examples/webapp/README.md`
   で配布物の説明が冗長になっていた
 
 ゴール: `java -jar searchable-cli-<version>.jar <args>` だけで動く単一 jar 配布物
@@ -93,8 +93,8 @@
   - 現状は `lib/` 同梱を前提とした 3 経路の resolver。shade 後は
     `target/searchable-cli-*.jar` を見つけて `java -jar` で起動する単純な
     スクリプトに作り替える
-- `docs/cli-guide.ja.md` の「ビルドと配布」節
-- `docs/getting-started.ja.md` のケース B ビルド成果物の記述
+- `docs/public/cli-guide.ja.md` の「ビルドと配布」節
+- `docs/public/getting-started.ja.md` のケース B ビルド成果物の記述
 - `examples/webapp/README.md` の `searchable-cli` 起動コマンド例
 - `searchable-cli/pom.xml` のテスト設定(`maven-jar-plugin` を簡素化、または除去)
 

@@ -22,7 +22,7 @@ import java.nio.file.Path;
  * Spring Boot entry point for the embedded webapp example (TASK-114).
  *
  * <p>Demonstrates the "all-in-one" deployment pattern from
- * {@code docs/architecture.md} §7.2: the same JVM process owns the index,
+ * {@code docs/devel/design/architecture/overview.md} §7.2: the same JVM process owns the index,
  * runs Thymeleaf, and serves the search UI.
  *
  * <p>The webapp opens the {@link SearchableLibrary} in read-only mode and
@@ -48,7 +48,7 @@ public class SearchableWebappApplication {
             GlobalConfig.defaults());
         // Resolve relative paths against the JVM CWD because no config-file
         // anchor exists when paths come from Spring `@Value` injection.
-        // See docs/adr/0002-data-directory-relative-path-resolution.md.
+        // See docs/devel/adr/0002-data-directory-relative-path-resolution.md.
         final ApplicationConfig config = ApplicationConfig.normalize(raw, Path.of("").toAbsolutePath());
         return SearchableLibrary.builder()
             .applicationConfig(config)

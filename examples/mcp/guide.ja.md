@@ -22,7 +22,7 @@ mvn -B -pl searchable-mcp -am package
 ## 3. 設定ファイル
 
 REST API と同じ YAML 形式の設定ファイルを利用する
-（`docs/setup-guide.md` 参照）。MCPサーバー固有の追加項目は不要。
+（`docs/public/setup-guide.md` 参照）。MCPサーバー固有の追加項目は不要。
 
 ```yaml
 data-directory: ./data
@@ -147,7 +147,7 @@ MCP プロトコル仕様: <https://modelcontextprotocol.io/>
 
 - 初回検索時は Lucene のインデックスを mmap するため、ウォームアップに
   数秒かかる場合がある
-- 性能要件（500ms以内）は事前検証済み（`docs/research/task-003-performance.md`）
+- 性能要件（500ms以内）は事前検証済み（`docs/devel/work/investigations/003-performance.md`）
 
 ---
 

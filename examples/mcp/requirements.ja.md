@@ -4,7 +4,7 @@
 サーバーのサンプル実装** である。位置付けはサンプルだが、API Key 認証を
 有効化することで軽度の本番利用にも耐える品質を目指す。
 
-ライブラリ本体の要件は [docs/requirements.md](../../docs/requirements.md)
+ライブラリ本体の要件は [docs/devel/requirements.md](../../docs/devel/requirements.md)
 を参照。
 
 ## 1. 位置付け

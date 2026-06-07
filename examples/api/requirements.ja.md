@@ -4,7 +4,7 @@
 ある。位置付けはサンプルだが、設定された API Key 認証を有効化することで
 軽度の本番利用にも耐える品質を目指す。
 
-ライブラリ本体の要件は [docs/requirements.md](../../docs/requirements.md)
+ライブラリ本体の要件は [docs/devel/requirements.md](../../docs/devel/requirements.md)
 を参照。
 
 ## 1. 位置付け

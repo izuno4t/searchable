@@ -95,7 +95,7 @@ java -jar searchable-ui-1.0.0-SNAPSHOT.jar \
 > ディレクトリを用意し、書き込み完了時にディレクトリ名を不可分に
 > リネームして切り替える。旧ディレクトリは 30 秒の猶予期間を置いてから
 > 削除する。再構築の実行中も検索 API は旧バージョンで結果を返し続ける。
-> 詳細は [docs/architecture.md §5.7](architecture.md) を参照。
+> 詳細は [docs/devel/design/architecture/overview.md §5.7](architecture.md) を参照。
 
 ### ドキュメントアップロード (`/documents/upload`)
 
@@ -167,7 +167,7 @@ flash メッセージで indexing 結果を表示する。
 ## 10. デモ環境
 
 `docker/` 配下に Docker Compose ベースのデモ環境を提供。
-詳細は `docs/demo-setup.md`。
+詳細は `docs/public/demo-setup.md`。
 
 ---
 

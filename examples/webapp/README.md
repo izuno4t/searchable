@@ -3,7 +3,7 @@
 Library-embedded webapp built on Spring Boot + Thymeleaf. The same JVM
 process owns the Lucene index and serves the search UI — the
 "all-in-one" deployment pattern from
-[docs/architecture.md §7.2](../../docs/architecture.md).
+[docs/devel/design/architecture/overview.md §7.2](../../docs/devel/design/architecture/overview.md).
 
 ## Run
 

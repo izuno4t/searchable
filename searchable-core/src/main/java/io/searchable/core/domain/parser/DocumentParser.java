@@ -23,7 +23,7 @@ public interface DocumentParser {
     /**
      * MIME type produced by this parser, used as the value of the
      * {@code metadata.contentType} reserved key (see
-     * {@code docs/architecture.md} §5.7). Defaults to
+     * {@code docs/devel/design/architecture/overview.md} §5.7). Defaults to
      * {@code application/octet-stream} for parsers that do not provide a
      * more specific value.
      */

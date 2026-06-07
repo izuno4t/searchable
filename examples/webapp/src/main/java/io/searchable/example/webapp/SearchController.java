@@ -56,7 +56,7 @@ public class SearchController {
                 "Document not found: " + namespaceId + "/" + documentId));
         model.addAttribute("document", match);
         // Resolve the origin URL from metadata.url so the detail page can
-        // link to the source file / page (see docs/architecture.md §5.7).
+        // link to the source file / page (see docs/devel/design/architecture/overview.md §5.7).
         final String originUrl = library.documentMetadataRepository()
             .findById(namespaceId, documentId)
             .map(r -> r.metadata().get("url"))

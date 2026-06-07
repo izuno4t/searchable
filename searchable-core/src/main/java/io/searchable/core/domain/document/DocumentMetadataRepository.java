@@ -19,7 +19,7 @@ import java.util.Optional;
  * Splitting the two keeps "what is this document" separate from
  * "where did we last fetch it from".
  *
- * <p>See {@code docs/architecture.md} §5.7 for the full design.
+ * <p>See {@code docs/devel/design/architecture/overview.md} §5.7 for the full design.
  */
 public interface DocumentMetadataRepository {
 

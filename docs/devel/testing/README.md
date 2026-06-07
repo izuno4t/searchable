@@ -131,5 +131,5 @@ Testcontainers もそのまま動作する。
 ## 関連ドキュメント
 
 + [docs/test-infrastructure-plan.md](test-infrastructure-plan.md) — 設計レポート
-+ [docs/branch-protection.md](branch-protection.md) — ブランチ保護設定手順
-+ [docs/architecture.md](architecture.md) — モジュール構成
++ [docs/devel/standards/branch-protection.md](branch-protection.md) — ブランチ保護設定手順
++ [docs/devel/design/architecture/overview.md](architecture.md) — モジュール構成

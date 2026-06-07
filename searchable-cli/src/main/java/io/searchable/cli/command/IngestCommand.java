@@ -101,7 +101,7 @@ public final class IngestCommand implements Callable<Integer> {
                     .title(parsed.title())
                     .content(parsed.content())
                     // `url` and `contentType` are reserved metadata keys
-                    // (see docs/architecture.md §5.7). Use the file URI
+                    // (see docs/devel/design/architecture/overview.md §5.7). Use the file URI
                     // so SearchHit.metadata.url can be opened directly
                     // from the UI, and the parser's MIME so UIs can
                     // decide how to render the original document.

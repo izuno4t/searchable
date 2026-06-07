@@ -160,7 +160,7 @@ curl -X DELETE http://localhost:8080/api/v1/namespaces/project-a
 ## 8. メタデータ DB スキーマの更新と既存インデックスの互換性
 
 文書レベルのメタデータ(`title` / `metadata.url` / `category` 等)は
-`DOCUMENT_METADATA` テーブルに移されました(`docs/architecture.md` §5.7)。
+`DOCUMENT_METADATA` テーブルに移されました(`docs/devel/design/architecture/overview.md` §5.7)。
 旧バージョンで作成された Lucene インデックスには `metadataJson` /
 `namespaceId` の stored field が残っていますが、新バージョンの検索処理は
 これらを読まないため、**検索結果の `SearchHit.metadata` は空** になります

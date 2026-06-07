@@ -25,7 +25,7 @@ import java.util.Objects;
  * tab-separated cell values.
  *
  * <p>Each registered instance is bound to one extension and its matching MIME
- * type (see {@code docs/architecture.md} §5.7), so {@link #contentType()} can
+ * type (see {@code docs/devel/design/architecture/overview.md} §5.7), so {@link #contentType()} can
  * return a single accurate value per the {@code metadata.contentType} reserved
  * key contract.
  */

@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * preserves Lucene's per-namespace serialization guarantee
  * (one writer per directory) while letting different namespaces run in
  * parallel — the same isolation rule documented in
- * {@code docs/architecture.md} §7.1.
+ * {@code docs/devel/design/architecture/overview.md} §7.1.
  *
  * <p>The implementation is suitable for moderate throughput. For very
  * high ingest volumes, callers should batch documents via

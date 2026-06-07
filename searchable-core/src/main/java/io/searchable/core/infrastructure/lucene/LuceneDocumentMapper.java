@@ -60,7 +60,7 @@ public final class LuceneDocumentMapper {
      * the metadata DB ({@code DocumentMetadataRepository}). The Lucene
      * document only carries the per-chunk search-time data plus the
      * {@code PARENT_ID} link back to the document registry.
-     * See {@code docs/architecture.md} §5.7.
+     * See {@code docs/devel/design/architecture/overview.md} §5.7.
      *
      * @param doc    parent domain document
      * @param chunk  chunk produced by a {@code ChunkingStrategy}

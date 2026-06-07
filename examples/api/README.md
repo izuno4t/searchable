@@ -59,7 +59,7 @@ curl -X POST http://localhost:8080/api/v1/index/documents \
 ```
 
 `metadata` accepts the reserved keys `url` (RFC 3986 URI) and
-`contentType` (MIME); see [docs/architecture.md §5.7](../../docs/architecture.md)
+`contentType` (MIME); see [docs/devel/design/architecture/overview.md §5.7](../../docs/devel/design/architecture/overview.md)
 for the full list. They are optional but recommended — the search UI
 follows `metadata.url` to link back to the source and uses
 `metadata.contentType` to decide how to render hits.

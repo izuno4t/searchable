@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Resolution rules for {@link ApplicationConfig#normalize(ApplicationConfig, Path)};
- * see {@code docs/adr/0002-data-directory-relative-path-resolution.md}.
+ * see {@code docs/devel/adr/0002-data-directory-relative-path-resolution.md}.
  */
 class ApplicationConfigNormalizeTest {
 

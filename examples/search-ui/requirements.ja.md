@@ -5,7 +5,7 @@
 のリファレンス実装で、**Vanilla HTML + JavaScript** により実装する。
 ビルドツールやフレームワーク (React / Vue 等) は使用しない。
 
-ライブラリ本体の要件は [docs/requirements.md](../../docs/requirements.md)
+ライブラリ本体の要件は [docs/devel/requirements.md](../../docs/devel/requirements.md)
 を参照。サーバー側の要件は
 [examples/api/requirements.ja.md](../api/requirements.ja.md) を参照。
 

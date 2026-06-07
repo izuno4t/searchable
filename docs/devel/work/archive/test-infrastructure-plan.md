@@ -146,8 +146,8 @@ Maven ローカルリポジトリは `actions/cache` でジョブ間共有。
 
 ## ドキュメント方針
 
-- `docs/testing.md`: testkit 利用方法、テスト実行手順、CI ジョブ説明
-- `docs/branch-protection.md`: PR 必須チェック設定手順
+- `docs/devel/testing/README.md`: testkit 利用方法、テスト実行手順、CI ジョブ説明
+- `docs/devel/standards/branch-protection.md`: PR 必須チェック設定手順
 - `.devcontainer/README.md`: 開発環境セットアップ（任意）
 
 ## スコープ外（Phase 4 では実装しない）

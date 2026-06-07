@@ -7,7 +7,7 @@
 「外部 API サーバーを立てたくない / 単一デプロイ単位で完結させたい」
 というユースケースの参考実装。
 
-ライブラリ本体の要件は [docs/requirements.md](../../docs/requirements.md)
+ライブラリ本体の要件は [docs/devel/requirements.md](../../docs/devel/requirements.md)
 を参照。
 
 ## 1. 位置付け

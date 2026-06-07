@@ -89,7 +89,7 @@ mvn -B -f searchable-cli/pom.xml clean package                  # host (CLI fat 
 ### Step 2. Put the plugin on the classpath
 
 The CLI itself ships as a single shaded fat jar (see
-[docs/adr/0001-cli-executable-jar-with-shade-plugin.md](../../docs/adr/0001-cli-executable-jar-with-shade-plugin.md))
+[docs/devel/adr/0001-cli-executable-jar-with-shade-plugin.md](../../docs/devel/adr/0001-cli-executable-jar-with-shade-plugin.md))
 and no longer exposes a `lib/` directory, so plugins must be loaded
 through the `plugins.directory` mechanism. Copy the plugin JAR and its
 `aws-sdk` transitive dependencies into the directory referenced by the

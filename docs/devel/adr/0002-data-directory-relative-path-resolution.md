@@ -22,7 +22,7 @@
 
 ### 観測された不整合
 
-`docs/getting-started.ja.md` のケース B では、CLI(ingest)と webapp(検索 UI)が
+`docs/public/getting-started.ja.md` のケース B では、CLI(ingest)と webapp(検索 UI)が
 同じインデックスを共有する前提だが:
 
 - リポジトリルートから `searchable-cli` を起動して `data-directory: ./data/webapp`
@@ -101,7 +101,7 @@
 
 ### マイグレーションノート
 
-`docs/setup-guide.md` に以下を追記する:
+`docs/public/setup-guide.md` に以下を追記する:
 
 - 0.x → 0.y 間で path 解決基準が CWD 基準から **config ファイル基準** に変更
   された旨
@@ -123,13 +123,13 @@
   `persistence.url` も出るよう確認
 
 ### ドキュメント
-- `docs/getting-started.ja.md` の `$HOME/searchable-data` workaround を撤去し
+- `docs/public/getting-started.ja.md` の `$HOME/searchable-data` workaround を撤去し
   「config 隣の `./data`」に書き換え
 - `examples/webapp/README.md` の `./data/webapp` 説明を「webapp の
   application.properties デフォルト = CWD/data/webapp」のニュアンスを残しつつ、
   ベストプラクティスは「config ファイル + 隣の相対パス」と並記
-- `docs/cli-guide.ja.md` の searchable.yaml 例を見直し
-- `docs/setup-guide.md` にマイグレーションノート
+- `docs/public/cli-guide.ja.md` の searchable.yaml 例を見直し
+- `docs/public/setup-guide.md` にマイグレーションノート
 
 ### テスト
 - `ConfigLoader` の正規化テスト

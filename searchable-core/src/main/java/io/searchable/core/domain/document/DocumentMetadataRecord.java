@@ -35,7 +35,7 @@ import java.util.Objects;
  * @param metadata    free-form metadata map; reserved keys
  *                    ({@code url}, {@code contentType}, {@code category},
  *                    {@code lang}, {@code tags}) follow the rules
- *                    documented in {@code docs/architecture.md} §5.7
+ *                    documented in {@code docs/devel/design/architecture/overview.md} §5.7
  * @param indexedAt   timestamp of the last successful indexing of the
  *                    document; never null
  * @param source      origin descriptor (type / location / contentHash /

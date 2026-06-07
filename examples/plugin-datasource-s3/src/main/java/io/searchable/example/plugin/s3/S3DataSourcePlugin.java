@@ -117,7 +117,7 @@ public final class S3DataSourcePlugin implements DataSourcePlugin {
 
         final Map<String, Object> metadata = new LinkedHashMap<>();
         // `url` is the reserved metadata key for the document origin
-        // (see docs/architecture.md §5.7). For S3-sourced documents the
+        // (see docs/devel/design/architecture/overview.md §5.7). For S3-sourced documents the
         // canonical URI is `s3://bucket/key`. Presigned HTTP URLs are
         // intentionally NOT placed here because they are short-lived.
         metadata.put("url", sourceLocation);

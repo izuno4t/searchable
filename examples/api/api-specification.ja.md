@@ -258,7 +258,7 @@
 }
 ```
 
-`metadata` の予約キー(詳細は `docs/architecture.md` §5.7):
+`metadata` の予約キー(詳細は `docs/devel/design/architecture/overview.md` §5.7):
 
 | キー | 値 | 用途 |
 | --- | --- | --- |

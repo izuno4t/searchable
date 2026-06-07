@@ -157,7 +157,7 @@ Searchable は日本語形態素解析に対応した全文検索ライブラリ
 ベクトル検索と組み合わせたハイブリッド検索にも対応しています。
 EOF
 
-cat > ~/sample-docs/architecture.md <<'EOF'
+cat > ~/sample-docs/devel/design/architecture/overview.md <<'EOF'
 # アーキテクチャ概要
 
 Searchable は Lucene をベースに、Kuromoji / Sudachi の形態素解析と

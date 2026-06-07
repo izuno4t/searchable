@@ -79,7 +79,7 @@ public class StartupIngestRunner implements CommandLineRunner {
                         .title(parsedDoc.title())
                         .content(parsedDoc.content())
                         // url / contentType are reserved metadata keys
-                        // (see docs/architecture.md §5.7).
+                        // (see docs/devel/design/architecture/overview.md §5.7).
                         .metadata(java.util.Map.of(
                             "url", absolute.toUri().toString(),
                             "path", absolute.toString(),
