@@ -1,22 +1,19 @@
 # TASKS
 
-マイルストーン: Review-202606
-ゴール: 2026-06 の Claude レビュー指摘 (P0-P3) への対応と、それから派生したドキュメント管理体系 (ガイドライン v1.0) 再編・仕様整備を完遂する
+Milestone: M3
+Goal: AI 統合機能(LLM プロバイダ連携・検索結果要約・管理画面)を実装し、Searchable から AI 経由の利用シナリオを成立させる
 
 ## 前提
 
-- 本タスクは 2026-06-07 のレビュー受領内容を起点とし、事前の事実確認で確定した不整合の解消、
-  および対応中に発見した派生作業 (docs 再編・specs 整備・CLAUDE.md 最新化) を統合管理する
-- レビュー指摘のうち、事実確認の結果コード調査が追加で必要なもの (パフォーマンス計測・Multi-tenant 設計・プラグイン拡張点など) は「現状調査 → 判断 → 反映」の3段で分割する
-- 削除・別リポジトリ化など破壊的判断を含むタスクは、判断段階でユーザー合意を取り、合意後に実行する
-- 完了済みタスク (✅) と取消タスク (🚫) は履歴として残し、archive へは本マイルストーン完了時に一括移動する
+- M1 (M-v3.3) 完了済(2026-06-01 チェックポイント)。基盤(`SearchableLibrary` / `AiProvider` SPI / `searchable-admin` / CLI / examples 一式)は M1 で確立。詳細は `docs/devel/work/archive/m1-tasks.md` を参照
+- M3 着手時点で `AiProvider` SPI(M1 TASK-084)は定義済み。M3 ではプロバイダ実装・要約サービス・設定・UI・テストを追加する
 
 ## ワークフロールール
 
 - タスク開始時にステータスを 🚧 に更新する
 - タスク完了時にステータスを ✅ に更新する
-- DependsOn のタスクがすべて ✅ になるまで開始しない
-- タスク着手時にまず該当箇所の現状を確認し、すでに解消されていれば 🚫 にして根拠を記録する
+- DependsOn のタスクが全て ✅ になるまで開始しない
+- タスク着手時にまず実装済みかを確認し、既存実装で要件を満たす場合は内容を確認して ✅ または 🚫 にする
 
 ## ステータス表記
 
@@ -32,308 +29,212 @@
 
 | ID | ステータス | 概要 | 依存関係 |
 | --- | --- | --- | --- |
-| TASK-001 | 🚫 | CLAUDE.md の "no source code yet" 記述と旧モジュール構成を最新の実装状態に書き直す | - |
-| TASK-002 | ✅ | README の Lucene バージョン表記を pom.xml の 10.4.0 に統一する | - |
-| TASK-003 | ✅ | README の "Sudachi" 言及を pom.xml の依存状況に合わせて整理する | - |
-| TASK-004 | ✅ | README の "AsciiDoc" を含む対応フォーマット一覧を実装状況に合わせて修正する | - |
-| TASK-005 | ✅ | ルート直下の旧 searchable-api/mcp/ui ディレクトリの扱いを決定し処置する | - |
-| TASK-006 | ✅ | pom.xml の `<modules>` に examples/ 配下を登録するかの方針を決定し反映する | TASK-005 |
-| TASK-007 | ✅ | ベンチコード (task-003/task-123) の計測単位と warm/cold 区分の現状を点検しレポートする | - |
-| TASK-008 | ✅ | ベンチコードを JMH ベースに置き換え warm/cold 両方の数値を出力する | TASK-007 |
-| TASK-009 | ✅ | README Performance セクションの数値表記を JMH 出力に基づき更新する | TASK-008 |
-| TASK-010 | ✅ | README の "in-memory" 表現を mmap 実態に合わせて修正する | - |
-| TASK-011 | ✅ | README の "Embeddable, not infrastructure" 表現を Spring Boot 依存実態に合わせて緩和する | - |
-| TASK-012 | ✅ | README の "Multi-tenant by design" 表現を JVM 内論理分離の実態に合わせて緩和する | - |
-| TASK-013 | ✅ | Multi-tenant の制約 (OOM・ノイジーネイバー・QoS・暗号化) を docs に明記する | TASK-012 |
-| TASK-014 | ✅ | searchable-admin の embeddable 性との整合方針を決定し README/docs に反映する | TASK-011 |
-| TASK-015 | ✅ | examples/webapp と examples/search-ui の位置付け方針を決定し README に反映する | TASK-006 |
-| TASK-016 | ✅ | ONNX モデル (multilingual-e5) の配布・取得・キャッシュ戦略を docs/public/vector-search-guide.md に追記する | - |
-| TASK-017 | ✅ | HNSW パラメーター (M・efConstruction・efSearch) のチューニング指針を docs/public/vector-search-guide.md に追記する | - |
-| TASK-018 | ✅ | ベクトル初期インデックス構築 (88s/100k) の再現条件 (CPU・並列度・バッチサイズ) を docs に明記する | TASK-007 |
-| TASK-019 | ✅ | README の MCP プロトコルバージョン badge と最新仕様追従方針を更新する | - |
-| TASK-020 | ✅ | MCP server を searchable-mcp モジュールとして昇格するか examples 維持かを決定し反映する | TASK-005,TASK-006 |
-| TASK-021 | ✅ | プラグイン API で差し替え可能な拡張点 (DataSource・Analyzer・Embedder ほか) を README に明示する | - |
-| TASK-022 | ✅ | pom.xml の Lucene/Jackson 依存を BOM import に置き換えるかを判断し反映する | - |
-| TASK-023 | ✅ | CI で検証する JDK バージョン一覧を README に明記する | - |
-| TASK-024 | ✅ | ガイドライン v1.0 準拠のディレクトリ構成へ docs/ 配下を全面移行する | - |
-| TASK-025 | ✅ | 旧パスへの参照を新パスへ書き換える (README・CLAUDE.md・examples・Java コメントほか) | TASK-024 |
-| TASK-026 | ✅ | 入口 README を新設する (`docs/README.md` / `docs/devel/README.md` / `docs/devel/design/README.md`) | TASK-024 |
-| TASK-027 | ✅ | CLAUDE.md を実装現状 (Pre-1.0・実モジュール構成・実依存) に最新化する | TASK-025 |
-| TASK-028 | ✅ | 新設した入口 README と統合 task.md・specs/ 配下を `git add` で staging する | TASK-026,TASK-032 |
-| TASK-029 | ✅ | 再編後のファイル全体を markdownlint-cli2 で検証し、警告を解消する | TASK-024,TASK-026 |
-| TASK-030 | ✅ | `examples/filesystem-plugin/` の壊れた残骸 (src なし・README なし・pom なし) の処置を決定し実施する | - |
-| TASK-031 | ✅ | カレントタスク識別ルール (「`work/tasks/` 配下 = 進行中」「`task.md` が常設の最優先」) を `docs/devel/README.md` に追記する | TASK-026 |
-| TASK-032 | ✅ | `docs/devel/specs/` を新設し、仕様の所在マップ README を整備する | TASK-024 |
-| TASK-033 | 🚫 | ~~`specs/java-api.md` を書き起こす~~ — Javadoc と二重管理になるため取り止め。Javadoc を正本とする | TASK-032 |
-| TASK-034 | 🚫 | ~~`specs/spi-data-source.md` を書き起こす~~ — 同上、Javadoc を正本とする | TASK-032 |
-| TASK-035 | 🚫 | ~~`specs/spi-ai-provider.md` を書き起こす~~ — 同上、Javadoc を正本とする | TASK-032 |
-| TASK-036 | ✅ | `specs/cli-commands.md` を書き起こす (CLI 各サブコマンドの引数・終了コード・出力契約) | TASK-032 |
-| TASK-037 | ✅ | `specs/config-yaml.md` を書き起こす (`searchable.yaml` のスキーマ・必須項目・デフォルト) | TASK-032 |
-| TASK-038 | ✅ | `specs/document-metadata.md` を書き起こす (予約キー: url・contentType・category・lang・tags) | TASK-032 |
-| TASK-039 | ✅ | `specs/search-behavior.md` を書き起こす (クエリ構文・ハイブリッド戦略・スコア融合) | TASK-032 |
-| TASK-040 | ✅ | Javadoc サイトを生成・公開するか方針を決定する (`maven-javadoc-plugin` 導入の要否) | - |
+| TASK-001 | ✅ | OpenAI プロバイダ実装(`AiProvider` SPI 実装、Chat Completions API 連携) | - |
+| TASK-002 | ✅ | Anthropic プロバイダ実装(`AiProvider` SPI 実装、Messages API 連携) | - |
+| TASK-003 | ✅ | Ollama プロバイダ実装(`AiProvider` SPI 実装、ローカル LLM 連携) | - |
+| TASK-004 | ✅ | 検索結果要約・統合サービス実装(検索ヒットを LLM に渡して要約/回答生成) | TASK-001,TASK-002,TASK-003 |
+| TASK-005 | ✅ | AI 統合タイムアウト・フォールバック制御実装(LLM 障害時の degrade 戦略) | TASK-004 |
+| TASK-006 | ✅ | AI 統合設定モデルと application.properties 取込(プロバイダ選択・API キー・モデル・タイムアウト) | TASK-004 |
+| TASK-007 | ✅ | AI 統合ユニットテスト(スタブプロバイダによる API 非依存テスト) | TASK-004,TASK-005 |
+| TASK-008 | ✅ | searchable-admin に AI 統合設定画面追加(プロバイダ・API キー・モデル選択 UI) | TASK-006 |
+| TASK-009 | ✅ | 設定パスの解決基準を `data-directory` ベースに改修(現状は JVM CWD 基準で CLI/webapp の起動ディレクトリ差で別 index を見にいく footgun)。ADR-0002 を併設(M1 残務) | - |
+| TASK-010 | ✅ | `searchable ingest` で未対応拡張子(`.DS_Store` 等)に当たると `IllegalArgumentException` で全体中断する問題を WARN ログ + skip カウンタで継続するように修正(M1 残務) | - |
+| TASK-011 | ✅ | `searchable ingest --namespace X` で `X` 未登録時に `NoSuchElementException` でスタックトレース終了する UX を改善。TTY なら対話プロンプト、`--create-namespace` フラグで非対話自動作成、非 TTY + フラグ無しなら案内付きエラーで `exit 1`(M1 残務) | - |
 
 ## タスク詳細
 
-### TASK-001
+### TASK-001 / TASK-002 / TASK-003
 
-- 補足: 「Phase 1 planning - documentation only, no source code yet」の記述と「searchable-api・searchable-mcp」モジュール記載が現状と乖離している
-- 注意: docs/ の整理状況 (archives への移設) と pom.xml の `<modules>` 構成を反映する。
-  TASK-027 でパス追従のみ実施済み、本タスクは Status / Architecture セクションの本格修正を扱う
-- 結果 (2026-06-07): commit `6c83baa` までに CLAUDE.md は最新状態へ書き換え済み
-  (`Phases 1–5 implementation is complete` 表記、`Architecture` ブロックの module 一覧が
-  pom.xml の `<modules>` と一致、`examples/` 配下も最新)。
-  本タスクで追加変更は不要のため 🚫
-
-### TASK-003
-
-- 補足: pom.xml には Kuromoji 依存のみで Sudachi 依存は存在しない
-- 注意: 将来導入予定であれば README ではなく docs/devel/work/plans/project-plan.md または backlog に記載する
-- 結果 (2026-06-07): README の Sudachi 言及2箇所 (Why セクション / Features 表) を削除。将来導入は BACKLOG-003 で別途管理
+- 補足: いずれも M1 で定義した `AiProvider` SPI(旧 TASK-084)の実装。プロバイダ間で API 差異(認証ヘッダ・リクエスト/レスポンス形式・ストリーミング有無)を吸収するアダプタとして実装する
+- 注意: HTTP クライアントは Java 標準 `HttpClient` を基本とし、外部依存は最小化。SDK 依存は避ける(将来のバージョン差異・脆弱性対応コスト削減のため)
+- 結果 (2026-06-07):
+  - **TASK-001 OpenAI**: `io.searchable.ai.openai.OpenAiProvider` を実装。Chat Completions API (`POST /v1/chat/completions`)、`Authorization: Bearer` ヘッダ、JSON で `model` / `messages[]` / `max_tokens` / `temperature` 送信。既定モデル `gpt-4o-mini`。API キーは `OPENAI_API_KEY` / `searchable.ai.openai.api-key` から解決。
+  - **TASK-002 Anthropic**: `io.searchable.ai.anthropic.AnthropicProvider` を実装。Messages API (`POST /v1/messages`)、`x-api-key` + `anthropic-version` ヘッダ、`system` プロンプトはトップレベル、複数の `content` ブロックを連結。既定モデル `claude-sonnet-4-6`、既定 API バージョン `2023-06-01`。
+  - **TASK-003 Ollama**: `io.searchable.ai.ollama.OllamaProvider` を実装。Generate API (`POST /api/generate`)、認証なし、`stream=false`、`options.num_predict` / `options.temperature`。既定モデル `llama3.2`、既定ベース URL `http://localhost:11434`。
+  - **共通基盤**: `io.searchable.ai.internal.HttpProviderSupport` を新設し HTTP ステータス → `AiException.Kind` のマッピング (401/403→AUTH、400/404/422/429→REQUEST、5xx→UPSTREAM、HttpTimeoutException→TIMEOUT) を共通化。`META-INF/services/io.searchable.ai.AiProvider` に 3 プロバイダを登録。
+  - **テスト**: `FakeHttpServer` (com.sun.net.httpserver.HttpServer 利用) を test fixture として導入し、各プロバイダの正常系・認証エラー・5xx 障害・タイムアウトを検証 (TASK-007 で詳述)。
 
 ### TASK-004
 
-- 補足: README の "Plain Text / Markdown / AsciiDoc / PDF / HTML" のうち AsciiDoctor 依存は pom.xml にない
-- 注意: PDFBox・jsoup・POI で実際にカバーしているフォーマットに表記を寄せる
-- 結果 (2026-06-07): `AsciiDocParser.java` が正規表現ベースの軽量実装として既に存在し
-  `ParserRegistry.defaults()` に登録済みと判明。AsciiDoc 表記は維持し、
-  漏れていた Office 6種 (docx/doc/xlsx/xls/pptx/ppt) を追加。
-  BACKLOG-004 (AsciiDoc 本格実装) は前提が崩れたため取り扱い再検討の余地あり
+- 補足: 検索結果(`SearchHit` のコンテンツ・メタデータ)を context として LLM に渡し、ユーザの自然言語問い合わせに対する要約・回答を生成する。RAG パターンの単純実装
+- 注意: context サイズ管理(トークン上限)とプロバイダ間でのトークン換算差異を吸収する仕組みが必要
+- 結果 (2026-06-07):
+  - `AiProviderRegistry` を新設 (ServiceLoader 経由で provider をロード、name 重複は最初のものを採用、`AutoCloseable` で provider の `close()` を伝播)。
+  - `SummaryConfig` レコード (provider/model/timeout/maxTokens/temperature/maxContextItems/maxContextChars/fallbackOnError) と `SummaryService` を新設。
+  - `SearchResult` → `List<AiContextItem>` への変換は `SummaryService.toContextItems()` で実施し、namespace と score をメタデータに含める。
+  - コンテキスト制限は「件数上限優先 → 残りで文字数」の単純な打ち切りで実装。トークン換算の精密化は将来課題。
+  - `SummaryService` は `summarize(String, SearchResult)` / `summarize(String, List<AiContextItem>)` の 2 エントリポイントを提供。
 
 ### TASK-005
 
-- 補足: ルート直下の searchable-{api,mcp,ui}/ は pom.xml の `<modules>` に未登録で src/ と target/ が残存している
-- 注意: 削除前に git history と examples/ への移設状況を確認し、未移設のコード・設定がないことを保証する。TASK-030 (filesystem-plugin 残骸) と方針を揃える
-- 結果 (2026-06-07): 3 ディレクトリすべて `git ls-files` 結果ゼロ (tracked file なし)、
-  配下は `target/` `build/` と空の `src/` のみで実体ファイルゼロを確認後、
-  `rm -rf searchable-api searchable-mcp searchable-ui` で物理削除。
-  git 履歴・コミットへの影響なし。
+- 補足: LLM 呼出のタイムアウト・リトライ・サーキットブレーカ。失敗時は AI 抜きの検索結果のみ返すフォールバック動作
+- 注意: タイムアウト値は設定可能とし、デフォルトは応答性重視(例: 10s)
+- 結果 (2026-06-07):
+  - タイムアウトは `AiRequest.timeout()` を経由して各 provider の `HttpRequest.Builder.timeout()` に渡る。既定 15 秒。
+  - `SummaryConfig.fallbackOnError` が true (既定) の場合、`AiException.Kind` が `TIMEOUT` / `UPSTREAM` / `UNKNOWN` の例外は `SummaryService.fallbackResponse()` (空 text、`model="ai-fallback"`、`usage` に `error.kind` と `error.message`) に変換。
+  - `AUTH` / `REQUEST` は常に再 throw して設定ミスを silent fail させない。
+  - リトライ・サーキットブレーカ本体は導入せず、上位レイヤー (admin UI / アプリ側) の責務とする (KISS)。
 
 ### TASK-006
 
-- 補足: 現状 README は examples の個別 pom.xml を別途 package する手順を案内している
-- 注意: examples を `<modules>` に含める場合、quality・security プロファイルとの兼ね合いを検証する
-- 結果 (2026-06-07): 現状維持を採用。コアビルドとサンプルのスコープを分離し、
-  quality / security プロファイルもコアモジュールに限定したまま運用する。
-  README の Quick Start は既に `./mvnw -f examples/api/pom.xml package` を案内しており
-  追加修正は不要。`<modules>` には examples を含めない。
+- 補足: API Key・モデル名・タイムアウト・最大トークン等を設定可能にする
+- 注意: シークレットを application.properties に直書きしない運用ガイドを別途用意する(環境変数 / 外部シークレットストア参照を推奨)
+- 結果 (2026-06-07):
+  - `SearchableProperties.Ai` 内部クラスを新設し、`searchable.ai.*` プレフィックスで Spring Boot バインド。
+    フィールド: enabled / provider / model / timeout / maxTokens / temperature / maxContextItems / maxContextChars / fallbackOnError。
+  - `SearchableConfiguration` に `aiProviderRegistry` / `summaryConfig` / `summaryConfigProvider` / `summaryService` の 4 ビーンを追加。`destroyMethod="close"` で provider の HTTP クライアントを shutdown 時に解放。
+  - **API キーは Properties にバインドしない**。各 provider が `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `searchable.ai.<provider>.api-key` 等を独自に解決する設計に統一し、admin DB や HTTP traffic に平文キーが流れない構造を担保。
+  - `searchable-admin/application.properties` に既定値 (enabled=false、`provider=`、timeout=15s 等) を追記。
+  - `searchable-admin` の `pom.xml` に `searchable-ai` 依存を追加。
 
 ### TASK-007
 
-- 補足: README 記載値「p99 = 0ms」は計測単位 (ms 丸め) かウォームアップ済みの可能性が高い
-- 注意: 現状コードでの計測タイミング・ウォームアップ有無・コールド計測の有無を確認するのみとし、コード改修は TASK-008 で行う
-- 結果 (2026-06-07): `docs/devel/work/poc/task-003-search-perf/.../SearchPerformanceTest.java` および
-  `task-123-vector-perf/.../VectorSearchPerformanceTest.java` を点検。両者で以下が共通:
-  - 計測単位: `(System.nanoTime() - start) / 1_000_000` で **ms 整数に丸めて long に格納**。
-    サブミリ秒のレイテンシは 0 ms として記録されるため、README の「p99 = 0ms」は
-    「p99 < 1ms」を意味するに過ぎない。
-  - ウォームアップ: WARMUP_QUERIES=100 → MEASURED_QUERIES=1,000 のシリアル実行。
-    **warm 計測のみで cold 計測は無い**。JIT は warmup 中にコンパイル完了している前提。
-  - JMH 非使用のため fork / iteration / dead code elimination 制御は無し。
-  - GC や safepoint の影響は集約しておらず、最大値・p99 への計上は最小限。
-  - シングルスレッドのため、書き込み混在ワークロード (write-while-search) や
-    並行検索のレイテンシは取得不能。
-  - 差分: task-003 は `TextField + QueryParser`、task-123 は `KnnFloatVectorField + KnnFloatVectorQuery`
-    で SHA-256 ベースのハッシュ埋め込み (実モデル非依存)。
-- 判断: README の数値は「warm・整数 ms 丸め下の上限」であり「定量精度」を持たない。
-  TASK-008 で JMH 化し、warm/cold・µs 精度・並行ケースを別々に出すまで、TASK-009 の
-  数値更新は保留が妥当。
-
-### TASK-009
-
-- 補足: 旧 README は ms 整数丸めの天井値 (p99=0/1ms) を載せていた
-- 注意: warm / cold の二段構成は新規読者の混乱を招かないよう列を明示する
-- 結果 (2026-06-07): メイン `README.md` の Performance セクションを以下の JMH 1.37
-  実測値で更新し、warm / cold 双方の数値を表に併記した。
-  - Full-text (`SearchBenchmark`): warm p99 = **0.36 ms** (358 µs)、warm max = 3.0 ms、
-    cold mean = **9.2 ms** (5 fork)
-  - Vector HNSW (`VectorSearchBenchmark`): warm p99 = **0.26 ms** (263 µs)、
-    warm max = 3.7 ms、cold mean = **7.6 ms** (3 fork)
-  - REST API (TASK-034) と初期インデックス構築の行は JMH 範囲外のため凡例を維持。
-    投稿元として PoC ディレクトリ (`task-003-search-perf` / `task-123-vector-perf`)
-    へのリンクを追加し、旧 `investigations/` 配下は「pre-JMH の原本」として並記。
-  - 投資/再現性として「3 orders of magnitude (warm) / 2 orders of magnitude (cold)」
-    の言い回しに更新。bench environment 行に JMH 1.37 と計測日 (2026-06-07) を明記。
-  - PoC 側 README (`task-003-search-perf/README.md`, `task-123-vector-perf/README.md`)
-    も併せて JMH ベースに刷新済み。
-  - `investigations/003-performance.md` / `123-vector-performance.md` は M1 当時の
-    「Approved」記録のため改変せず、README 側で「original (pre-JMH) reports」として
-    参照する形に統一。
+- 補足: 実 API を呼ばないスタブプロバイダ(`AiProvider` 実装の test fixture)で要約パイプラインのテストを成立させる。各プロバイダの実 API 接続テストはオプトイン(環境変数で有効化)
+- 注意: ユニットテストは CI で常時実行可能とし、API キーを要求しない
+- 結果 (2026-06-07):
+  - `searchable-ai/src/test/java/io/searchable/ai/testfixture/FakeHttpServer.java` を新設。JDK 標準 `com.sun.net.httpserver.HttpServer` で各 provider の upstream をシミュレートし、ヘッダ正規化 (lowercase) と本文記録に対応。
+  - `OpenAiProviderTest` / `AnthropicProviderTest` / `OllamaProviderTest` で正常系・認証ヘッダ・ステータスコードマッピング・タイムアウトを検証。
+  - `SummaryServiceTest` で disabled / unknown provider / TIMEOUT fallback / UPSTREAM rethrow / AUTH 必ず rethrow / SearchResult マッピング / コンテキスト制限を網羅。
+  - `AiProviderRegistryTest` で ServiceLoader 経由の検出と name 重複処理を検証。
+  - `searchable-admin/AiSettingsControllerTest` で UI ページの描画 (providers が `<select>` に出る) と form binding (POST → `SummaryConfigProvider` 更新) を検証。
+  - **結果**: searchable-ai 51 件、searchable-admin 97 件 (+3 件 AI UI) いずれもパス。全リアクター BUILD SUCCESS。
 
 ### TASK-008
 
-- 補足: JMH に置き換え warm-up・measurement・fork を明示する
-- 注意: 書き込み混在ワークロード (write-while-search) を含めるかは別途判断する
+- 補足: M1 で実装済の `searchable-admin`(TASK-103)に AI 統合設定画面を追加。プロバイダ選択 / API キー入力 / モデル選択 / タイムアウト設定の UI
+- 注意: API キーは画面表示時にマスクし、保存時のみ平文受領。永続化形式は TASK-006 と整合
 - 結果 (2026-06-07):
-  - `task-003-search-perf` と `task-123-vector-perf` の両 PoC を **JMH 1.37** ベースに
-    全面置き換え。旧 `SearchPerformanceTest` / `VectorSearchPerformanceTest` (整数 ms 丸めの
-    シングルファイル main) を削除し、それぞれ `SearchBenchmark` / `VectorSearchBenchmark`
-    に差し替え。
-  - 両ベンチで `warmQuery` と `coldQuery` の 2 メソッドを単一クラスに共存させた。
-    - `warmQuery`: `Mode.SampleTime` + `@Warmup(5×1s)` + `@Measurement(10×5s)` + `@Fork(1)`
-      → p50/p95/p99/p99.9/max を µs 解像度で取得
-    - `coldQuery`: `Mode.SingleShotTime` + `@Warmup(0)` + `@Measurement(1×1batch)` +
-      `@Fork(5)` (search) / `@Fork(3)` (vector) → fresh JVM 初回投入レイテンシ
-  - pom.xml は Lucene 10.4.0 + JMH 1.37 + annotation processor + shade plugin
-    (`benchmarks.jar` を生成) の構成で再編。`mvnw -DskipTests package` 後
-    `java -jar target/benchmarks.jar` で実行できる。
-  - 書き込み混在ワークロードは BACKLOG-005 維持で本タスクのスコープ外。
-  - 動作検証: 両 jar で `java -jar target/benchmarks.jar -l` が warm/cold の
-    2 ベンチを認識することを確認。実機 full run (Apple Silicon / Java 21.0.9) で
-    `SearchBenchmark` (約 1:29) と `VectorSearchBenchmark` (約 6:26) の双方が
-    正常完了し、JSON 出力 (`-rf json -rff result.json`) も生成されることを確認。
-    計測値は TASK-009 で README 群に反映。
+  - `SummaryConfigProvider` (mutable holder) を新設し、`SummaryService` を `SummaryConfig` 直接 / Provider 経由の 2 つのコンストラクタに拡張。UI 更新は holder の `update()` で次回 summarize から有効化。
+  - `AiSettingsController` (`/settings/ai`) と `AiSettingsForm` (バリデーション付き) を新設。template は `ai-settings.html` (基本設定 / 生成パラメーター / コンテキスト制限 / 障害時挙動 の 4 セクション)。
+  - **API キーは UI で扱わない**: 画面は明示的に「環境変数から読み込みます」と案内し、`<input type=password>` を置かない。これにより admin DB / HTTP traffic に平文キーが流れない設計を貫徹。TASK-006 と整合。
+  - `settings.html` 下部に「関連設定 → AI 要約設定」へのリンクを追加 (新規 navbar 項目は増やさず既存 Settings 配下に集約)。
+  - provider 候補は `AiProviderRegistry.names()` から動的に列挙。プロバイダ未検出時は警告 alert を表示。
 
-### TASK-010
+### TASK-022 followup (M2 carry-over)
 
-- 補足: README の "in-memory Lucene-based architecture" は MMapDirectory 利用の実態と乖離している
-- 注意: 「single-process・mmap-backed」など実態に即した表現に置き換える
+- 結果 (2026-06-07): M2 TASK-022 で導入された Jackson BOM 化の処理に取りこぼしがあり (parent pom dependencyManagement 内に「BOM import の後ろに version 無し jackson-databind/jsr310/yaml の個別エントリ」が残っており Maven 3.9 が `dependencies.dependency.version is missing` でビルド拒否)、M3 着手時のフルリアクタービルドで初露呈した。BOM が version を供給するため個別エントリは不要なので削除して修正。`-N validate` だけでは検出できなかったため、M2 TASK-022 result 節の検証フローを「-N validate ではなく `-pl searchable-ai -am install` 相当の reactor ビルドで確認」と改訂すべきだが M2 はアーカイブ済みのため本記録のみとする。
 
-### TASK-014
+### TASK-009
 
-- 補足: searchable-admin は Spring Boot + Thymeleaf を引きずるため、README の "Embeddable, not infrastructure" と整合しない
-- 注意: experimental 降格・別リポジトリ化・据え置き＋表現変更の3案を比較してからユーザー合意を取る
-- 結果 (2026-06-07): ユーザー判断は「core (`searchable-core` 等) は確かに embeddable で、
-  管理機能 (`searchable-admin`) は別物」。これを反映し:
-  - Why セクションを `Embeddable core, not infrastructure` に書き換え、Spring Boot 例 / admin
-    は「separate, optional artifacts that *use* the embeddable core」と明示。
-  - Modules 表を「Embeddable core / Standalone tools / Reference apps」の3グループに整理し、
-    `searchable-admin` は Standalone tools 側に Operator-facing として配置。
-  - experimental バッジは付与せず (ユーザー回答に沿って core/管理機能を分離する方針)。
+- 背景: `ConfigLoader` は YAML をデシリアライズするだけで path 正規化を一切しない。`ApplicationConfig` / `IndexConfig` / `PersistenceConfig` が保持する `Path` は relative のまま `Files.*` / `MMapDirectory` / H2 JDBC URL に渡るため、`user.dir`(JVM CWD)基準で解決される。CLI(リポジトリルートから起動)と webapp(任意ディレクトリから起動)を別 CWD で動かすと index/DB が分裂する
+- 提案する解決順序:
+  1. `data-directory` 自身: 絶対なら as-is、相対なら **config ファイルの親ディレクトリ基準** で解決(Spring Boot 経由の webapp で config ファイル不在なら CWD を fallback)
+  2. `index.directory`(未設定時のデフォルト `<data-directory>/indexes`): 絶対なら as-is、相対なら **`data-directory` 基準**
+  3. `plugins.directory`: 同じく `data-directory` 基準
+  4. H2 JDBC URL: URL 内のファイルパスが相対なら `data-directory` 基準で絶対化してから H2 に渡す。または `persistence.directory` を新設し、デフォルトを `<data-directory>` にしてテンプレート展開する設計を検討
+  5. 起動時に正規化後の絶対パスを INFO ログ出力(運用診断)
+- 実装範囲:
+  - `searchable-core/.../application/config/ConfigLoader.java` で post-deserialize 正規化
+  - `ApplicationConfig` の path フィールドは「正規化後の絶対 Path」を契約とする(`normalize(Path base)` factory を導入)
+  - `examples/webapp/SearchableWebappApplication` の Spring Boot binding でも同じ resolver を通すよう変更
+  - 起動ログに正規化済み絶対パスを INFO 出力
+  - 起動済 path が直接 `MMapDirectory` / `Files.newOutputStream` に渡る前提を満たすよう、`LuceneIndexProvider` / `JdbcDocumentMetadataRepository` 側で `toAbsolutePath()` 呼び出しに依存していたら整理
+- 後方互換:
+  - 既存 config(`./data/webapp` 系)は意味が変わる(CWD 基準 → config 親ディレクトリ基準)。`docs/public/getting-started.ja.md` で導入した `$HOME/searchable-data` の workaround は本タスク完了後に「自然な相対パス」へ書き換え可能
+  - 移行注記を `docs/public/setup-guide.md` に追加
+- 関連 ADR: 新規 ADR-0002 を作成(`data-directory` を path 解決の anchor とする方針、H2 URL 書換、ログ出力義務などの設計判断を記録)
+- 関連 docs: `docs/public/getting-started.ja.md` / `examples/webapp/README.md` / `docs/public/setup-guide.md` / `docs/public/cli-guide.ja.md`
 
-### TASK-016
-
-- 補足: multilingual-e5 のモデルファイル (約 470MB) を JAR 同梱しない場合、取得手順とキャッシュパスをドキュメント化する必要がある
-- 注意: examples/ と Java API embedded 利用の両方の経路をカバーする
-- 結果 (2026-06-07): `docs/public/vector-search-guide.md` の「ONNX プロバイダ」節に
-  「ONNX モデルの配布・取得・キャッシュ戦略」サブセクションを追加。
-  推奨モデルとサイズ表、`huggingface-cli` / `git lfs` での取得コマンド、
-  推奨キャッシュパス (`~/.cache/searchable/models/<model-id>/`)、
-  Java API embedded / examples 両経路の指定方法、CI/Docker 取扱い、
-  ライセンス確認の注意を明記。実装は `OnnxEmbeddingProvider` が
-  `Path modelPath` を受け取るだけでダウンロード機構を持たないことを根拠としている。
-
-### TASK-019
-
-- 結果 (2026-06-07): `examples/mcp/src/main/java/io/searchable/example/mcp/McpServer.java:39` の
-  `PROTOCOL_VERSION = "2024-11-05"` と README badge `MCP-2024--11--05` は一致しており badge 表記の
-  即時修正は不要。
-- 追従方針 (2026-06-07): MCP 公式仕様サイト
-  (<https://modelcontextprotocol.io/specification>) を確認したところ、
-  最新版は **`2025-11-25`**。`examples/mcp` を `2024-11-05` → `2025-11-25` へ
-  追従させる作業は BACKLOG-006 として登録。badge は実装が `2025-11-25` に
-  上がった時点で同時更新する。
-
-### TASK-020
-
-- 補足: 現状 examples/mcp 配下にあるが README badge は MCP プロトコルを前面に出している
-- 注意: TASK-005 で旧 searchable-mcp/ を削除する判断と整合させる
-- 結果 (2026-06-07): `examples/mcp` 留めを採用。MCP はクライアント連携の参照実装
-  であり、core JAR への組込が前提ではない。Modules 表でも既に
-  「Reference apps」グループに配置済みのため README 追加修正は不要。
-  badge は MCP プロトコルバージョンの可視化が主目的のため維持。
-
-### TASK-015
-
-- 結果 (2026-06-07): TASK-006「現状維持」に整合させ、`examples/webapp` と
-  `examples/search-ui` も examples のリファレンス位置を据え置く。
-  Modules 表は本タスクで既に「Reference apps」グループへ分離済み
-  (webapp = "Embedded webapp demo"、search-ui = "Static HTML / JS client")。
-  追加修正は不要。
-
-### TASK-022
-
-- 補足: lucene-bom・jackson-bom を import すれば個別バージョン指定を集約できる
-- 注意: 既存の `${lucene.version}`・`${jackson.version}` プロパティ参照箇所を BOM 化後に整理する
-- 結果 (2026-06-07):
-  - **Jackson BOM 化を実施**: `com.fasterxml.jackson:jackson-bom:${jackson.version}` を
-    dependencyManagement に import し、`jackson-databind` / `jackson-datatype-jsr310` /
-    `jackson-dataformat-yaml` の個別 `<version>` 指定を削除。Spring Boot BOM より前に
-    宣言することで Jackson 2.19.0 を優先解決。`./mvnw -B -q -DskipTests -N validate` で
-    解決確認済み。
-  - **Lucene BOM 化は断念**: Maven Central で `org.apache.lucene:lucene-bom:10.4.0`
-    の解決に失敗。Apache Lucene は公式に BOM artifact を公開していない
-    (2026-06-07 時点)。`${lucene.version}` プロパティで版を集約する既存方式が
-    そのまま唯一の集約手段であるため、Lucene 個別 `<version>` 指定は据え置き。
-    pom.xml にも理由をコメントとして残した。
-
-### TASK-028
-
-- 補足: 統合後の task.md・新設 README 群・specs/ 配下を staging する
-- 注意: コミット作成はユーザーが行うため、staging のみで止める
-- 結果 (2026-06-07): TASK-026/032 の新設物 (`docs/devel/README.md`,
-  `docs/devel/specs/`) は前セッションのコミット `3d9b530` で取り込み済み。
-  本セッションの追加修正 (README.md / CLAUDE.md / pom.xml / task.md /
-  specs/README.md / adr/0001-0002 / multi-tenancy-guide.md /
-  vector-search-guide.md) を `git add` で staging し、ユーザーに
-  コミット委譲。
-
-### TASK-029
-
-- 補足: `markdownlint-cli2` の実行は本セッションでは権限ルールによりブロックされている
-- 注意: ユーザー手元での実行と、出た警告の追修正を想定する
-- 結果 (2026-06-07): `markdownlint-cli2 "**/*.md"` を実行。本マイルストーン
-  (Review-202606) で触れたファイル群 (README.md / CLAUDE.md / task.md /
-  specs/README.md / adr/0001-0002 / multi-tenancy-guide.md /
-  vector-search-guide.md) は 0 errors を確認。
-  残る警告は別マイルストーン由来 (M1 アーカイブ `archive/m1-tasks.md`、
-  M3 タスク `work/tasks/m3.md`、`requirements.md`、`searchable-cli/README.md`
-  の line-length) のため、本タスクのスコープ外として据え置き。
-  Review-202606 完了時の archive 移動 (前提§4) 時に M1/M3 側の
-  クリーンアップを別途検討。
-
-### TASK-030
-
-- 補足: `examples/filesystem-plugin/` には旧 `searchable-core/` ディレクトリと `target/`
-  のみが残存し、`src/` も `README.md` も `pom.xml` も存在しない
-- 注意: TASK-005 (旧 searchable-api/mcp/ui の処置) と方針を揃える
-- 結果 (2026-06-07): `git ls-files examples/filesystem-plugin/` は空 (tracked file ゼロ)。
-  実体は `examples/filesystem-plugin/searchable-core/src/` (空ディレクトリ) と
-  `examples/filesystem-plugin/target/` のみで、いずれも untracked。
-  `rm -rf examples/filesystem-plugin` で TASK-005 と同タイミングで物理削除済み。
-
-### TASK-040
-
-- 補足: 現状 pom.xml に `maven-javadoc-plugin` の active な設定はない
-- 注意: Javadoc を正本とする方針 (TASK-033〜035 取り消しの根拠) と整合するため、優先度は中以上で扱う
-- 結果 (2026-06-07): 「生成のみ (ローカル)」を採用。
-  - pom.xml `pluginManagement` に `maven-javadoc-plugin` を追加し
-    バージョン固定と Java 21 ソース指定、`-Xdoclint:none` を設定。
-    デフォルト実行 (`<execution>`) は付けず、利用者が手動で
-    `./mvnw javadoc:javadoc` を実行する形に留める。
-  - GitHub Pages 公開は今回は対象外。CI で site デプロイの設定も追加しない。
-  - 生成手順は開発者向けの `docs/devel/specs/README.md` に追記
-    (利用者向け README には載せない — 一般利用者は Javadoc 生成までは
-    踏み込まないとのユーザーフィードバックを反映)。
-
-## Backlog一覧
+## バックログ
 
 | ID | ステータス | 概要 | 依存関係 |
 | --- | --- | --- | --- |
-| BACKLOG-001 | ⏳ | テナント毎のリソースクォータ (index size 上限・QPS 制限) を実装する | - |
-| BACKLOG-002 | ⏳ | テナント毎の at-rest 暗号化機構を設計・実装する | - |
-| BACKLOG-003 | ⏳ | Sudachi 形態素解析エンジンを Analyzer プラグインとして実装する | - |
-| BACKLOG-004 | ⏳ | AsciiDoc ドキュメントパーサーを実装する | - |
-| BACKLOG-005 | ⏳ | 書き込み混在ワークロード (write-while-search) のベンチを追加する | - |
-| BACKLOG-006 | ⏳ | examples/mcp の MCP プロトコルバージョンを 2024-11-05 → 2025-11-25 に追従する | - |
+| BACKLOG-002 | ⏳ | Google Docs / Apple Pages 連携(PDF 変換経由) | - |
+| BACKLOG-003 | ⏳ | ユーザー/ロール管理(認可)実装 | - |
+| BACKLOG-004 | ⏳ | インデックスデータの暗号化保存 | - |
+| BACKLOG-005 | ⏳ | カスタム検索フィルタプラグイン SPI | - |
+| BACKLOG-006 | ⏳ | 文書パーサープラグイン SPI | - |
+| BACKLOG-007 | ⏳ | カスタムスコアリングプラグイン SPI | - |
+| BACKLOG-008 | ⏳ | MCP 経由のインデックス更新(要件 2.4.3 将来拡張) | - |
+| BACKLOG-009 | ⏳ | REST 一括取込エンドポイント実装 | - |
+| BACKLOG-010 | ⏳ | 取込ジョブの非同期実行とステータス取得 API | - |
+| BACKLOG-011 | ⏳ | 取込ジョブのスケジューラ(cron)機能 | - |
+| BACKLOG-012 | ⏳ | 取込チェックポイント永続化による中断再開機能 | - |
+| BACKLOG-013 | ⏳ | 並列ワーカープールによる並列取込 | - |
+| BACKLOG-014 | ⏳ | レガシー `.doc`(HWPF)パーサの実抽出テスト整備 | - |
+| BACKLOG-015 | ⏳ | Spring Boot 3.4.1 → 4.0.x メジャーアップグレード(独立マイルストーン候補) | - |
+| BACKLOG-016 | ⏳ | Web クローラ取込 DataSourcePlugin 実装(クローラ本体は OSS ライブラリを採用) | - |
 
-## Backlog詳細
-
-### BACKLOG-001
-
-- 補足: TASK-013 で制約として明示した内容のうち、コード実装を伴う部分を切り出す
-- 注意: M4 以降の検討対象として project-plan.md に転記する想定
+## バックログ詳細
 
 ### BACKLOG-003
 
-- 補足: TASK-003 で README から除去した Sudachi 対応を将来導入する場合の受け皿
-- 注意: Lucene Analyzer SPI として実装し既存 Kuromoji 構成と切替可能にする
+- 補足: 要件 2.2.3 「権限管理(設計のみ、実装は将来)」の実装相当
+- 注意: API Key 認証(M1 TASK-126/TASK-143)とは別レイヤーの認可
 
-### BACKLOG-006
+### BACKLOG-005
 
-- 補足: TASK-019 で確認した MCP 公式仕様の最新版 `2025-11-25` に
-  `examples/mcp` の `PROTOCOL_VERSION` を引き上げ、必要なメッセージ
-  スキーマ差分 (sampling / roots / elicitation 等) を反映する作業。
-- 注意: 上げる際は `McpServer.java:39` の定数と README badge
-  (`![MCP Protocol](https://img.shields.io/badge/MCP-...)`) を
-  同時更新し、`mcp-capabilities.yaml` のコメントも追随させる。
+- 補足: 要件 2.7.2 「将来拡張」に該当
+- 注意: DataSourcePlugin と同じ SPI 基盤を流用する想定
+
+### BACKLOG-008
+
+- 補足: 要件 2.4.3「将来拡張: インデックス更新」に該当
+- 注意: 書込権限の取扱いは API Key 認証では不十分。認可機構と同時設計
+
+### BACKLOG-014
+
+- 背景: M1 TASK-177 で `.doc` は POI が新規書き出し未サポートのため、現状
+  `OfficeDocumentParserTest` では登録・MIME・拡張子解決のみ検証し、実抽出
+  は同じ `ExtractorFactory` 経路の `.xls`/`.ppt` で間接カバーに留めている。
+- 目的: 実 `.doc` バイナリをフィクスチャとして HWPF 抽出経路を直接検証
+  する。
+- 注意: フィクスチャは **ライセンスがクリア(自作 or 再配布可能)** かつ
+  **小さい(数 KB)** ものを用意する。`.docx` をリネームしただけは
+  `ExtractorFactory` がファイルマジックで OOXML と判定するため不可
+  (本物の Word 97-2003 / OLE2 バイナリが必要)。
+- 備考: POI 単体では生成不可。LibreOffice headless(`soffice --convert-to
+  doc`)等で生成するか、自作の最小 `.doc` を同梱する。
+
+### BACKLOG-016
+
+- **結論**: Web ページ取込用の `DataSourcePlugin` を新設する。ただし
+  **クローラ本体(HTTP fetch / robots.txt 解釈 / URL 正規化 / frontier 管理 /
+  リトライ等)は OSS の Java クローラライブラリに委譲**し、本プラグインは
+  「設定の受け渡し」「`PluginDocument` への整形」「`metadata.url` 等の予約キー
+  付与」のアダプタに徹する。**フル自前実装は避ける**(再発明コストが過大な
+  ため)。
+- **採用ライブラリ**: 本タスクの第一ステップで選定(crawler4j /
+  norconex-crawler / StormCrawler 等を、ライセンス・保守状況・依存サイズ・
+  Java 21 互換性で比較。**一次情報で要確認**)。MVP(URL リスト取込)のみで
+  足りる場合は `jsoup` + Java 標準 `HttpClient` の軽量構成でも可、と段階別に
+  判断する。
+- 背景: 現状の同梱データソースは `FilesystemDataSourcePlugin` と
+  `examples/plugin-datasource-s3` のみで、Web 上のページを取込する経路が無い。
+  `HtmlParser` はローカル HTML のパースのみを担い、HTTP fetch は持たない。
+- スコープ案(段階導入):
+  - フェーズ 1(MVP): **URL リスト取込**。`urls: [...]` または sitemap.xml を
+    config で受け、各 URL を逐次 fetch → `HtmlParser` でパース →
+    `PluginDocument` 化。`metadata.url` はそのまま元 URL を採用。
+  - フェーズ 2: **再帰クロール**。`seedUrls` + `maxDepth` + `sameOriginOnly`
+    等の制約付きでリンク追跡。`robots.txt` 尊重、`Crawl-Delay` 解釈、同時実行
+    数上限、重複 URL の正規化(クエリ並び替え・末尾スラッシュ等)を含む。
+- 注意:
+  - User-Agent は識別可能な文字列を既定とし、設定で上書き可能にする。
+  - 動的レンダリング(JS 実行)は対象外。必要なら別プラグインで切り出す。
+  - 文字コード判定は HTTP `Content-Type` ヘッダ → HTML meta → UTF-8 フォール
+    バックの順(採用ライブラリの機能を優先利用)。
+  - 認証付きサイトは将来課題(Basic / Bearer / Cookie はフェーズ 2 以降)。
+  - 採用ライブラリが内部で独自 HTTP クライアントを持つ場合は、TASK-001〜003
+    の「Java 標準 `HttpClient` 優先」方針よりライブラリ選定を優先する。
+- ADR 化判断: ライブラリ選定が決まった時点で、その採用理由を ADR-0002 として
+  独立記録する(本エントリは「やる/やらない」のスコープ管理にとどめる)。
+- 関連: `DataSourcePlugin` SPI、`HtmlParser`、`metadata.url` 予約キー
+  (`docs/devel/design/architecture/overview.md` §5.7)。
+
+### BACKLOG-015
+
+- 想定マイルストーン: M3(独立した移行プロジェクトとして計画)
+- 背景: 依存脆弱性スキャン(Red Hat Dependency Analytics)で Spring Boot
+  3.4.1 の各スターターに多数の推移的脆弱性(spring-boot-starter-web で
+  critical 6 / high 15 等)。最新 GA は 4.0.6(2026-05 時点、spring.io で
+  確認)。リリースは年2回・マイナーは最低12か月 OSS サポートの方針から、
+  3.4.x / 3.5.x は OSS サポート終了または終了間際と推定(正確な EOL 日は
+  移行計画時に要確認)。
+- 影響範囲: `searchable-admin` と `examples/*`(webapp / api / mcp)のみ。
+  `searchable-core` は Spring 非依存のため無関係。
+- 注意: 3.x → 4.0 はメジャーアップで Spring Framework 7 ベース、破壊的
+  変更を伴う。Java baseline・削除/変更 API・`jakarta` 系の差分を移行前に
+  一次情報で確認すること。段階移行(まず最新 3.x → 4.0)も検討。
+- 進め方: 独立した移行プロジェクトとして brainstorming → plan → 実装 →
+  全モジュールのテスト/起動確認のサイクルで実施する。

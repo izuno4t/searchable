@@ -27,6 +27,7 @@ public class SearchableProperties {
     private Embedding embedding = new Embedding();
     private Dictionary dictionary = new Dictionary();
     private Chunking chunking = new Chunking();
+    private Ai ai = new Ai();
 
     public Path getDataDirectory() { return dataDirectory; }
     public void setDataDirectory(final Path v) { this.dataDirectory = v; }
@@ -44,6 +45,8 @@ public class SearchableProperties {
     public void setDictionary(final Dictionary v) { this.dictionary = v; }
     public Chunking getChunking() { return chunking; }
     public void setChunking(final Chunking v) { this.chunking = v; }
+    public Ai getAi() { return ai; }
+    public void setAi(final Ai v) { this.ai = v; }
 
     /**
      * Resolve all path-typed fields to absolute paths. {@code dataDirectory}
@@ -179,6 +182,53 @@ public class SearchableProperties {
         public void setStorage(final String v) { this.storage = v; }
         public Path getDirectory() { return directory; }
         public void setDirectory(final Path v) { this.directory = v; }
+    }
+
+    /**
+     * AI summarisation settings (provider selection, model, runtime limits).
+     *
+     * <p>API keys are <strong>not</strong> bound here; each provider reads them
+     * from its own environment variable (see provider Javadoc). This keeps
+     * secrets out of {@code application.properties} unless the operator opts in.
+     */
+    public static class Ai {
+        /** Master switch. When false the SummaryService returns a disabled sentinel. */
+        private boolean enabled;
+        /** Provider id: {@code openai}, {@code anthropic}, {@code ollama}, or empty. */
+        private String provider = "";
+        /** Model identifier sent to the provider. Empty → provider default. */
+        private String model = "";
+        /** Wall-clock timeout for a single summarisation call. */
+        private java.time.Duration timeout = java.time.Duration.ofSeconds(15);
+        /** Upper bound on tokens requested from the provider. */
+        private int maxTokens = 512;
+        /** Sampling temperature in [0.0, 2.0]. */
+        private double temperature = 0.2;
+        /** Cap on number of search hits forwarded as context. */
+        private int maxContextItems = 5;
+        /** Cap on total character length of context body. */
+        private int maxContextChars = 8000;
+        /** When true, TIMEOUT / UPSTREAM failures degrade silently. */
+        private boolean fallbackOnError = true;
+
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(final boolean v) { this.enabled = v; }
+        public String getProvider() { return provider; }
+        public void setProvider(final String v) { this.provider = v == null ? "" : v; }
+        public String getModel() { return model; }
+        public void setModel(final String v) { this.model = v == null ? "" : v; }
+        public java.time.Duration getTimeout() { return timeout; }
+        public void setTimeout(final java.time.Duration v) { this.timeout = v; }
+        public int getMaxTokens() { return maxTokens; }
+        public void setMaxTokens(final int v) { this.maxTokens = v; }
+        public double getTemperature() { return temperature; }
+        public void setTemperature(final double v) { this.temperature = v; }
+        public int getMaxContextItems() { return maxContextItems; }
+        public void setMaxContextItems(final int v) { this.maxContextItems = v; }
+        public int getMaxContextChars() { return maxContextChars; }
+        public void setMaxContextChars(final int v) { this.maxContextChars = v; }
+        public boolean isFallbackOnError() { return fallbackOnError; }
+        public void setFallbackOnError(final boolean v) { this.fallbackOnError = v; }
     }
 
     /** Default search behavior for namespaces. */

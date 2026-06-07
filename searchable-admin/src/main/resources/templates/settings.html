@@ -66,6 +66,18 @@
       <a class="btn btn-outline-secondary" th:href="@{/}">Cancel</a>
     </div>
   </form>
+
+  <hr class="my-5">
+  <section>
+    <h2 class="h5">関連設定</h2>
+    <ul class="list-unstyled">
+      <li>
+        <a th:href="@{/settings/ai}">
+          AI 要約設定 (プロバイダー・モデル・タイムアウト) →
+        </a>
+      </li>
+    </ul>
+  </section>
 </main>
 
 <footer th:replace="~{layouts/base :: footer}"></footer>

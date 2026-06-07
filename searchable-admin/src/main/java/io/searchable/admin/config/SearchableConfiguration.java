@@ -39,6 +39,10 @@ import io.searchable.core.infrastructure.persistence.SchemaInitializer;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcIndexMetadataRepository;
 import io.searchable.core.infrastructure.persistence.jdbc.JdbcNamespaceRepository;
 import io.searchable.core.infrastructure.plugin.PluginLoader;
+import io.searchable.ai.AiProviderRegistry;
+import io.searchable.ai.SummaryConfig;
+import io.searchable.ai.SummaryConfigProvider;
+import io.searchable.ai.SummaryService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -236,6 +240,55 @@ public class SearchableConfiguration {
             final LuceneFullTextSearcher fullText,
             final LuceneVectorSearcher vector) {
         return new HybridSearchOrchestrator(fullText, vector);
+    }
+
+    /**
+     * Registry of {@link io.searchable.ai.AiProvider} implementations discovered
+     * via {@link java.util.ServiceLoader}. Closed on application shutdown so
+     * provider-owned HTTP clients are released.
+     */
+    @Bean(destroyMethod = "close")
+    public AiProviderRegistry aiProviderRegistry() {
+        return AiProviderRegistry.discover();
+    }
+
+    /**
+     * Build a {@link SummaryConfig} from {@code searchable.ai.*} properties.
+     * When {@code searchable.ai.enabled=false} (default) the config carries a
+     * null provider name so {@link SummaryService} returns
+     * {@link SummaryService#disabledResponse()}.
+     */
+    @Bean
+    public SummaryConfig summaryConfig(final SearchableProperties props) {
+        final SearchableProperties.Ai a = props.getAi();
+        final String providerName = a.isEnabled() && !a.getProvider().isBlank()
+            ? a.getProvider() : null;
+        final String model = a.getModel().isBlank() ? null : a.getModel();
+        return new SummaryConfig(
+            providerName,
+            model,
+            a.getTimeout(),
+            a.getMaxTokens(),
+            a.getTemperature(),
+            a.getMaxContextItems(),
+            a.getMaxContextChars(),
+            a.isFallbackOnError()
+        );
+    }
+
+    /**
+     * Mutable holder so the admin UI can change the active summarisation
+     * configuration without restarting the application.
+     */
+    @Bean
+    public SummaryConfigProvider summaryConfigProvider(final SummaryConfig initial) {
+        return new SummaryConfigProvider(initial);
+    }
+
+    @Bean
+    public SummaryService summaryService(final AiProviderRegistry registry,
+                                         final SummaryConfigProvider configProvider) {
+        return new SummaryService(registry, configProvider);
     }
 
     @Bean

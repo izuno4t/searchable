@@ -41,9 +41,12 @@ class AiProviderTest {
     }
 
     @Test
-    void serviceLoaderDiscoversNoProvidersByDefault() {
-        // searchable-ai ships only the SPI; concrete providers come from other modules.
-        assertThat(AiProvider.discover()).isEmpty();
+    void serviceLoaderDiscoversBundledProviders() {
+        // searchable-ai now ships OpenAI / Anthropic / Ollama implementations
+        // (TASK-001/002/003); discover() lists them via ServiceLoader.
+        assertThat(AiProvider.discover())
+            .extracting(AiProvider::name)
+            .contains("openai", "anthropic", "ollama");
     }
 
     @Test

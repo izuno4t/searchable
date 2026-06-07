@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/base :: head('AI Settings')}"></head>
+<body>
+
+<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+<main class="container-fluid py-4">
+  <h1 class="h3 mb-4">AI Summarisation Settings</h1>
+
+  <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
+  <div th:if="${flashError}" class="alert alert-danger" th:text="${flashError}"></div>
+
+  <p class="text-muted">
+    検索結果を LLM プロバイダーで要約する機能の設定です。API キーは
+    本フォームでは扱いません。各プロバイダーが自身の環境変数
+    (<code>OPENAI_API_KEY</code> / <code>ANTHROPIC_API_KEY</code>)
+    から読み込みます。Ollama は認証なしで動作します。
+  </p>
+
+  <div th:if="${!hasProviders}" class="alert alert-warning">
+    AiProvider が ServiceLoader 経由で 1 件も検出されませんでした。
+    classpath に <code>searchable-ai</code> が含まれているか確認してください。
+  </div>
+
+  <form method="post" th:action="@{/settings/ai}" th:object="${form}" novalidate>
+
+    <section class="card mb-4">
+      <div class="card-header">基本設定</div>
+      <div class="card-body">
+        <div class="form-check mb-3">
+          <input type="checkbox" class="form-check-input" id="enabled"
+                 th:field="*{enabled}">
+          <label class="form-check-label" for="enabled">
+            要約機能を有効にする
+          </label>
+          <div class="form-text">
+            無効の場合、検索結果は要約せずそのまま返されます。
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label" for="provider">プロバイダー</label>
+            <select id="provider" class="form-select" th:field="*{provider}">
+              <option value="">(選択してください)</option>
+              <option th:each="p : ${registeredProviders}"
+                      th:value="${p}" th:text="${p}"></option>
+            </select>
+            <div class="form-text">
+              ServiceLoader で検出された全 AiProvider が候補に出ます。
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="model">モデル</label>
+            <input type="text" id="model" class="form-control" th:field="*{model}"
+                   placeholder="(プロバイダーの既定値)">
+            <div class="form-text">
+              例: <code>gpt-4o-mini</code> / <code>claude-sonnet-4-6</code> /
+              <code>llama3.2</code>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="timeoutSeconds">タイムアウト (秒)</label>
+            <input type="number" id="timeoutSeconds" class="form-control"
+                   min="1" th:field="*{timeoutSeconds}">
+            <div th:if="${#fields.hasErrors('timeoutSeconds')}" class="invalid-feedback d-block"
+                 th:errors="*{timeoutSeconds}"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card mb-4">
+      <div class="card-header">生成パラメーター</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label" for="maxTokens">最大トークン数</label>
+            <input type="number" id="maxTokens" class="form-control" min="1"
+                   th:field="*{maxTokens}">
+            <div th:if="${#fields.hasErrors('maxTokens')}" class="invalid-feedback d-block"
+                 th:errors="*{maxTokens}"></div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="temperature">温度 (0.0-2.0)</label>
+            <input type="number" id="temperature" class="form-control" step="0.1"
+                   min="0" max="2" th:field="*{temperature}">
+            <div th:if="${#fields.hasErrors('temperature')}" class="invalid-feedback d-block"
+                 th:errors="*{temperature}"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card mb-4">
+      <div class="card-header">コンテキスト制限</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label" for="maxContextItems">最大ヒット数</label>
+            <input type="number" id="maxContextItems" class="form-control" min="1"
+                   th:field="*{maxContextItems}">
+            <div class="form-text">
+              要約に渡す検索ヒットの上限件数。
+            </div>
+            <div th:if="${#fields.hasErrors('maxContextItems')}" class="invalid-feedback d-block"
+                 th:errors="*{maxContextItems}"></div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="maxContextChars">最大文字数</label>
+            <input type="number" id="maxContextChars" class="form-control" min="100"
+                   th:field="*{maxContextChars}">
+            <div class="form-text">
+              コンテキスト本文の合計文字数の上限。超過すると末尾のヒットが落とされます。
+            </div>
+            <div th:if="${#fields.hasErrors('maxContextChars')}" class="invalid-feedback d-block"
+                 th:errors="*{maxContextChars}"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card mb-4">
+      <div class="card-header">障害時の挙動</div>
+      <div class="card-body">
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="fallbackOnError"
+                 th:field="*{fallbackOnError}">
+          <label class="form-check-label" for="fallbackOnError">
+            タイムアウト・上流障害時は要約なしで継続する
+          </label>
+          <div class="form-text">
+            無効の場合、AiException がそのまま呼び出し元に伝播します。
+            認証/リクエスト不正は常に伝播します。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="mt-4">
+      <button type="submit" class="btn btn-primary">Save</button>
+      <a class="btn btn-outline-secondary" th:href="@{/settings}">Cancel</a>
+    </div>
+  </form>
+</main>
+
+<footer th:replace="~{layouts/base :: footer}"></footer>
+<th:block th:replace="~{layouts/base :: scripts}"></th:block>
+</body>
+</html>

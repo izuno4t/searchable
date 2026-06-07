@@ -195,25 +195,18 @@
                 <version>${log4j.version}</version>
             </dependency>
 
-            <!-- JSON / YAML (Jackson BOM-managed) -->
+            <!-- JSON / YAML: versions are managed entirely by the imported
+                 Jackson BOM. Module poms reference jackson-databind /
+                 jackson-datatype-jsr310 / jackson-dataformat-yaml without a
+                 <version> element. The Jackson BOM is imported BEFORE the
+                 Spring Boot BOM so that ${jackson.version} (2.19.0) wins
+                 over the Spring Boot transitive default. -->
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
                 <version>${jackson.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jsr310</artifactId>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.dataformat</groupId>
-                <artifactId>jackson-dataformat-yaml</artifactId>
             </dependency>
             <dependency>
                 <groupId>org.yaml</groupId>

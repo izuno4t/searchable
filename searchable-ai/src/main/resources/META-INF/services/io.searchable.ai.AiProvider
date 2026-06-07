@@ -1,0 +1,3 @@
+io.searchable.ai.openai.OpenAiProvider
+io.searchable.ai.anthropic.AnthropicProvider
+io.searchable.ai.ollama.OllamaProvider
