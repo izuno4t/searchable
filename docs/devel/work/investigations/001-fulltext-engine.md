@@ -66,9 +66,9 @@
 
 ### 5.1 PoC概要
 
-- 場所: `poc/task-001-lucene-japanese/`
+- 場所: `docs/devel/work/poc/task-001-lucene-japanese/`
 - 内容: 日本語サンプル文書 5 件を `JapaneseAnalyzer` でインデックス化し、複数クエリで検索
-- 実行: `mvn -q -f poc/task-001-lucene-japanese/pom.xml compile exec:java`
+- 実行: `mvn -q -f docs/devel/work/poc/task-001-lucene-japanese/pom.xml compile exec:java`
 
 ### 5.2 確認した動作
 
@@ -80,7 +80,7 @@
 
 ### 5.3 PoCログ抜粋
 
-詳細は `poc/task-001-lucene-japanese/README.md` に記載。
+詳細は `docs/devel/work/poc/task-001-lucene-japanese/README.md` に記載。
 Kuromoji の基本動作は全項目正常に確認済み。
 
 ## 6. 結論

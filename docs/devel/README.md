@@ -7,6 +7,7 @@
 | パス | 役割 |
 | --- | --- |
 | [`requirements.md`](requirements.md) | 要求・制約・前提 |
+| [`specs/`](specs/) | ライブラリ本体が外部に提供する I/F と振る舞いの仕様 |
 | [`design/`](design/) | 現在有効な設計内容（アーキテクチャ・アプリケーション） |
 | [`adr/`](adr/) | 重要な設計判断・技術選定の記録 |
 | [`standards/`](standards/) | 実装・運用に関する規約 |
@@ -27,7 +28,7 @@
 
 - `work/tasks/` に置かれているファイルは「進行中のタスク」と扱う
 - `work/tasks/task.md` は常設の最優先タスク集約ファイルとし、現在優先で進めている軽量タスクを記載する
-- マイルストーン固有のタスクは `work/tasks/{milestone}.md` で別管理する (例: `m3.md`, `review-202606.md`)
+- マイルストーン固有のタスクは `work/tasks/{milestone}.md` で別管理する (例: `m3.md`)
 - 完了したタスクは `work/archive/` へ移動する（または不要なら削除）
 - `work/` で得た恒久化すべき知見は、該当する恒久文書（`requirements/`・`design/`・`adr/` など）へ反映する
 - ADR は設計判断の履歴であり、`design/` 配下には配置しない

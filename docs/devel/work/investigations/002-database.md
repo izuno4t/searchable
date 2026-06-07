@@ -63,9 +63,9 @@
 
 ### 5.1 PoC概要
 
-- 場所: `poc/task-002-h2-benchmark/`
+- 場所: `docs/devel/work/poc/task-002-h2-benchmark/`
 - 内容: H2に10万件のNamespaceメタデータを挿入・検索・更新する
-- 実行: `mvn -q -f poc/task-002-h2-benchmark/pom.xml compile exec:java`
+- 実行: `mvn -q -f docs/devel/work/poc/task-002-h2-benchmark/pom.xml compile exec:java`
 
 ### 5.2 計測項目
 
@@ -76,7 +76,7 @@
 
 ### 5.3 結果
 
-詳細は `poc/task-002-h2-benchmark/README.md` に記載。
+詳細は `docs/devel/work/poc/task-002-h2-benchmark/README.md` に記載。
 組み込みモード・MVStore下で要件を満たす性能を確認。
 
 ## 6. 結論

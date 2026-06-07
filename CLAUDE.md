@@ -66,6 +66,7 @@ Doc layout follows the repository docs guideline (v1.0). Start from
 [`docs/devel/README.md`](docs/devel/README.md).
 
 - [`docs/devel/requirements.md`](docs/devel/requirements.md) — Requirements
+- [`docs/devel/specs/`](docs/devel/specs/) — Public I/F contracts (Java API, SPI, CLI, config, metadata, search behavior)
 - [`docs/devel/design/`](docs/devel/design/) — Current design (architecture / application)
 - [`docs/devel/adr/`](docs/devel/adr/) — Architecture Decision Records
 - [`docs/devel/testing/`](docs/devel/testing/) — Test policy and verification steps

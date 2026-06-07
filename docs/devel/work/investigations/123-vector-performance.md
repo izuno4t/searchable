@@ -9,7 +9,7 @@
 
 | 層 | 検証 | 検証元 |
 | --- | --- | --- |
-| Lucene ベクトル検索（10万件） | p99 0ms / max 1ms / 500ms超 0件 | 本タスク（`poc/task-123-vector-perf/`） |
+| Lucene ベクトル検索（10万件） | p99 0ms / max 1ms / 500ms超 0件 | 本タスク（`docs/devel/work/poc/task-123-vector-perf/`） |
 | Lucene 全文検索（10万件） | p99 1ms / max 1ms / 500ms超 0件 | TASK-003 |
 | REST API + 5,000件 | p95 7ms / max 17ms | TASK-034 |
 

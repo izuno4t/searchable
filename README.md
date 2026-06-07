@@ -2,7 +2,7 @@
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Build](https://img.shields.io/badge/Build-Maven-c71a36)
-![Lucene](https://img.shields.io/badge/Lucene-10.2-blue)
+![Lucene](https://img.shields.io/badge/Lucene-10.4-blue)
 ![MCP Protocol](https://img.shields.io/badge/MCP-2024--11--05-blueviolet)
 ![Version](https://img.shields.io/badge/Version-1.0.0--SNAPSHOT-brightgreen)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -20,7 +20,7 @@ back-ends and AI-tool integrations.
 
 ## ✨ Why Searchable
 
-- 🇯🇵 **Japanese first** — Kuromoji / Sudachi morphological analysis and
+- 🇯🇵 **Japanese first** — Kuromoji morphological analysis and
   Japanese-optimized embedding models (multilingual-e5) are wired in by
   default. No extra configuration to handle particles, auxiliary verbs,
   or mixed-byte text.
@@ -152,10 +152,10 @@ for the full surface.
 
 | Capability | Detail |
 | --- | --- |
-| Full-text search | Apache Lucene + Kuromoji / Sudachi, BM25 scoring with per-namespace overrides |
+| Full-text search | Apache Lucene + Kuromoji, BM25 scoring with per-namespace overrides |
 | Vector search | Lucene HNSW + ONNX Runtime + multilingual-e5 |
 | Hybrid search | Sequential or parallel execution, configurable per namespace |
-| Document formats | Plain Text / Markdown / AsciiDoc / PDF / HTML |
+| Document formats | Plain Text / Markdown / AsciiDoc / HTML / PDF (PDFBox) / Microsoft Office .docx / .doc / .xlsx / .xls / .pptx / .ppt (Apache POI) |
 | Interfaces | Java API (core); CLI (`searchable-cli`); REST API / MCP / webapp as reference apps in [`examples/`](examples/) |
 | Persistence | H2 (default) or PostgreSQL metadata via HikariCP + file-system Lucene indexes |
 | Operations | Backup / restore of Lucene indexes, user dictionary management, admin UI (`searchable-admin`) |
@@ -178,13 +178,13 @@ for the full setups.
 
 > 🎯 Target was 500 ms / 100k docs — actual results are **3 orders of
 > magnitude** below target. Bench environment: Java 21, Apple Silicon,
-> `MMapDirectory`, Lucene 10.2.
+> `MMapDirectory`, Lucene 10.4.
 
 ---
 
 ## 🛠️ Technology Stack
 
-Java 21 · Maven · Apache Lucene 10.2 · ONNX Runtime · Spring Boot · SLF4J + Logback ·
+Java 21 · Maven · Apache Lucene 10.4 · ONNX Runtime · Spring Boot · SLF4J + Logback ·
 H2 / PostgreSQL (HikariCP). Admin UI uses Thymeleaf; the sample search UI
 under `examples/search-ui/` is plain HTML + JS.
 
