@@ -39,8 +39,8 @@
 | TASK-005 | ✅ | ルート直下の旧 searchable-api/mcp/ui ディレクトリの扱いを決定し処置する | - |
 | TASK-006 | ✅ | pom.xml の `<modules>` に examples/ 配下を登録するかの方針を決定し反映する | TASK-005 |
 | TASK-007 | ✅ | ベンチコード (task-003/task-123) の計測単位と warm/cold 区分の現状を点検しレポートする | - |
-| TASK-008 | ⏳ | ベンチコードを JMH ベースに置き換え warm/cold 両方の数値を出力する | TASK-007 |
-| TASK-009 | ⏳ | README Performance セクションの数値表記を JMH 出力に基づき更新する | TASK-008 |
+| TASK-008 | ✅ | ベンチコードを JMH ベースに置き換え warm/cold 両方の数値を出力する | TASK-007 |
+| TASK-009 | ✅ | README Performance セクションの数値表記を JMH 出力に基づき更新する | TASK-008 |
 | TASK-010 | ✅ | README の "in-memory" 表現を mmap 実態に合わせて修正する | - |
 | TASK-011 | ✅ | README の "Embeddable, not infrastructure" 表現を Spring Boot 依存実態に合わせて緩和する | - |
 | TASK-012 | ✅ | README の "Multi-tenant by design" 表現を JVM 内論理分離の実態に合わせて緩和する | - |
@@ -139,10 +139,50 @@
   TASK-008 で JMH 化し、warm/cold・µs 精度・並行ケースを別々に出すまで、TASK-009 の
   数値更新は保留が妥当。
 
+### TASK-009
+
+- 補足: 旧 README は ms 整数丸めの天井値 (p99=0/1ms) を載せていた
+- 注意: warm / cold の二段構成は新規読者の混乱を招かないよう列を明示する
+- 結果 (2026-06-07): メイン `README.md` の Performance セクションを以下の JMH 1.37
+  実測値で更新し、warm / cold 双方の数値を表に併記した。
+  - Full-text (`SearchBenchmark`): warm p99 = **0.36 ms** (358 µs)、warm max = 3.0 ms、
+    cold mean = **9.2 ms** (5 fork)
+  - Vector HNSW (`VectorSearchBenchmark`): warm p99 = **0.26 ms** (263 µs)、
+    warm max = 3.7 ms、cold mean = **7.6 ms** (3 fork)
+  - REST API (TASK-034) と初期インデックス構築の行は JMH 範囲外のため凡例を維持。
+    投稿元として PoC ディレクトリ (`task-003-search-perf` / `task-123-vector-perf`)
+    へのリンクを追加し、旧 `investigations/` 配下は「pre-JMH の原本」として並記。
+  - 投資/再現性として「3 orders of magnitude (warm) / 2 orders of magnitude (cold)」
+    の言い回しに更新。bench environment 行に JMH 1.37 と計測日 (2026-06-07) を明記。
+  - PoC 側 README (`task-003-search-perf/README.md`, `task-123-vector-perf/README.md`)
+    も併せて JMH ベースに刷新済み。
+  - `investigations/003-performance.md` / `123-vector-performance.md` は M1 当時の
+    「Approved」記録のため改変せず、README 側で「original (pre-JMH) reports」として
+    参照する形に統一。
+
 ### TASK-008
 
 - 補足: JMH に置き換え warm-up・measurement・fork を明示する
 - 注意: 書き込み混在ワークロード (write-while-search) を含めるかは別途判断する
+- 結果 (2026-06-07):
+  - `task-003-search-perf` と `task-123-vector-perf` の両 PoC を **JMH 1.37** ベースに
+    全面置き換え。旧 `SearchPerformanceTest` / `VectorSearchPerformanceTest` (整数 ms 丸めの
+    シングルファイル main) を削除し、それぞれ `SearchBenchmark` / `VectorSearchBenchmark`
+    に差し替え。
+  - 両ベンチで `warmQuery` と `coldQuery` の 2 メソッドを単一クラスに共存させた。
+    - `warmQuery`: `Mode.SampleTime` + `@Warmup(5×1s)` + `@Measurement(10×5s)` + `@Fork(1)`
+      → p50/p95/p99/p99.9/max を µs 解像度で取得
+    - `coldQuery`: `Mode.SingleShotTime` + `@Warmup(0)` + `@Measurement(1×1batch)` +
+      `@Fork(5)` (search) / `@Fork(3)` (vector) → fresh JVM 初回投入レイテンシ
+  - pom.xml は Lucene 10.4.0 + JMH 1.37 + annotation processor + shade plugin
+    (`benchmarks.jar` を生成) の構成で再編。`mvnw -DskipTests package` 後
+    `java -jar target/benchmarks.jar` で実行できる。
+  - 書き込み混在ワークロードは BACKLOG-005 維持で本タスクのスコープ外。
+  - 動作検証: 両 jar で `java -jar target/benchmarks.jar -l` が warm/cold の
+    2 ベンチを認識することを確認。実機 full run (Apple Silicon / Java 21.0.9) で
+    `SearchBenchmark` (約 1:29) と `VectorSearchBenchmark` (約 6:26) の双方が
+    正常完了し、JSON 出力 (`-rf json -rff result.json`) も生成されることを確認。
+    計測値は TASK-009 で README 群に反映。
 
 ### TASK-010
 

@@ -173,21 +173,31 @@ for the full surface.
 
 ## ⚡ Performance
 
-Measured on synthetic Japanese corpora; see
+Measured on synthetic Japanese corpora with **OpenJDK JMH 1.37**
+benchmarks. Each search workload reports two regimes: *warm* (steady
+state, JIT-compiled, sampled distribution) and *cold* (first query in a
+fresh JVM, single-shot). See
+[`docs/devel/work/poc/task-003-search-perf/`](docs/devel/work/poc/task-003-search-perf/)
+and
+[`docs/devel/work/poc/task-123-vector-perf/`](docs/devel/work/poc/task-123-vector-perf/)
+for the harnesses and full distributions; see
 [`docs/devel/work/investigations/003-performance.md`](docs/devel/work/investigations/003-performance.md)
-and [`docs/devel/work/investigations/123-vector-performance.md`](docs/devel/work/investigations/123-vector-performance.md)
-for the full setups.
+and
+[`docs/devel/work/investigations/123-vector-performance.md`](docs/devel/work/investigations/123-vector-performance.md)
+for the original (pre-JMH) reports.
 
-| Workload | Scale | p99 | Max | Over 500 ms |
-| --- | --- | --- | --- | --- |
-| Full-text search | 100k docs | 1 ms | 1 ms | 0 / 1,000 |
-| Vector search | 100k docs | 0 ms | 1 ms | 0 / 1,000 |
-| REST API search | 5k docs | 7 ms (p95) | 17 ms | 0 / N |
-| Initial index build | 100k docs | — | 6 s (full-text) / 88 s (vector) | — |
+| Workload | Scale | Warm p99 | Warm max | Cold (first query) | Bench |
+| --- | --- | --- | --- | --- | --- |
+| Full-text search | 100k docs | 0.36 ms | 3.0 ms | ≈ 9.2 ms | `SearchBenchmark` |
+| Vector search (HNSW) | 100k docs / dim 384 | 0.26 ms | 3.7 ms | ≈ 7.6 ms | `VectorSearchBenchmark` |
+| REST API search | 5k docs | 7 ms (p95) | 17 ms | — | TASK-034 (legacy) |
+| Initial index build | 100k docs | — | 6 s (full-text) / ≈ 88 s (vector) | — | one-shot |
 
-> 🎯 Target was 500 ms / 100k docs — actual results are **3 orders of
-> magnitude** below target. Bench environment: Java 21, Apple Silicon,
-> `MMapDirectory`, Lucene 10.4.
+> 🎯 Target was 500 ms / 100k docs. Warm-state results are **3 orders
+> of magnitude** below target, and cold-start (fresh JVM) is still
+> **two orders below**. Bench environment: Java 21 (LTS), Apple
+> Silicon, `MMapDirectory`, Lucene 10.4.0, JMH 1.37; measured
+> 2026-06-07.
 
 ---
 
