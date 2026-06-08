@@ -93,6 +93,15 @@ AI クライアント (Claude Desktop 等) から Searchable の検索機能を
 | --- | --- | --- |
 | [plugin-datasource-s3](plugin-datasource-s3/) | S3 互換ストレージから取込む `DataSourcePlugin` 実装 | `mvn -f examples/plugin-datasource-s3/pom.xml package` |
 
+### AI プロバイダ設定のリファレンス
+
+`searchable-admin` で `AiProvider` SPI を有効化する際の設定例。コード
+ではなく、設定ファイル + 起動手順のセットとして提供する。
+
+| サンプル | 概要 | 形式 |
+| --- | --- | --- |
+| [ai-ollama](ai-ollama/) | ローカル Ollama サーバーで AI 要約を有効化する設定例(専用 `OllamaProvider` 利用、OpenAI 互換ルートも併記) | 設定ファイル + docker-compose |
+
 各サンプルをビルドする前に、Searchable 本体をローカル Maven リポジトリに
 インストールしておくこと。
 

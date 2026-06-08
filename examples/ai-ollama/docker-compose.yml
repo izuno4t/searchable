@@ -1,0 +1,26 @@
+# Minimal Ollama server for the searchable-admin AI summarisation example.
+#
+# Usage:
+#   docker compose -f examples/ai-ollama/docker-compose.yml up -d
+#   docker exec -it searchable-ollama ollama pull llama3.2
+#
+# The Ollama REST API is then reachable at http://localhost:11434, which
+# matches OllamaProvider's default base URL.
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: searchable-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  ollama-data:

@@ -1,5 +1,5 @@
 # Project-specific terminology dictionary for cspell.
-# Add one word per line. Comments begin with '#'.
+# Add one word per line. Comments begin with '
 
 # Brand / product names
 cspell
@@ -79,9 +79,9 @@ CVE
 CVSS
 CycloneDX
 linting
-MVCC
 mutator
 mutators
+MVCC
 NVD
 PIT
 SBOM
@@ -107,3 +107,7 @@ Adic
 
 # Test libraries
 assertj
+HWPF
+norconex
+OOXML
+soffice
