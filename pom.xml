@@ -87,6 +87,7 @@
         <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
         <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
         <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
+        <maven-help-plugin.version>3.5.1</maven-help-plugin.version>
         <central-publishing-plugin.version>0.10.0</central-publishing-plugin.version>
     </properties>
 
@@ -285,6 +286,11 @@
                         <skipRuntimeScope>false</skipRuntimeScope>
                         <skipTestScope>true</skipTestScope>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-help-plugin</artifactId>
+                    <version>${maven-help-plugin.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>

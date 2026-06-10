@@ -52,7 +52,17 @@ jobs:
             echo "::error::Invalid tag format: $TAG"
             exit 1
           fi
-          POM_VERSION=$(./mvnw -B -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+          # Read project.version via maven-help-plugin (pinned in
+          # pluginManagement). The `if !` wrapper is required because
+          # `bash -e` aborts the script silently if a command
+          # substitution exits non-zero — without the wrapper, a mvn
+          # failure here would kill the step before the error line below
+          # ever runs.
+          if ! POM_VERSION=$(./mvnw -B -q --non-recursive \
+                help:evaluate -Dexpression=project.version -DforceStdout); then
+            echo "::error::Failed to read project.version via maven-help-plugin"
+            exit 1
+          fi
           if [ "$TAG" != "$POM_VERSION" ]; then
             echo "::error::Tag $TAG does not match pom version $POM_VERSION"
             exit 1
