@@ -1,10 +1,11 @@
 # <img src="assets/logo.svg" alt="" width="36" height="36"> Searchable
 
+[![CI](https://github.com/searchable-io/searchable/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/searchable-io/searchable/actions/workflows/ci.yml)
+![Version](https://img.shields.io/badge/Version-1.0.0-brightgreen)
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Build](https://img.shields.io/badge/Build-Maven-c71a36)
 ![Lucene](https://img.shields.io/badge/Lucene-10.4-blue)
 ![MCP Protocol](https://img.shields.io/badge/MCP-2024--11--05-blueviolet)
-![Version](https://img.shields.io/badge/Version-1.0.0-brightgreen)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > 🇯🇵 **Japanese-optimized hybrid search for Java** — full-text and vector
