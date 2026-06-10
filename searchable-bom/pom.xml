@@ -273,4 +273,55 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <!--
+        searchable-bom has no <parent>, so the release profile from
+        searchable-parent's pom is NOT inherited. Without this, `mvn
+        deploy` falls back to maven-deploy-plugin and fails with
+        "repository element was not specified". Mirror the parent
+        release profile here just enough to sign the pom and publish via
+        central-publishing-maven-plugin. Keep plugin versions in sync
+        with the parent pom (literal versions because BOM has no access
+        to the parent's <properties>).
+    -->
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.7</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.10.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                            <waitUntil>published</waitUntil>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
