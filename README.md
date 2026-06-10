@@ -1,6 +1,7 @@
 # <img src="assets/logo.svg" alt="" width="36" height="36"> Searchable
 
 [![CI](https://github.com/searchable-io/searchable/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/searchable-io/searchable/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/searchable-io/searchable/branch/main/graph/badge.svg)](https://codecov.io/gh/searchable-io/searchable)
 ![Version](https://img.shields.io/badge/Version-1.0.0-brightgreen)
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Build](https://img.shields.io/badge/Build-Maven-c71a36)
