@@ -6,15 +6,7 @@ name: Publish
 #   v1.0.0-SNAPSHOT  → Central snapshot repository
 # central-publishing-maven-plugin auto-routes by suffix.
 #
-# Two-job split:
-#   verify  — re-runs the release-readiness checks independently of
-#             main CI (so a tag on a broken commit cannot bypass them).
-#             Tag/pom version match, release artifact generation
-#             (sources/javadoc), and the e2e gate. No credentials.
-#   publish — only runs if verify passes. Holds GPG + Central tokens
-#             and is the only step that actually deploys.
-#
-# Required GitHub Secrets (publish job only):
+# Required GitHub Secrets:
 #   - CENTRAL_USERNAME  : Central Portal token user (https://central.sonatype.com/account)
 #   - CENTRAL_TOKEN     : Central Portal token password
 #   - GPG_PRIVATE_KEY   : ASCII-armored GPG private key
@@ -33,54 +25,10 @@ env:
   MAVEN_CLI_OPTS: "--batch-mode --no-transfer-progress --errors -Dstyle.color=always"
 
 jobs:
-  verify:
-    name: Release verification (tag + dry-run build + e2e)
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 21
-          cache: maven
-
-      - name: Verify tag matches pom version
-        run: |
-          TAG="${GITHUB_REF#refs/tags/v}"
-          # Strict semver, optional -SNAPSHOT or other qualifier.
-          if ! [[ "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$ ]]; then
-            echo "::error::Invalid tag format: $TAG"
-            exit 1
-          fi
-          POM_VERSION=$(grep -m1 -oP '(?<=<version>)[^<]+' pom.xml)
-          if [ "$TAG" != "$POM_VERSION" ]; then
-            echo "::error::Tag $TAG does not match pom version $POM_VERSION"
-            exit 1
-          fi
-          echo "Publishing $TAG"
-
-      - name: Release-build dry-run (sources + javadoc, no signing)
-        # Same check as ci.yml's release-build-check, repeated here so
-        # the verify gate does not implicitly trust that main CI passed
-        # on this exact commit. Also installs the reactor into local m2
-        # so the next step can resolve searchable-* artifacts.
-        run: ./mvnw $MAVEN_CLI_OPTS -Prelease -DskipTests -Dgpg.skip=true install
-
-      - name: e2e verification gate (packaged JAR + forked JVM + HTTP)
-        # Boots the real packaged Spring Boot JAR in a separate JVM and
-        # runs EndToEndVerificationIT against it. Failure here blocks
-        # publish, so we never deploy a JAR that can't actually start.
-        # See docs/devel/testing/verify.ja.md.
-        run: ./mvnw $MAVEN_CLI_OPTS -f examples/api/pom.xml verify
-
   publish:
     name: Publish to Sonatype Central
-    needs: [verify]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6
 
@@ -96,7 +44,34 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: GPG_PASSPHRASE
 
-      - name: Deploy
+      # --- verify (deploy 前の独立検証。main CI 緑を信用しない) ---
+
+      - name: Verify tag matches pom version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          if ! [[ "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$ ]]; then
+            echo "::error::Invalid tag format: $TAG"
+            exit 1
+          fi
+          POM_VERSION=$(grep -m1 -oP '(?<=<version>)[^<]+' pom.xml)
+          if [ "$TAG" != "$POM_VERSION" ]; then
+            echo "::error::Tag $TAG does not match pom version $POM_VERSION"
+            exit 1
+          fi
+          echo "Publishing $TAG"
+
+      - name: Verify release artifacts (sources + javadoc, no signing)
+        # Reactor を local .m2 に install。e2e と publish の前提を整える。
+        run: ./mvnw $MAVEN_CLI_OPTS -Prelease -DskipTests -Dgpg.skip=true install
+
+      - name: e2e verification gate (packaged JAR + forked JVM + HTTP)
+        # 出荷物（packaged JAR）が別 JVM で起動して REST が動くか検証。
+        # 詳細: docs/devel/testing/verify.ja.md。
+        run: ./mvnw $MAVEN_CLI_OPTS -f examples/api/pom.xml verify
+
+      # --- publish (上記 verify が通った場合のみ実行される) ---
+
+      - name: Deploy to Sonatype Central
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}

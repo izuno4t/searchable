@@ -31,6 +31,7 @@ JaCoCo
 JDBC
 jdbcx
 JPMS
+jspecify
 JsonRpc
 Jsoup
 JSR

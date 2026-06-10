@@ -125,13 +125,13 @@ jobs:
           name: spotbugs-reports
           path: "**/target/spotbugs*.xml"
 
-  release-build-check:
-    # Validates that the codebase can produce release artifacts:
-    # source JAR, Javadoc JAR, and the central-publishing bundle.
-    # GPG signing and the actual deploy are excluded (those belong to
-    # release.yml). Catches code-level issues like Javadoc generation
-    # failures before they surface at release time.
-    name: Release Build Check (sources + javadoc)
+  javadoc:
+    # Catches Javadoc generation failures (e.g. module resolution errors
+    # against the project sources) as part of every-push feedback, so
+    # they never surface only at release time. Runs the release profile
+    # because that is where the Javadoc execution is bound, with GPG
+    # signing and deploy disabled.
+    name: Javadoc Generation
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -144,7 +144,7 @@ jobs:
           java-version: 21
           cache: maven
 
-      - name: Build release artifacts (no signing, no deploy)
+      - name: Generate Javadoc (release profile, no signing, no deploy)
         run: ./mvnw $MAVEN_CLI_OPTS -Prelease -DskipTests -Dgpg.skip=true verify
 
   docs-lint:
