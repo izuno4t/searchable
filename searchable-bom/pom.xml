@@ -51,6 +51,12 @@
         <jackson.version>2.19.0</jackson.version>
         <snakeyaml.version>2.5</snakeyaml.version>
         <commons-io.version>2.22.0</commons-io.version>
+        <!-- Forced ahead of the version that poi-ooxml-lite 5.5.1 pulls in
+             transitively (3.17.0) to remediate CVE-2025-48924
+             (ClassUtils.getClass uncontrolled recursion → StackOverflowError
+             DoS, fixed in 3.18.0). Drop this pin when Apache POI ships a
+             release that depends on 3.18+ on its own. -->
+        <commons-lang3.version>3.18.0</commons-lang3.version>
         <spring-boot.version>3.5.14</spring-boot.version>
         <postgresql.version>42.7.11</postgresql.version>
         <hikaricp.version>6.3.3</hikaricp.version>
@@ -213,6 +219,14 @@
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commons-io.version}</version>
+            </dependency>
+            <!-- Override poi-ooxml-lite's transitive commons-lang3 (3.17.0)
+                 to ship 3.18.0+ until POI bumps it upstream
+                 (CVE-2025-48924). -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
             </dependency>
 
             <!-- Spring Boot BOM -->
