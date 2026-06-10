@@ -19,6 +19,7 @@ before exposing them to untrusted tenants.
 | CPU / disk I/O | **No** | No QoS or rate limiting between Namespaces |
 | At-rest encryption | **No** | Index files and metadata are stored in plaintext |
 | Authentication / authorization | **No** | The library does not authenticate callers; the embedding application owns access control |
+| Outbound traffic from `AiProvider` | **No** | If an external provider (Anthropic / OpenAI) is enabled, retrieved hits leave the host — see §5 below |
 
 In short: Namespaces are a **logical** boundary inside one JVM, not a
 process-, container-, or cluster-level isolation.
@@ -74,6 +75,38 @@ not **access**. It is the embedding application's responsibility to:
 The reference REST API and MCP server under
 [`examples/`](../../examples/) demonstrate one possible wiring, but
 they are illustrative and not hardened for hostile tenants.
+
+### 5. External AI providers send tenant data off-host
+
+`searchable-ai` ships three `AiProvider` implementations for post-search
+summarization / Q&A:
+
+| Provider | Endpoint | Data flow |
+| --- | --- | --- |
+| `AnthropicProvider` | `https://api.anthropic.com` | Query + retrieved hits sent to Anthropic |
+| `OpenAiProvider` | `https://api.openai.com/v1` | Query + retrieved hits sent to OpenAI |
+| `OllamaProvider` | `http://localhost:11434` (configurable) | Stays on the host (or wherever the Ollama daemon runs) |
+
+No provider is selected by default. **Enabling Anthropic or OpenAI
+means that document content from the calling Namespace leaves the host
+in plaintext over HTTPS**, subject to the provider's data-retention
+and training-use policies. For multi-tenant deployments this has
+consequences beyond Searchable's own isolation model:
+
+- **Data residency / regulatory scope** (GDPR, 個人情報保護法,
+  HIPAA, financial sector rules) — sending tenant documents to a
+  US-based LLM provider may breach contractual or statutory
+  residency requirements. Confirm the chosen provider's region,
+  zero-retention option, and DPA before enabling it for a regulated
+  tenant.
+- **Per-tenant opt-in is the calling application's job** — there is
+  no per-Namespace flag in the library to allow / deny `AiProvider`
+  usage. The embedding application must decide, per request, whether
+  the caller's data may be shared with the configured provider.
+- **Prefer Ollama (or another self-hosted provider) for sensitive
+  tenants** — Ollama keeps the prompt on the host. Implementing a
+  custom `AiProvider` against a self-hosted inference endpoint is the
+  standard path when external providers are not acceptable.
 
 ## When Namespaces are enough
 

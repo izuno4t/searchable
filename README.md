@@ -35,8 +35,17 @@ back-ends and AI-tool integrations.
   `searchable-admin` management UI are **separate, optional artifacts**
   that *use* the embeddable core — they are not part of the embedded
   surface itself.
-- 🔒 **Local-first AI** — vector embeddings are generated in-process with
-  ONNX Runtime. No external API keys, no data leaving the host.
+- 🔒 **Local-first vector embeddings** — embeddings are generated
+  in-process with ONNX Runtime. No external API keys are required for
+  search itself, and index content stays on the host.
+- 🤖 **Optional AI providers** — for post-search summarization or Q&A,
+  plug in an [`AiProvider`](searchable-ai/src/main/java/io/searchable/ai/AiProvider.java).
+  Bundled implementations: **Anthropic** / **OpenAI** (external HTTPS,
+  send query + retrieved hits to the LLM API) and **Ollama** (fully
+  local). No provider is selected by default — opt in only when you
+  accept the data-flow trade-offs; see the
+  [Multi-tenancy Guide](docs/public/multi-tenancy-guide.md) for the
+  data-residency / privacy considerations.
 - 🏢 **Namespace-based logical multi-tenancy** — Namespaces give each
   tenant or dataset its own logical index with isolated Analyzer,
   embedding, and persistence configuration **within a single JVM**.
@@ -223,7 +232,7 @@ discovery styles are used:
 | Extension point | Discovery | Default | Typical use |
 | --- | --- | --- | --- |
 | [`DataSourcePlugin`](searchable-plugins/src/main/java/io/searchable/plugin/DataSourcePlugin.java) | ServiceLoader | — | Ingest from external sources (filesystem, S3, Confluence, ...) |
-| [`AiProvider`](searchable-ai/src/main/java/io/searchable/ai/AiProvider.java) | ServiceLoader | — | LLM post-processing (summarize / answer with retrieved hits) |
+| [`AiProvider`](searchable-ai/src/main/java/io/searchable/ai/AiProvider.java) | ServiceLoader | Bundled: Anthropic / OpenAI / Ollama (opt-in) | LLM post-processing (summarize / answer with retrieved hits) |
 | [`EmbeddingProvider`](searchable-core/src/main/java/io/searchable/core/domain/embedding/EmbeddingProvider.java) | Builder | ONNX + multilingual-e5 | Swap the vector-embedding backend |
 | [`DocumentParser`](searchable-core/src/main/java/io/searchable/core/domain/parser/DocumentParser.java) | `ParserRegistry.register(...)` | Plain / Markdown / AsciiDoc / HTML / PDF / Office | Add new file-format extractors |
 | [`ChunkingStrategy`](searchable-core/src/main/java/io/searchable/core/domain/chunking/ChunkingStrategy.java) | Builder | — | Control how long documents are split before embedding |

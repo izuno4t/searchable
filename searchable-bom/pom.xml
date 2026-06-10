@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- searchable-bom is intentionally a stand-alone POM (no <parent>):
+         the searchable-parent root POM imports this BOM in its own
+         dependencyManagement, and a `parent -> import-BOM -> parent`
+         dependency cycle would prevent Maven from resolving the effective
+         POM. Keeping the BOM independent also lets external consumers
+         (the examples/ apps, downstream projects) import it without
+         pulling in the rest of the parent pom's build configuration. -->
+
+    <groupId>io.searchable</groupId>
+    <artifactId>searchable-bom</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Searchable BOM</name>
+    <description>
+        Bill of Materials for Searchable. Pins versions of all
+        third-party dependencies used by the core modules and the
+        reference example apps under examples/. Import this BOM in
+        dependencyManagement to track the same versions the core
+        build uses, instead of duplicating version literals.
+    </description>
+
+    <properties>
+        <!-- Library versions: this BOM is the single source of truth.
+             searchable-parent (root pom) intentionally does NOT redeclare
+             these properties; sub-modules and examples receive the
+             resolved versions through this BOM's dependencyManagement
+             import. The only exception is spring-boot.version, which the
+             root pom redeclares because spring-boot-maven-plugin needs it
+             at plugin-version level (plugin versions are not managed by
+             dependency BOMs). Keep the two spring-boot.version values in
+             sync. -->
+        <lucene.version>10.4.0</lucene.version>
+        <h2.version>2.3.232</h2.version>
+        <onnxruntime.version>1.26.0</onnxruntime.version>
+        <pdfbox.version>3.0.7</pdfbox.version>
+        <jsoup.version>1.22.2</jsoup.version>
+        <poi.version>5.5.1</poi.version>
+        <slf4j.version>2.0.18</slf4j.version>
+        <logback.version>1.5.34</logback.version>
+        <!-- Matches the log4j-api version transitively pulled by Apache POI;
+             the bridge routes POI's Log4j 2 API calls to SLF4J/Logback. -->
+        <log4j.version>2.26.0</log4j.version>
+        <jackson.version>2.19.0</jackson.version>
+        <snakeyaml.version>2.5</snakeyaml.version>
+        <commons-io.version>2.22.0</commons-io.version>
+        <spring-boot.version>3.5.14</spring-boot.version>
+        <postgresql.version>42.7.11</postgresql.version>
+        <hikaricp.version>6.3.3</hikaricp.version>
+
+        <!-- Test -->
+        <junit.version>5.12.2</junit.version>
+        <assertj.version>3.27.7</assertj.version>
+        <!-- Mockito 5.20 ships Byte Buddy 1.17 which knows about Java 25's
+             class file format; older Mockito (5.14) fails to mock final
+             classes such as ai.onnxruntime.OrtEnvironment on JDK 25. -->
+        <mockito.version>5.23.0</mockito.version>
+        <testcontainers.version>1.21.4</testcontainers.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Sub-modules -->
+            <dependency>
+                <groupId>io.searchable</groupId>
+                <artifactId>searchable-plugins</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.searchable</groupId>
+                <artifactId>searchable-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.searchable</groupId>
+                <artifactId>searchable-ai</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.searchable</groupId>
+                <artifactId>searchable-cli</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.searchable</groupId>
+                <artifactId>searchable-testkit</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Lucene: Apache Lucene does not publish a `lucene-bom` artifact
+                 (Lucene 10.4 was checked in 2026-06; not present on Maven Central),
+                 so versions stay centralized via `${lucene.version}` instead. -->
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-core</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-analysis-kuromoji</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-analysis-common</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-queryparser</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-highlighter</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+
+            <!-- DB -->
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.zaxxer</groupId>
+                <artifactId>HikariCP</artifactId>
+                <version>${hikaricp.version}</version>
+            </dependency>
+
+            <!-- ONNX Runtime (vector embedding) -->
+            <dependency>
+                <groupId>com.microsoft.onnxruntime</groupId>
+                <artifactId>onnxruntime</artifactId>
+                <version>${onnxruntime.version}</version>
+            </dependency>
+
+            <!-- Document parsers (PDF / HTML / Office) -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>${jsoup.version}</version>
+            </dependency>
+            <!-- Apache POI: OOXML (.docx/.xlsx/.pptx) pulls in poi (core,
+                 incl. HSSF=.xls); poi-scratchpad adds HWPF=.doc / HSLF=.ppt. -->
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-scratchpad</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+
+            <!-- Logging -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+            <!-- Bridge: route Apache POI's Log4j 2 API logging to SLF4J. -->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-to-slf4j</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+
+            <!-- JSON / YAML: versions are managed entirely by the imported
+                 Jackson BOM. Module poms reference jackson-databind /
+                 jackson-datatype-jsr310 / jackson-dataformat-yaml without a
+                 <version> element. The Jackson BOM is imported BEFORE the
+                 Spring Boot BOM so that ${jackson.version} (2.19.0) wins
+                 over the Spring Boot transitive default. -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
+            </dependency>
+
+            <!-- Utility -->
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+
+            <!-- Spring Boot BOM -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Test -->
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-junit-jupiter</artifactId>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>

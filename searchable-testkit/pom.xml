@@ -49,26 +49,23 @@
             <artifactId>h2</artifactId>
         </dependency>
 
-        <!-- PostgreSQL via Testcontainers (high-fidelity DB tests) -->
+        <!-- PostgreSQL via Testcontainers (high-fidelity DB tests);
+             versions resolved through searchable-bom. -->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>${testcontainers.version}</version>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
-            <version>${testcontainers.version}</version>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>${testcontainers.version}</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
         </dependency>
 
         <!-- Spring Boot test support (optional for Spring-based tests) -->

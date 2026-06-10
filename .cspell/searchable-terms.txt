@@ -40,8 +40,10 @@ analyzer
 analyzers
 chunker
 chunking
+doclint
 Dskip
 Dtest
+Xdoclint
 embedder
 embeddings
 FREQS
