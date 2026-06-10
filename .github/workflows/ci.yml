@@ -95,7 +95,7 @@ jobs:
         # Only on main pushes (push from main or workflow_dispatch from main).
         # PRs and non-main branches do not upload.
         if: github.ref == 'refs/heads/main'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./target/site/jacoco-aggregate/jacoco.xml

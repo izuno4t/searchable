@@ -67,9 +67,7 @@ back-ends and AI-tool integrations.
 follow semantic versioning — additive changes in 1.x minors, breaking
 changes deferred to 2.0.
 
-The Phase 1–5 implementation plans (documented under
-[`docs/devel/work/archive/`](docs/devel/work/archive/)) are complete; roadmap and follow-up
-work live in [`docs/devel/work/plans/project-plan.md`](docs/devel/work/plans/project-plan.md).
+See the [roadmap](docs/devel/work/plans/project-plan.md) for follow-up work.
 
 ---
 
