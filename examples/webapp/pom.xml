@@ -14,7 +14,7 @@
 
     <groupId>io.github.searchable-io.example</groupId>
     <artifactId>webapp-example</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Searchable Web App (Example)</name>
     <description>
@@ -27,7 +27,7 @@
     <properties>
         <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <searchable.version>1.0.0</searchable.version>
+        <searchable.version>1.0.0-SNAPSHOT</searchable.version>
     </properties>
 
     <dependencyManagement>
