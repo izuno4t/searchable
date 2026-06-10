@@ -1,8 +1,29 @@
 # Searchable - 動作検証手順
 
-Searchable が **エンドツーエンドで機能していることを最短で確認する** ための手順。
+Searchable のテスト階層における **e2e レベル** の検証手順。
+[Testing Guide](README.md#テスト階層) の通り、結合レベル
+(`maven-failsafe-plugin` + Testcontainers) では検出できない以下の故障を
+ここで捕まえる:
+
+- packaged JAR の正しさ（`Main-Class` / shaded manifest / `spring-boot-loader`）
+- 別 JVM プロセスでの起動シーケンス
+- 実 JDK 21 ランタイム + ホスト OS 境界
+- パッケージ済成果物を **ユーザーが受け取る状態のまま** 動かせるか
+
+そのため本手順は **packaged JAR を別プロセスで起動し、外部 HTTP クライアントで
+叩く** ことを前提とする。同 JVM 内で動く `@SpringBootTest` 系はこの層の
+代替にはならない。
+
+## 走らせるタイミング
+
+| タイミング | 必須 |
+| --- | --- |
+| release タグ push 時 (release pipeline ゲート) | ✅ 必須 |
+| 大きめのリファクタ後、ローカル手動 | 推奨 |
+| 各 PR / main push | 不要（結合レベルでカバー） |
+
 実行手段(Docker / ローカル Maven / CLI / 手作業 curl)に依存しない形で
-「何を、どの順で、どのモジュールに対して確かめるか」を定義する。
+「何を、どの順で、どのモジュールに対して確かめるか」を以下に定義する。
 
 具体的なコマンド例は [getting-started.ja.md](getting-started.ja.md) と
 [cli-guide.ja.md](cli-guide.ja.md)、または [examples/](../examples/) 配下の
@@ -98,22 +119,32 @@ Namespace の作成/削除経路は **永続化層(H2 or PostgreSQL)** と
 スクリプト化する場合は 0〜7 をそれぞれ別のチェック関数にし、
 任意のステップ単位で再実行できるようにしておくとよい。
 
-## 7. 自動実行スクリプト
+## 7. 自動実行 (Maven failsafe IT)
 
-本手順を `examples/api` 経由で実行するシェルスクリプトを
-[`scripts/verify/`](../scripts/verify/) に同梱している。
-取込対象ドキュメントの取得元は **既存の `docker/demo-data/`** と
-**インターネット (`ja.wikipedia.org`)** から選べる。
+本手順は **`examples/api` の Maven failsafe IT** として実装されている。
+`spring-boot-maven-plugin` が packaged JAR を別 JVM で起動し、
+`EndToEndVerificationIT` が外部 HTTP クライアントから REST API を叩く構成。
 
 ```bash
-# 既定: バンドル済みのデモデータで実行
-scripts/verify/run.sh
+# まず reactor を local .m2 に install (examples/api が searchable-core を解決するため)
+./mvnw -B -DskipTests install
 
-# Wikipedia から取得した記事で実行
-scripts/verify/run.sh --source internet
+# e2e ゲート実行
+./mvnw -B -f examples/api/pom.xml verify
 ```
 
-詳細は [`scripts/verify/README.md`](../scripts/verify/README.md) を参照。
+実行内容:
+
+| Maven フェーズ | 動作 |
+| --- | --- |
+| `process-test-classes` | `build-helper-maven-plugin` が空き TCP ポートを `${searchable.test.port}` に予約 |
+| `pre-integration-test` | `spring-boot-maven-plugin:start` が packaged JAR を別 JVM で起動 |
+| `integration-test` | `maven-failsafe-plugin` が `EndToEndVerificationIT` を実行 (HTTP 越し) |
+| `post-integration-test` | `spring-boot-maven-plugin:stop` で別 JVM を graceful shutdown |
+| `verify` | failsafe が結果確定 |
+
+CI では `.github/workflows/release.yml` の **deploy 直前のゲート** として
+同コマンドが走る。失敗すれば Maven Central への publish へ進まない。
 
 ---
 

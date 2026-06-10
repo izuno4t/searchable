@@ -91,6 +91,86 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <!--
+                        e2e verification: boot the packaged JAR in a forked
+                        JVM during pre-integration-test, then stop it after.
+                        Failsafe ITs in src/test/java/.../e2e/ talk to it via
+                        HTTP on the port reserved by build-helper below.
+                        @SpringBootTest stays out of this layer because it
+                        runs in-process and does not validate packaging /
+                        startup. See docs/devel/testing/README.md.
+                    -->
+                    <execution>
+                        <id>e2e-start</id>
+                        <goals>
+                            <goal>start</goal>
+                        </goals>
+                        <configuration>
+                            <jvmArguments>-Dserver.port=${searchable.test.port} -Dsearchable.data-directory=${project.build.directory}/e2e-data -Dsearchable.persistence.url=jdbc:h2:${project.build.directory}/e2e-data/metadata;MODE=PostgreSQL -Dsearchable.index.directory=${project.build.directory}/e2e-data/indexes</jvmArguments>
+                            <skip>${skipITs}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>e2e-stop</id>
+                        <goals>
+                            <goal>stop</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skipITs}</skip>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+                Reserve an OS-assigned free TCP port and expose it as
+                ${searchable.test.port}, so the booted Spring Boot
+                process and the Failsafe IT JVM agree on the port without
+                hard-coding 8080 (which races with the dev runner).
+            -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>reserve-e2e-port</id>
+                        <phase>process-test-classes</phase>
+                        <goals>
+                            <goal>reserve-network-port</goal>
+                        </goals>
+                        <configuration>
+                            <portNames>
+                                <portName>searchable.test.port</portName>
+                            </portNames>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+                Bind Failsafe to integration-test / verify phases so it
+                runs *IT classes against the forked Spring Boot process
+                started above. The reserved port is forwarded as a system
+                property.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <systemPropertyVariables>
+                        <searchable.test.port>${searchable.test.port}</searchable.test.port>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
         </plugins>
     </build>

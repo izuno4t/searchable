@@ -60,6 +60,16 @@ jobs:
           fi
           echo "Publishing $TAG"
 
+      - name: Install reactor (so examples/api can resolve searchable-* from local .m2)
+        run: ./mvnw $MAVEN_CLI_OPTS -DskipTests install
+
+      - name: e2e verification gate (packaged JAR + forked JVM + HTTP)
+        # Boots the real packaged Spring Boot JAR in a separate JVM and
+        # runs EndToEndVerificationIT against it. Failure here blocks the
+        # deploy step below, so we never publish a JAR that can't actually
+        # start. See docs/devel/testing/verify.ja.md.
+        run: ./mvnw $MAVEN_CLI_OPTS -f examples/api/pom.xml verify
+
       - name: Deploy
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}

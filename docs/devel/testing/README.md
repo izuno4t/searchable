@@ -2,6 +2,38 @@
 
 Searchable のテスト基盤と CI ジョブの利用方法をまとめる。
 
+## テスト階層
+
+Searchable のテストは「**何を保証するか / どこに走らせるか**」で 3 層に分ける。
+各層は別の故障モードを捕まえる役割があり、上位層が下位層を完全に代替することはない。
+
+| レベル | ツール | プロセス境界 | 主な対象 | 動くタイミング |
+| --- | --- | --- | --- | --- |
+| **単体** | `maven-surefire-plugin` (`*Test.java`) | テスト JVM 同一プロセス | 関数・クラス単位の挙動、分岐網羅 | PR / main push (CI) |
+| **結合** | `maven-failsafe-plugin` (`*IT.java`) + Testcontainers | テスト JVM + DB / 外部サービス用コンテナ | DB / Lucene / SPI / 多モジュール連携 | PR / main push (CI) |
+| **e2e** | `spring-boot-maven-plugin:start/stop` + Failsafe + 外部 HTTP クライアント | **packaged JAR を別プロセスで起動**、テスト JVM から HTTP 越しに叩く | パッケージング、起動シーケンス、OS 境界、`Main-Class` 等の Manifest、実 ランタイム挙動 | **release タグ push 時** (release pipeline のゲート) |
+
+### 各層が捕まえる故障モード
+
+- **単体で漏れて結合で出る**: クラス間の契約違反、トランザクション境界、SQL の dialect 差。
+- **結合で漏れて e2e で出る**: fat JAR の shading 失敗、`spring.factories` の欠落、
+  JDK バージョン差での起動失敗、配布形態固有の classpath 問題。
+- **e2e で漏れる**: 性能・スケール・実ユーザー操作シナリオ（手動 QA 領域）。
+
+### e2e と「Spring Boot Test」の違い
+
+`@SpringBootTest(webEnvironment = RANDOM_PORT)` はテスト JVM 内で Spring コンテキストを
+起動するため、**結合レベル**であって e2e ではない。e2e で検証すべき以下の項目は
+すべて取りこぼす:
+
+- packaged JAR の `Main-Class` / shaded manifest / `spring-boot-loader` 起動
+- 別 JVM プロセスでの起動失敗（環境変数欠落、port bind 競合 等）
+- 実 JDK 21 ランタイム上での classpath 解決
+- ホスト OS のシグナル / シャットダウン
+
+e2e の実装はかならず **packaged JAR を別プロセスで起動して外部から叩く** こと。
+具体的なステップは [verify.ja.md](verify.ja.md) を参照。
+
 ## ローカルでのテスト実行
 
 ```bash
@@ -130,6 +162,6 @@ Testcontainers もそのまま動作する。
 
 ## 関連ドキュメント
 
-+ [docs/test-infrastructure-plan.md](test-infrastructure-plan.md) — 設計レポート
-+ [docs/devel/standards/branch-protection.md](branch-protection.md) — ブランチ保護設定手順
-+ [docs/devel/design/architecture/overview.md](architecture.md) — モジュール構成
+- [docs/test-infrastructure-plan.md](test-infrastructure-plan.md) — 設計レポート
+- [docs/devel/standards/branch-protection.md](branch-protection.md) — ブランチ保護設定手順
+- [docs/devel/design/architecture/overview.md](architecture.md) — モジュール構成
