@@ -167,17 +167,25 @@ echo "[3/3] Updating dev-version-tracking refs in *.md (JAR filename + POM <vers
 # searchable-cli/README.md). Anything under docs/devel/ is internal
 # developer documentation that never tracks the working dev version.
 #
-# Auto-bump targets only two unambiguous patterns:
-#   - `-CURRENT.jar` : output of `mvn package` against the current pom
-#   - `<version>CURRENT</version>` : Maven coordinate snippets in docs
-# Badges, status text, OpenAPI/JSON version fields, and similar prose
-# need contextual judgement and are NOT auto-bumped. They're listed in
-# the Advisory section below for manual review.
+# Auto-bump targets three unambiguous patterns:
+#   - `-CURRENT.jar`                       : output of `mvn package`
+#   - `<version>CURRENT</version>`         : Maven coordinate snippets
+#   - shields.io `badge/Version-CURRENT-`  : project version README badge
+# Status text, OpenAPI/JSON version fields, and similar prose need
+# contextual judgement and are NOT auto-bumped. They're listed in the
+# Advisory section below for manual review.
 EXCLUDE_REGEX='^(\./)?(docs/devel/|CLAUDE\.md(:|$)|.*/archive/)'
+
+# shields.io ではバッジ URL の値部分の `-` を `--` でエスケープする規約。
+# 例: 1.0.1-SNAPSHOT → URL 上では 1.0.1--SNAPSHOT。
+shields_encode() { printf '%s' "$1" | sed 's|-|--|g'; }
+CURRENT_BADGE=$(shields_encode "$CURRENT")
+NEW_BADGE=$(shields_encode "$NEW")
 
 PATTERNS=(
   "<version>${CURRENT}</version>:<version>${NEW}</version>"
   "-${CURRENT}.jar:-${NEW}.jar"
+  "badge/Version-${CURRENT_BADGE}-:badge/Version-${NEW_BADGE}-"
 )
 declare -A SEEN
 for spec in "${PATTERNS[@]}"; do
@@ -200,10 +208,17 @@ done
 
 echo ""
 echo "=== Checking that no auto-bump pattern leaks for $CURRENT ==="
+# *.md only: step [3/3] never touches *.xml, and pom.xml legitimately
+# carries third-party dependency versions like jspecify 1.0.0 that
+# happen to match the project's old version. Including *.xml here
+# produces false-positive leaks.
 LEAK_FOUND=0
-for pat in "<version>${CURRENT}</version>" "-${CURRENT}.jar"; do
+for pat in \
+    "<version>${CURRENT}</version>" \
+    "-${CURRENT}.jar" \
+    "badge/Version-${CURRENT_BADGE}-"; do
   LEAKS=$(grep -rlF \
-    --include='*.xml' --include='*.md' \
+    --include='*.md' \
     --exclude-dir=.git \
     --exclude-dir=target \
     --exclude-dir=node_modules \
@@ -228,8 +243,7 @@ printf '%s ✅  OK%s — no %s auto-bump pattern remains outside history paths.\
 echo ""
 echo "=== Advisory: other $CURRENT literals (NOT auto-bumped, manual review) ==="
 OTHER=$(grep -rnF \
-  --include='*.md' --include='*.xml' --include='*.json' \
-  --include='*.yaml' --include='*.yml' --include='*.properties' \
+  --include='*.md' \
   --exclude-dir=.git \
   --exclude-dir=target \
   --exclude-dir=node_modules \
