@@ -4,6 +4,7 @@
 # Brand / product names
 cspell
 Failsafe
+gdrive
 Hikari
 Kuromoji
 Logback
