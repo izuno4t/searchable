@@ -26,6 +26,36 @@
         dependencyManagement to track the same versions the core
         build uses, instead of duplicating version literals.
     </description>
+    <url>https://github.com/searchable-io/searchable</url>
+    <inceptionYear>2026</inceptionYear>
+
+    <!-- Maven Central requires <licenses>, <scm>, <developers>, and
+         <url> on every published POM. searchable-bom has no <parent>
+         (intentionally, to avoid a parent → import-BOM → parent cycle),
+         so it cannot inherit these from searchable-parent and must
+         declare them here. Keep these blocks in sync with the root pom. -->
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>izuno4t</id>
+            <name>izuno4t</name>
+            <url>https://github.com/izuno4t</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/searchable-io/searchable.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/searchable-io/searchable.git</developerConnection>
+        <url>https://github.com/searchable-io/searchable</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <properties>
         <!-- Library versions: this BOM is the single source of truth.
