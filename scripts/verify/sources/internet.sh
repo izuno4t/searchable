@@ -40,7 +40,7 @@ find "${VERIFY_STAGING_DIR}" -maxdepth 1 -type f \
     -o -name '*.adoc' -o -name '*.asciidoc' \
     -o -name '*.html' -o -name '*.htm' -o -name '*.xhtml' \) -delete
 
-_ua="searchable-verify/1.0 (+https://github.com/izuno4t/searchable)"
+_ua="searchable-verify/1.0 (+https://github.com/searchable-io/searchable)"
 _api="https://ja.wikipedia.org/w/api.php"
 # Cap each article so a single doc cannot blow up the request. The
 # leading paragraphs are sufficient to assert lexical and semantic

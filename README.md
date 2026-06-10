@@ -102,7 +102,7 @@ REST API example.
 ### 1. Clone & build
 
 ```bash
-git clone https://github.com/izuno4t/searchable.git
+git clone https://github.com/searchable-io/searchable.git
 cd searchable
 ./mvnw -B clean install -DskipTests
 ./mvnw -B -f examples/api/pom.xml package
@@ -330,9 +330,9 @@ Started**, then jump to the topic guide you need.
 ## 💬 Support
 
 - 🐛 **Bugs & feature requests** —
-  [GitHub Issues](https://github.com/izuno4t/searchable/issues)
+  [GitHub Issues](https://github.com/searchable-io/searchable/issues)
 - 💡 **Questions & design discussion** —
-  [GitHub Discussions](https://github.com/izuno4t/searchable/discussions)
+  [GitHub Discussions](https://github.com/searchable-io/searchable/discussions)
   (enable from the repository if not yet active)
 - 📨 **Direct contact** — open an issue with `[contact]` in the title
 
