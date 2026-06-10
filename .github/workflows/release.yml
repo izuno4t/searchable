@@ -4,10 +4,17 @@ name: Publish
 # version, including any -SNAPSHOT suffix, e.g.:
 #   v1.0.0           → Maven Central release (signed)
 #   v1.0.0-SNAPSHOT  → Central snapshot repository
-# central-publishing-maven-plugin auto-routes by suffix, so one workflow
-# covers both.
+# central-publishing-maven-plugin auto-routes by suffix.
 #
-# Required GitHub Secrets:
+# Two-job split:
+#   verify  — re-runs the release-readiness checks independently of
+#             main CI (so a tag on a broken commit cannot bypass them).
+#             Tag/pom version match, release artifact generation
+#             (sources/javadoc), and the e2e gate. No credentials.
+#   publish — only runs if verify passes. Holds GPG + Central tokens
+#             and is the only step that actually deploys.
+#
+# Required GitHub Secrets (publish job only):
 #   - CENTRAL_USERNAME  : Central Portal token user (https://central.sonatype.com/account)
 #   - CENTRAL_TOKEN     : Central Portal token password
 #   - GPG_PRIVATE_KEY   : ASCII-armored GPG private key
@@ -26,24 +33,19 @@ env:
   MAVEN_CLI_OPTS: "--batch-mode --no-transfer-progress --errors -Dstyle.color=always"
 
 jobs:
-  publish:
-    name: Publish to Sonatype Central
+  verify:
+    name: Release verification (tag + dry-run build + e2e)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
 
-      - name: Set up JDK 21 + Central Portal credentials + GPG key
+      - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
           cache: maven
-          server-id: central
-          server-username: CENTRAL_USERNAME
-          server-password: CENTRAL_TOKEN
-          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          gpg-passphrase: GPG_PASSPHRASE
 
       - name: Verify tag matches pom version
         run: |
@@ -60,15 +62,39 @@ jobs:
           fi
           echo "Publishing $TAG"
 
-      - name: Install reactor (so examples/api can resolve searchable-* from local .m2)
-        run: ./mvnw $MAVEN_CLI_OPTS -DskipTests install
+      - name: Release-build dry-run (sources + javadoc, no signing)
+        # Same check as ci.yml's release-build-check, repeated here so
+        # the verify gate does not implicitly trust that main CI passed
+        # on this exact commit. Also installs the reactor into local m2
+        # so the next step can resolve searchable-* artifacts.
+        run: ./mvnw $MAVEN_CLI_OPTS -Prelease -DskipTests -Dgpg.skip=true install
 
       - name: e2e verification gate (packaged JAR + forked JVM + HTTP)
         # Boots the real packaged Spring Boot JAR in a separate JVM and
-        # runs EndToEndVerificationIT against it. Failure here blocks the
-        # deploy step below, so we never publish a JAR that can't actually
-        # start. See docs/devel/testing/verify.ja.md.
+        # runs EndToEndVerificationIT against it. Failure here blocks
+        # publish, so we never deploy a JAR that can't actually start.
+        # See docs/devel/testing/verify.ja.md.
         run: ./mvnw $MAVEN_CLI_OPTS -f examples/api/pom.xml verify
+
+  publish:
+    name: Publish to Sonatype Central
+    needs: [verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK 21 + Central Portal credentials + GPG key
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_TOKEN
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: GPG_PASSPHRASE
 
       - name: Deploy
         env:

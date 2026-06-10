@@ -267,6 +267,28 @@
                         <additionalJOptions>
                             <additionalJOption>-Xdoclint:none</additionalJOption>
                         </additionalJOptions>
+                        <!--
+                            picocli 4.x's module-info declares
+                            `requires static org.jspecify`, and the
+                            release profile's `attach-javadocs` execution
+                            (`jar-no-fork`) pulls in test-scope classpath
+                            including junit-platform 6.0.3 which also
+                            references jspecify. Without this entry the
+                            javadoc tool resolves modules and fails with
+                            `module not found: org.jspecify`. Adding
+                            jspecify only to the javadoc tool's
+                            classpath (not the project's compile/runtime
+                            classpath) lets the modular lookup succeed
+                            without leaking the dep into the published
+                            POM.
+                        -->
+                        <additionalDependencies>
+                            <additionalDependency>
+                                <groupId>org.jspecify</groupId>
+                                <artifactId>jspecify</artifactId>
+                                <version>1.0.0</version>
+                            </additionalDependency>
+                        </additionalDependencies>
                     </configuration>
                 </plugin>
                 <plugin>
