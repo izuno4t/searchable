@@ -8,10 +8,6 @@ Japanese-optimized hybrid search library for Java. Provides full-text
 search (Apache Lucene + Kuromoji) and vector search (ONNX Runtime +
 multilingual-e5) from a single embeddable JAR.
 
-**Status**: Stable. Core (full-text + vector + hybrid search,
-multi-tenancy, admin UI, CLI) is complete; M3 (AI integration) is in
-progress. See [`docs/devel/work/tasks/`](docs/devel/work/tasks/).
-
 ## Build Commands
 
 ```bash
@@ -62,21 +58,14 @@ examples/plugin-datasource-s3/ # Sample DataSourcePlugin (S3)
 
 ## Documentation
 
-Doc layout follows the repository docs guideline (v1.0). Start from
-[`docs/devel/README.md`](docs/devel/README.md).
+The single source of truth for the developer-facing doc layout is
+[`docs/devel/README.md`](docs/devel/README.md). Start there; the
+sub-directory list and workflow rules are maintained in that file
+to avoid duplication.
 
-- [`docs/devel/requirements.md`](docs/devel/requirements.md) — Requirements
-- [`docs/devel/specs/`](docs/devel/specs/) — Public I/F contracts
-  (Java API, SPI, CLI, config, metadata, search behavior)
-- [`docs/devel/design/`](docs/devel/design/) — Current design (architecture / application)
-- [`docs/devel/adr/`](docs/devel/adr/) — Architecture Decision Records
-- [`docs/devel/testing/`](docs/devel/testing/) — Test policy and verification steps
-- [`docs/devel/operation/`](docs/devel/operation/) — Operational procedures
-- [`docs/devel/work/tasks/`](docs/devel/work/tasks/) — In-progress task lists
-- [`docs/devel/work/plans/`](docs/devel/work/plans/) — Multi-task plans (roadmap etc.)
-- [`docs/devel/work/investigations/`](docs/devel/work/investigations/) — Research reports
-- [`docs/devel/work/archive/`](docs/devel/work/archive/) — Completed task records
-- [`docs/public/`](docs/public/) — User-facing guides (getting-started, usage, CLI, etc.)
+The currently-active task list is
+[`docs/devel/work/tasks/task.md`](docs/devel/work/tasks/task.md).
+User-facing guides live under [`docs/public/`](docs/public/).
 
 ## Working Rules
 
@@ -102,3 +91,7 @@ Documents are classified by audience:
   scratch design memos) — written in **Japanese only**.
   - File extension is plain `.md` (no `.ja.md` suffix needed because
     there is no English counterpart).
+
+---
+
+**Last Updated**: 2026-06-10

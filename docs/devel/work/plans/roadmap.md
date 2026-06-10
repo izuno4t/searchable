@@ -1,9 +1,9 @@
 # Searchable - ロードマップ
 
-このリポジトリの **今後の作業方針** をまとめる。詳細タスクは
-[`docs/devel/work/tasks/`](../tasks/) 配下、完了済の経緯は
-[`docs/devel/work/archive/`](../archive/) 配下、キックオフ時の初期計画書は
-[`project-plan.md`](project-plan.md) を参照。
+このリポジトリの **今後の作業方針** をまとめる。
+work/ 配下のファイル配置（進行中タスク・クローズ済・バックログ等）は
+[`docs/devel/README.md`](../../README.md) を参照。
+キックオフ時の初期計画書は [`project-plan.md`](project-plan.md) を参照。
 
 ## 1. 現在進行中
 
