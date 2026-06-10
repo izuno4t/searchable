@@ -4,28 +4,40 @@
 # Brand / product names
 cspell
 Failsafe
+Hikari
 Kuromoji
 Logback
 markdownlint
 Ollama
+Portworx
+Qwen
 Searchable
 Spectral
 Sudachi
+Temurin
 testcontainers
 Thymeleaf
 
 # Library / API artifacts
+anth
+awssdk
+chatcmpl
 Checkstyle
 codehaus
+HikariCP
+hikaricp
 HNSW
 JaCoCo
 JDBC
+jdbcx
+JPMS
 JsonRpc
 Jsoup
 JSR
 Lucene
 ONNX
 onnxruntime
+ORAS
 PDFBox
 postgres
 PostgreSQL
@@ -33,7 +45,9 @@ SARIF
 snakeyaml
 Spotbugs
 SpotBugs
+WCAG
 xerial
+zaxxer
 
 # Domain / config terms
 analyzer
@@ -113,3 +127,60 @@ HWPF
 norconex
 OOXML
 soffice
+
+# Apache POI element / module identifiers
+HSLF
+HSSF
+presentationml
+spreadsheetml
+wordprocessingml
+XSLF
+XSSF
+XWPF
+
+# Storage / filesystem / infra terms
+APFS
+CIFS
+CMEK
+Gluster
+goofys
+LUKS
+tmpfs
+Topo
+zstd
+
+# Build tooling / system properties
+Dsearchable
+Dspring
+KMGTP
+mvnw
+sonatype
+
+# Placeholders used in examples and fixtures
+izuno
+minioadmin
+myapp
+
+# British English variants used in code comments and docs
+behaviour
+centralises
+containerised
+misconfig
+normalise
+normalised
+normalises
+recognise
+recognised
+tokeniser
+
+# Search / vector terminology
+reranks
+vectorizing
+
+# Identifier shortenings in test code
+bdoc
+deser
+nfetched
+sched
+serde
+strat
