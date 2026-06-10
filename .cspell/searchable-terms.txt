@@ -150,7 +150,9 @@ Topo
 zstd
 
 # Build tooling / system properties
+Dgenerate
 Dsearchable
+Dserver
 Dspring
 KMGTP
 mvnw
