@@ -69,7 +69,8 @@
 
 - ページネーション対応
 - スコアリング
-- メタデータ付与（予約キー: `url`(オリジン URI)・`contentType`(MIME)・`category`・`lang`・`tags` ─ 詳細は `docs/devel/design/architecture/overview.md` §5.7）
+- メタデータ付与（予約キー: `url`(オリジン URI)・`contentType`(MIME)・`category`・`lang`・`tags`
+  ─ 詳細は `docs/devel/design/architecture/overview.md` §5.7）
 - **セクション単位の検索結果（Sub-results）**
   - ドキュメント内の見出し単位で結果を返却
   - 各セクションへのアンカー付き URL（`metadata.url + #heading-slug`、full-text 検索でのみ生成）

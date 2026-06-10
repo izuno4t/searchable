@@ -132,5 +132,5 @@ example `SEARCHABLE_LOG_LEVEL=DEBUG`.
 - [`docs/public/setup-guide.md`](../docs/public/setup-guide.md) — Config file format
 - [`docs/public/usage.ja.md`](../docs/public/usage.ja.md) — Using Searchable as a Java
   library
-- [`docs/devel/design/architecture/overview.md`](../docs/devel/design/architecture/overview.md) — Storage layer and
-  module layout
+- [`docs/devel/design/architecture/overview.md`](../docs/devel/design/architecture/overview.md)
+  — Storage layer and module layout
