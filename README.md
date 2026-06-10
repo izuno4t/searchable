@@ -67,7 +67,7 @@ back-ends and AI-tool integrations.
 follow semantic versioning — additive changes in 1.x minors, breaking
 changes deferred to 2.0.
 
-See the [roadmap](docs/devel/work/plans/project-plan.md) for follow-up work.
+See the [roadmap](docs/devel/work/plans/roadmap.md) for follow-up work.
 
 ---
 
