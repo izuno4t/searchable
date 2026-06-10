@@ -1,7 +1,7 @@
 package io.searchable.core.application;
 
-import io.searchable.core.application.config.GlobalConfig;
-import io.searchable.core.application.config.GlobalConfigProvider;
+import io.searchable.core.application.config.SearchableGlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfigProvider;
 import io.searchable.core.domain.index.IndexMetadata;
 import io.searchable.core.domain.index.IndexMetadataRepository;
 import io.searchable.core.domain.namespace.AiConfig;
@@ -34,22 +34,22 @@ public final class NamespaceService {
     private final NamespaceRepository namespaces;
     private final IndexMetadataRepository indexMetadata;
     private final LuceneIndexProvider indexProvider;
-    private final GlobalConfigProvider globalConfigProvider;
+    private final SearchableGlobalConfigProvider globalConfigProvider;
     private final Clock clock;
 
     public NamespaceService(final NamespaceRepository namespaces,
                             final IndexMetadataRepository indexMetadata,
                             final LuceneIndexProvider indexProvider,
-                            final GlobalConfig globalConfig,
+                            final SearchableGlobalConfig globalConfig,
                             final Clock clock) {
         this(namespaces, indexMetadata, indexProvider,
-            new GlobalConfigProvider(globalConfig), clock);
+            new SearchableGlobalConfigProvider(globalConfig), clock);
     }
 
     public NamespaceService(final NamespaceRepository namespaces,
                             final IndexMetadataRepository indexMetadata,
                             final LuceneIndexProvider indexProvider,
-                            final GlobalConfigProvider globalConfigProvider,
+                            final SearchableGlobalConfigProvider globalConfigProvider,
                             final Clock clock) {
         this.namespaces = Objects.requireNonNull(namespaces);
         this.indexMetadata = Objects.requireNonNull(indexMetadata);
@@ -136,7 +136,7 @@ public final class NamespaceService {
 
     private NamespaceConfig applyDefaults(final NamespaceConfigPatch patch) {
         final NamespaceConfigPatch p = patch == null ? NamespaceConfigPatch.empty() : patch;
-        final GlobalConfig globalConfig = globalConfigProvider.current();
+        final SearchableGlobalConfig globalConfig = globalConfigProvider.current();
         return new NamespaceConfig(
             p.architecture() != null ? p.architecture() : globalConfig.defaultArchitecture(),
             p.searchStrategy() != null ? p.searchStrategy()

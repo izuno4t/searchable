@@ -6,8 +6,8 @@ import io.searchable.core.application.IndexStatisticsService;
 import io.searchable.core.application.NamespaceService;
 import io.searchable.core.application.SearchPerformanceMonitor;
 import io.searchable.core.application.SearchService;
-import io.searchable.core.application.config.GlobalConfig;
-import io.searchable.core.application.config.GlobalConfigProvider;
+import io.searchable.core.application.config.SearchableGlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfigProvider;
 import io.searchable.core.domain.chunking.ChunkingStrategy;
 import io.searchable.core.domain.dictionary.UserDictionaryRepository;
 import io.searchable.core.domain.dictionary.UserDictionaryResolver;
@@ -175,9 +175,9 @@ public class SearchableConfiguration {
     }
 
     @Bean
-    public GlobalConfig globalConfig(final SearchableProperties props) {
+    public SearchableGlobalConfig globalConfig(final SearchableProperties props) {
         final SearchableProperties.Global g = props.getGlobal();
-        return new GlobalConfig(
+        return new SearchableGlobalConfig(
             SearchType.valueOf(g.getDefaultArchitecture()),
             SearchStrategy.valueOf(g.getDefaultSearchStrategy()),
             SearchOrder.valueOf(g.getDefaultSearchOrder())
@@ -185,8 +185,8 @@ public class SearchableConfiguration {
     }
 
     @Bean
-    public GlobalConfigProvider globalConfigProvider(final GlobalConfig globalConfig) {
-        return new GlobalConfigProvider(globalConfig);
+    public SearchableGlobalConfigProvider globalConfigProvider(final SearchableGlobalConfig globalConfig) {
+        return new SearchableGlobalConfigProvider(globalConfig);
     }
 
     @Bean
@@ -204,7 +204,7 @@ public class SearchableConfiguration {
     public NamespaceService namespaceService(final NamespaceRepository nr,
                                              final IndexMetadataRepository imr,
                                              final LuceneIndexProvider provider,
-                                             final GlobalConfigProvider provider2,
+                                             final SearchableGlobalConfigProvider provider2,
                                              final Clock clock) {
         return new NamespaceService(nr, imr, provider, provider2, clock);
     }

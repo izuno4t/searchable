@@ -1,9 +1,9 @@
 package io.searchable.core;
 
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.application.NamespaceService;
 import io.searchable.core.application.SearchService;
-import io.searchable.core.application.config.ApplicationConfig;
+import io.searchable.core.application.config.SearchableConfig;
 import io.searchable.core.application.config.IndexConfig;
 import io.searchable.core.application.config.PluginsConfig;
 import io.searchable.core.domain.document.Document;
@@ -74,7 +74,7 @@ class CoverageSweepFinal6Test {
             final var mdRepo = new JdbcIndexMetadataRepository(ds);
             final var embed = new io.searchable.core.infrastructure.embedding.HashEmbeddingProvider(64);
             final var indexer = new LuceneIndexer(provider, embed);
-            new NamespaceService(nsRepo, mdRepo, provider, GlobalConfig.defaults(), CLOCK)
+            new NamespaceService(nsRepo, mdRepo, provider, SearchableGlobalConfig.defaults(), CLOCK)
                 .create("s1", "S1", null);
             indexer.index(Document.builder().id("d").namespaceId("s1").title("t").content("x").build());
 
@@ -101,12 +101,12 @@ class CoverageSweepFinal6Test {
         // Build a library then close it; close() handles AutoCloseable
         // exceptions via the swallow-and-log branch.
         try (SearchableLibrary lib = SearchableLibrary.builder()
-                .applicationConfig(new ApplicationConfig(
+                .applicationConfig(new SearchableConfig(
                     tempDir,
                     new PersistenceConfig("H2", "jdbc:h2:mem:lib-close;DB_CLOSE_DELAY=-1", "sa", ""),
                     new IndexConfig(tempDir.resolve("lib-close-idx")),
                     PluginsConfig.classpathOnly(),
-                    GlobalConfig.defaults()))
+                    SearchableGlobalConfig.defaults()))
                 .build()) {
             // Close happens via try-with-resources; second close is a no-op.
             assertThat(lib).isNotNull();
@@ -116,12 +116,12 @@ class CoverageSweepFinal6Test {
     @Test
     void searchableLibraryDoubleCloseIsIdempotent() {
         final SearchableLibrary lib = SearchableLibrary.builder()
-            .applicationConfig(new ApplicationConfig(
+            .applicationConfig(new SearchableConfig(
                 tempDir,
                 new PersistenceConfig("H2", "jdbc:h2:mem:lib-double;DB_CLOSE_DELAY=-1", "sa", ""),
                 new IndexConfig(tempDir.resolve("lib-double-idx")),
                 PluginsConfig.classpathOnly(),
-                GlobalConfig.defaults()))
+                SearchableGlobalConfig.defaults()))
             .build();
         lib.close();
         lib.close();

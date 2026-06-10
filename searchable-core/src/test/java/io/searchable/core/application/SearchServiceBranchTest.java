@@ -1,6 +1,6 @@
 package io.searchable.core.application;
 
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.domain.document.Document;
 import io.searchable.core.domain.embedding.EmbeddingProvider;
 import io.searchable.core.domain.namespace.NamespaceConfigPatch;
@@ -65,7 +65,7 @@ class SearchServiceBranchTest {
         hybrid = new HybridSearchOrchestrator(fullText, vector);
         searchService = new SearchService(namespaces, fullText, vector, hybrid);
         namespaceService = new NamespaceService(namespaces, metadata, provider,
-            GlobalConfig.defaults(),
+            SearchableGlobalConfig.defaults(),
             Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC));
     }
 

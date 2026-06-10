@@ -1,95 +1,100 @@
-# Searchable チャンキング戦略ガイド
+# Searchable chunking strategy guide
 
-ドキュメントをベクトル化・索引化する際の分割（チャンキング）戦略を
-選択する方法。
+How to choose a splitting (chunking) strategy when vectorizing and
+indexing documents.
 
-## 1. 仕組み
+## 1. How it works
 
-- 各 Namespace へのドキュメント登録時、`LuceneIndexer` が
-  `ChunkingStrategy` を介してドキュメントを 1 つ以上のチャンクへ分割
-- 各チャンクは独立した Lucene サブドキュメントとして索引化される
-  （`parentId`, `chunkOrdinal` を持つ）
-- ベクトルは各チャンク単位で生成・保存
-- 親 ID で集約することで、検索結果はドキュメント単位/チャンク単位の
-  両方で扱える（現状: 検索 API は親 ID を返却。重複は呼び出し側で
-  処理）
+- When a document is registered into a Namespace, `LuceneIndexer`
+  splits the document into one or more chunks via `ChunkingStrategy`.
+- Each chunk is indexed as an independent Lucene sub-document (with
+  `parentId` and `chunkOrdinal`).
+- Vectors are generated and stored per chunk.
+- By aggregating on the parent ID, search results can be handled at
+  either the document level or the chunk level (current state: the
+  search API returns the parent ID; deduplication is handled by the
+  caller).
 
-## 2. 標準戦略
+## 2. Built-in strategies
 
-| 戦略 | 既定 | 説明 | 主な用途 |
+| Strategy | Default | Description | Primary use |
 | --- | --- | --- | --- |
-| `whole` | はい | 1 ドキュメント = 1 チャンク（タイトル + 本文） | 既定。短文・互換重視 |
-| `fixed` | | 文字数 + overlap 指定で分割 | 長文・モデル max_tokens 制約対策 |
-| `sentence` | | 句点 (。!?.!?) で分割し target サイズで pack | 一般的な日本語文書 |
-| `paragraph` | | 空行区切りで分割 | 段落で意味が完結する文書 |
-| `section` | | パーサが返す見出し単位（要 Markdown/HTML 等） | 構造化ドキュメント |
+| `whole` | Yes | One document = one chunk (title + body) | Default. Short text, compatibility-focused |
+| `fixed` | | Split by character count with `overlap` | Long text, working around the model's `max_tokens` limit |
+| `sentence` | | Split on sentence-ending punctuation (`。!?.!?`) and pack to the target size | General Japanese documents |
+| `paragraph` | | Split on blank lines | Documents where paragraphs are self-contained |
+| `section` | | Split by the headings returned by the parser (requires Markdown/HTML, etc.) | Structured documents |
 
-## 3. 設定方法
+## 3. Configuration
 
 ### `application.properties`
 
 ```properties
-# 既定値は "whole"
+# Default is "whole"
 searchable.chunking.strategy=fixed
 searchable.chunking.chunk-size=512
 searchable.chunking.overlap=64
-# sentence strategy のターゲットサイズ
+# Target size for the sentence strategy
 searchable.chunking.sentence-target-size=400
 ```
 
-### サポートされる strategy 値
+### Supported strategy values
 
 `whole` / `fixed` / `sentence` / `paragraph` / `section`
 
-### Namespace 単位の上書き
+### Per-Namespace overrides
 
-要件 2.1.2 のスコープ階層に従い、グローバル設定 +
-Namespace 個別設定（現状は未公開、Phase 4 タスクで段階的に追加）。
-即時運用が必要な場合はアプリ起動時に Spring Bean を上書きする。
+Following the scope hierarchy in requirement 2.1.2, global
+configuration plus per-Namespace overrides (per-Namespace overrides
+are not yet publicly exposed; they will be added incrementally under
+the Phase 4 tasks). If you need this immediately, override the Spring
+Bean at application startup.
 
-## 4. 戦略の選び方
+## 4. How to choose a strategy
 
 ```text
-ドキュメント長 < 1,000 文字 → whole
-中程度（1,000〜10,000）       → sentence または paragraph
-長文（10,000+）              → fixed（chunkSize=512、overlap=64）
-見出し構造あり                → section
+Document length < 1,000 chars     → whole
+Medium (1,000-10,000)             → sentence or paragraph
+Long (10,000+)                    → fixed (chunkSize=512, overlap=64)
+Has heading structure             → section
 ```
 
-### 各戦略のトレードオフ
+### Trade-offs per strategy
 
-#### whole（既定）
+#### whole (default)
 
-- ✓ 互換最重視、1 ドキュメント = 1 ベクトル
-- ✗ 長文は embedding model の max_tokens で切り捨てられる
-- ✗ ドキュメント内の特定箇所がヒットしているかは判別不可
+- Pro: maximum compatibility, one document = one vector
+- Con: long text is truncated at the embedding model's `max_tokens`
+- Con: cannot identify which part of the document was hit
 
 #### fixed
 
-- ✓ サイズ制約に確実に収まる
-- ✓ overlap で境界跨ぎの欠落を防げる
-- ✗ 文や段落の途中で切れる場合がある
+- Pro: reliably fits within size limits
+- Pro: `overlap` prevents losses across chunk boundaries
+- Con: may cut in the middle of a sentence or paragraph
 
 #### sentence
 
-- ✓ 文の途中で切れない
-- ✓ target サイズで効率的に pack
-- ✗ 終端記号（。!?）が無い文書では機能しにくい
+- Pro: does not cut in the middle of a sentence
+- Pro: packs efficiently up to the target size
+- Con: does not work well for documents without sentence-ending
+  punctuation (`。!?`)
 
 #### paragraph
 
-- ✓ 空行で意味が完結する文書に最適
-- ✗ 段落が極端に長い/短い場合は不均衡
+- Pro: ideal for documents whose meaning closes at blank lines
+- Con: unbalanced when paragraphs are extremely long or short
 
 #### section
 
-- ✓ 構造化文書（Markdown/AsciiDoc/HTML）で意味的に正しい分割
-- ✓ 見出しテキストもベクトル化に含めるため検索精度が向上
-- ✗ 構造のない文書では `whole` にフォールバック
+- Pro: semantically correct splits for structured documents
+  (Markdown/AsciiDoc/HTML)
+- Pro: heading text is also vectorized, improving search accuracy
+- Con: falls back to `whole` for unstructured documents
 
-## 5. 動作確認
+## 5. Verifying the behavior
 
-### whole（既定）でアップロード
+### Upload with whole (default)
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/index/documents \
@@ -107,7 +112,7 @@ curl http://localhost:8080/api/v1/index/demo/metadata
 # → documentCount: 1
 ```
 
-### fixed に切替後、同じ長文を再投入
+### Switch to fixed and re-ingest the same long text
 
 `application.properties`:
 
@@ -117,21 +122,21 @@ searchable.chunking.chunk-size=200
 searchable.chunking.overlap=30
 ```
 
-再起動後:
+After restart:
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/index/documents ...
 curl http://localhost:8080/api/v1/index/demo/metadata
-# → documentCount: N（チャンク数）
+# → documentCount: N (number of chunks)
 ```
 
-検索は親 ID で集約され、`SearchHit.documentId()` は元の文書 ID
-（"d1"）を返す。
+Searches are aggregated by parent ID, and `SearchHit.documentId()`
+returns the original document ID (`"d1"`).
 
-## 6. 既存インデックスへの影響
+## 6. Impact on existing indexes
 
-戦略を変更しても **既にインデックス化されたドキュメントは再分割されない**。
-新しい戦略を全面適用するには:
+Changing the strategy does **not re-split documents that are already
+indexed**. To apply the new strategy across the board:
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/index/rebuild \
@@ -139,21 +144,25 @@ curl -X POST http://localhost:8080/api/v1/index/rebuild \
   -d '{"namespaceId": "demo"}'
 ```
 
-…の後、ドキュメントを再アップロード(rebuild は新しい空の
-インデックスディレクトリを書き出し、完了時にディレクトリ名を不可分に
-リネームして切り替える方式。旧バージョンは 30 秒の猶予期間を経たあとに
-削除される。検索は途切れない。ソースからの再投入はプラグインか手動で行う)。
+…and then re-upload the documents (rebuild writes a new empty index
+directory, then switches over by atomically renaming the directory on
+completion; the old version is deleted after a 30-second grace period.
+Searches are not interrupted. Re-ingestion from the source is done by
+a plugin or manually).
 
-## 7. 性能特性
+## 7. Performance characteristics
 
-- **インデックス時間**: チャンク数に比例（ベクトル計算回数が増える）
-- **検索レイテンシ**: HNSW 性質上、サブドキュメント数増加でも対数オーダー
-  （TASK-123 で 10万件 / dim=384 で max 1ms を計測済み）
-- **インデックスサイズ**: チャンク数に応じて増加（ベクトル次元 × チャンク数）
+- **Indexing time**: proportional to the number of chunks (more
+  embedding computations are required).
+- **Search latency**: due to HNSW properties, latency grows
+  logarithmically even as the number of sub-documents grows (TASK-123
+  measured a max of 1 ms at 100,000 entries / dim=384).
+- **Index size**: grows with the number of chunks (vector dimension ×
+  chunk count).
 
-## 8. プログラム的に独自戦略を実装
+## 8. Implementing a custom strategy programmatically
 
-`ChunkingStrategy` インターフェースを実装し、Bean を差し替える:
+Implement the `ChunkingStrategy` interface and replace the Bean:
 
 ```java
 public final class MyCustomChunking implements ChunkingStrategy {
@@ -172,24 +181,27 @@ public class CustomChunkingConfig {
 }
 ```
 
-## 9. トラブルシューティング
+## 9. Troubleshooting
 
-### チャンクが期待通りに分かれない
+### Chunks are not split as expected
 
-- `application.properties` の `chunk-size` と `overlap` の値を確認
-- `section` で機能しない → ドキュメントの `metadata.format` が
-  Markdown/HTML 等の構造化形式になっているか確認
-- `sentence` で機能しない → 文末記号（。！？.!?）が存在するか
+- Check the `chunk-size` and `overlap` values in
+  `application.properties`.
+- `section` is not working → verify that the document's
+  `metadata.format` is a structured format such as Markdown or HTML.
+- `sentence` is not working → verify that sentence-ending punctuation
+  (`。！？.!?`) is present.
 
-### `documentCount` の意味が変わる
+### The meaning of `documentCount` changes
 
-- whole: 1 ドキュメント = 1（従来通り）
-- 他戦略: 1 ドキュメント = N（チャンク数）
-- ドキュメント数を正確に知りたい場合は `searchable.documentCount` の
-  代替として `parentId` の distinct を取る必要がある（Phase 4 拡張対象）
+- whole: 1 document = 1 (as before).
+- Other strategies: 1 document = N (the number of chunks).
+- If you need an accurate document count, you need to take the
+  distinct count of `parentId` as an alternative to
+  `searchable.documentCount` (planned for Phase 4 extension).
 
 ---
 
 **Document Version**: 1.0
 **Last Updated**: 2026-05-15
-**Status**: Phase 1 追加機能
+**Status**: Phase 1 additional feature

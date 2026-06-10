@@ -1,6 +1,6 @@
 package io.searchable.admin;
 
-import io.searchable.core.application.config.GlobalConfigProvider;
+import io.searchable.core.application.config.SearchableGlobalConfigProvider;
 
 import io.searchable.admin.config.SearchableTestDataConfig;
 import io.searchable.testkit.spring.SearchableSpringBootTest;
@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SettingsControllerTest {
 
     @Autowired MockMvc mvc;
-    @Autowired GlobalConfigProvider provider;
+    @Autowired SearchableGlobalConfigProvider provider;
 
     @Test
     void settingsFormShowsCurrentValues() throws Exception {

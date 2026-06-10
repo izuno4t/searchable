@@ -11,7 +11,7 @@
 
 - Searchable コアライブラリの利用例
 - `io.searchable.example.api` パッケージで提供
-- 成果物: `api-example-1.0.0-SNAPSHOT.jar` (Spring Boot fat jar)
+- 成果物: `api-example-1.0.0.jar` (Spring Boot fat jar)
 
 ## 2. 機能要件
 

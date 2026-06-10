@@ -1,6 +1,6 @@
 package io.searchable.core.infrastructure.lucene;
 
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.application.NamespaceService;
 import io.searchable.core.domain.chunking.ChunkingStrategy;
 import io.searchable.core.domain.document.Document;
@@ -59,7 +59,7 @@ class LuceneFullTextSearcherBranchTest {
 
         final var nsRepo = new JdbcNamespaceRepository(dataSource);
         final var metaRepo = new JdbcIndexMetadataRepository(dataSource);
-        new NamespaceService(nsRepo, metaRepo, provider, GlobalConfig.defaults(),
+        new NamespaceService(nsRepo, metaRepo, provider, SearchableGlobalConfig.defaults(),
             Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC))
             .create("ns", "N", null);
         indexer.indexBatch("ns", List.of(

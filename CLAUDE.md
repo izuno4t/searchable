@@ -8,7 +8,7 @@ Japanese-optimized hybrid search library for Java. Provides full-text
 search (Apache Lucene + Kuromoji) and vector search (ONNX Runtime +
 multilingual-e5) from a single embeddable JAR.
 
-**Status**: Pre-1.0 (`1.0.0-SNAPSHOT`). Phases 1–5 implementation is
+**Status**: `1.0.0` (released). Phases 1–5 implementation is
 complete; M3 (AI integration) and the 2026-06 review response are in
 progress. See [`docs/devel/work/tasks/`](docs/devel/work/tasks/).
 

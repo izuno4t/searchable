@@ -8,7 +8,7 @@ import io.searchable.core.application.DocumentBrowser;
 import io.searchable.core.application.IndexService;
 import io.searchable.core.application.NamespaceService;
 import io.searchable.core.application.RestoreService;
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.domain.dictionary.DictionaryScope;
 import io.searchable.core.domain.dictionary.UserDictionary;
 import io.searchable.core.domain.dictionary.UserDictionaryEntry;
@@ -202,7 +202,7 @@ class CoverageSweepTest {
             final LuceneIndexer indexer = new LuceneIndexer(provider, emb);
             final Clock clock = Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC);
             final IndexService svc = new IndexService(nsRepo, metaRepo, provider, indexer, clock);
-            new NamespaceService(nsRepo, metaRepo, provider, GlobalConfig.defaults(), clock)
+            new NamespaceService(nsRepo, metaRepo, provider, SearchableGlobalConfig.defaults(), clock)
                 .create("bn", "B", null);
 
             svc.indexBatch("bn", List.of(
@@ -351,12 +351,12 @@ class CoverageSweepTest {
         // in a lambda that downcasts to AutoCloseable. Exercise it by
         // simply building and closing the library twice.
         try (SearchableLibrary lib = SearchableLibrary.builder()
-                .applicationConfig(new io.searchable.core.application.config.ApplicationConfig(
+                .applicationConfig(new io.searchable.core.application.config.SearchableConfig(
                     tempDir,
                     new PersistenceConfig("H2", "jdbc:h2:mem:builder-test;DB_CLOSE_DELAY=-1", "sa", ""),
                     new io.searchable.core.application.config.IndexConfig(tempDir.resolve("idx")),
                     io.searchable.core.application.config.PluginsConfig.classpathOnly(),
-                    GlobalConfig.defaults()))
+                    SearchableGlobalConfig.defaults()))
                 .build()) {
             assertThat(lib).isNotNull();
         }

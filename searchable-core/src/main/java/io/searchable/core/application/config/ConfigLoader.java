@@ -13,7 +13,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 /**
- * Reads {@link ApplicationConfig} from a YAML source.
+ * Reads {@link SearchableConfig} from a YAML source.
  *
  * <p>Property names follow {@code kebab-case} convention
  * (e.g. {@code data-directory}).
@@ -29,24 +29,24 @@ public final class ConfigLoader {
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
-    public ApplicationConfig load(final Path file) {
+    public SearchableConfig load(final Path file) {
         Objects.requireNonNull(file, "file must not be null");
         try (InputStream in = Files.newInputStream(file)) {
-            final ApplicationConfig raw = load(in);
+            final SearchableConfig raw = load(in);
             // Resolve all path-typed fields against the config file's parent
             // directory (see ADR-0002). Without this, every relative path
             // would be silently resolved against the JVM CWD.
             final Path base = file.toAbsolutePath().getParent();
-            return ApplicationConfig.normalize(raw, base);
+            return SearchableConfig.normalize(raw, base);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read config from " + file, e);
         }
     }
 
-    public ApplicationConfig load(final InputStream input) {
+    public SearchableConfig load(final InputStream input) {
         Objects.requireNonNull(input, "input must not be null");
         try {
-            return objectMapper.readValue(input, ApplicationConfig.class);
+            return objectMapper.readValue(input, SearchableConfig.class);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to parse YAML config", e);
         }

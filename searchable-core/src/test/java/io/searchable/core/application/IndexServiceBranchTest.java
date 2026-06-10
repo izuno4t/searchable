@@ -1,6 +1,6 @@
 package io.searchable.core.application;
 
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.domain.document.Document;
 import io.searchable.core.domain.document.DocumentSource;
 import io.searchable.core.domain.embedding.EmbeddingProvider;
@@ -59,7 +59,7 @@ class IndexServiceBranchTest {
         final EmbeddingProvider embedding = new HashEmbeddingProvider(128);
         indexer = new LuceneIndexer(provider, embedding);
         clock = Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC);
-        new NamespaceService(namespaces, metadata, provider, GlobalConfig.defaults(), clock)
+        new NamespaceService(namespaces, metadata, provider, SearchableGlobalConfig.defaults(), clock)
             .create("bn", "BN", null);
     }
 

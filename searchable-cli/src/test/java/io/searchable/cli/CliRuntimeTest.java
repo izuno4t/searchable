@@ -1,7 +1,7 @@
 package io.searchable.cli;
 
 import io.searchable.core.SearchableLibrary;
-import io.searchable.core.application.config.ApplicationConfig;
+import io.searchable.core.application.config.SearchableConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -23,9 +23,9 @@ class CliRuntimeTest {
     }
 
     @Test
-    void loadConfigParsesYamlIntoApplicationConfig() throws Exception {
+    void loadConfigParsesYamlIntoSearchableConfig() throws Exception {
         final Path config = writeConfig(tempDir);
-        final ApplicationConfig cfg = CliRuntime.loadConfig(config);
+        final SearchableConfig cfg = CliRuntime.loadConfig(config);
 
         assertThat(cfg.dataDirectory()).isEqualTo(tempDir);
         assertThat(cfg.persistence().type()).isEqualTo("H2");

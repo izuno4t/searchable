@@ -1,6 +1,6 @@
 package io.searchable.core.application;
 
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.domain.dictionary.DictionaryScope;
 import io.searchable.core.domain.dictionary.UserDictionary;
 import io.searchable.core.domain.dictionary.UserDictionaryEntry;
@@ -54,7 +54,7 @@ class DictionaryServiceTest {
             new UserDictionaryAnalyzerFactory(resolver));
         namespaceService = new NamespaceService(namespaces,
             new JdbcIndexMetadataRepository(dataSource),
-            provider, GlobalConfig.defaults(),
+            provider, SearchableGlobalConfig.defaults(),
             Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC));
         service = new DictionaryService(dictionaryRepo, provider, namespaces);
     }

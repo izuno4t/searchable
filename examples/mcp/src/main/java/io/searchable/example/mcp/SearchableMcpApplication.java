@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.searchable.core.SearchableLibrary;
-import io.searchable.core.application.config.ApplicationConfig;
+import io.searchable.core.application.config.SearchableConfig;
 import io.searchable.core.application.config.ConfigLoader;
 import io.searchable.core.infrastructure.runtime.PidFile;
 import io.searchable.core.infrastructure.runtime.SighupListener;
@@ -40,7 +40,7 @@ public final class SearchableMcpApplication {
     public static void main(final String[] args) throws Exception {
         final Path configPath = resolveConfigPath(args);
         log.info("loading config from {}", configPath);
-        final ApplicationConfig config = new ConfigLoader().load(configPath);
+        final SearchableConfig config = new ConfigLoader().load(configPath);
 
         final McpCapabilitiesConfig capabilities = loadCapabilities(args);
 

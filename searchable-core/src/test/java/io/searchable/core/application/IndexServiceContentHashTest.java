@@ -1,6 +1,6 @@
 package io.searchable.core.application;
 
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.domain.document.ContentHashes;
 import io.searchable.core.domain.document.Document;
 import io.searchable.core.domain.document.DocumentSource;
@@ -57,7 +57,7 @@ class IndexServiceContentHashTest {
         final Clock clock = Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC);
         service = new IndexService(namespaces, metadata, provider, indexer, metadataRepo, clock);
         namespaceService = new NamespaceService(namespaces, metadata, provider,
-            GlobalConfig.defaults(), clock);
+            SearchableGlobalConfig.defaults(), clock);
         namespaceService.create("ch_ns", "CH", null);
     }
 

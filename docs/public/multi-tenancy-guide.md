@@ -130,8 +130,5 @@ tenant cohort) and put the routing layer above Searchable.
 
 ## Related documents
 
-- [`docs/devel/work/plans/project-plan.md`](../devel/work/plans/project-plan.md)
-  — roadmap including `BACKLOG-001` (per-tenant resource quotas) and
-  `BACKLOG-002` (at-rest encryption)
 - [`docs/public/setup-guide.md`](setup-guide.md) — environment-level
   hardening (filesystem encryption, JVM sizing)

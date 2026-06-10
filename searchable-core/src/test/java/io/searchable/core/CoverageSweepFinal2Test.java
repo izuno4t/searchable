@@ -2,7 +2,7 @@ package io.searchable.core;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.searchable.core.application.NamespaceService;
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.domain.dictionary.DictionaryScope;
 import io.searchable.core.domain.dictionary.UserDictionary;
 import io.searchable.core.domain.dictionary.UserDictionaryEntry;
@@ -171,7 +171,7 @@ class CoverageSweepFinal2Test {
         final var mdRepo = new JdbcIndexMetadataRepository(ds);
         final LuceneIndexProvider provider = mock(LuceneIndexProvider.class);
         final NamespaceService svc = new NamespaceService(nsRepo, mdRepo, provider,
-            GlobalConfig.defaults(),
+            SearchableGlobalConfig.defaults(),
             Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC));
         svc.create("rm", "RM", null);
         // remove(rm, true) throws IOException
@@ -196,7 +196,7 @@ class CoverageSweepFinal2Test {
                 new IndexLayout(tempDir.resolve("ns-list-idx")), AnalyzerFactory.japanese())) {
             final NamespaceService svc = new NamespaceService(
                 new JdbcNamespaceRepository(ds), new JdbcIndexMetadataRepository(ds),
-                provider, GlobalConfig.defaults(),
+                provider, SearchableGlobalConfig.defaults(),
                 Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC));
             svc.create("a", "A", null);
             svc.create("b", "B", null);

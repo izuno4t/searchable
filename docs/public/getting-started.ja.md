@@ -56,12 +56,12 @@ cd searchable
 ./mvnw -B -f examples/api/pom.xml package
 ```
 
-成果物: `examples/api/target/api-example-1.0.0-SNAPSHOT.jar`
+成果物: `examples/api/target/api-example-1.0.0.jar`
 
 ### A.2 起動する
 
 ```bash
-java -jar examples/api/target/api-example-1.0.0-SNAPSHOT.jar \
+java -jar examples/api/target/api-example-1.0.0.jar \
      --spring.config.location=examples/api/application.properties
 ```
 
@@ -137,8 +137,8 @@ curl -X POST http://localhost:8080/api/v1/search \
 
 成果物:
 
-- `searchable-cli/target/searchable-cli-1.0.0-SNAPSHOT.jar`
-- `examples/webapp/target/webapp-example-1.0.0-SNAPSHOT.jar`
+- `searchable-cli/target/searchable-cli-1.0.0.jar`
+- `examples/webapp/target/webapp-example-1.0.0.jar`
 
 ### B.2 ドキュメントを用意する
 
@@ -194,7 +194,7 @@ persistence:
 #### ingest 実行
 
 ```bash
-java -jar searchable-cli/target/searchable-cli-1.0.0-SNAPSHOT.jar \
+java -jar searchable-cli/target/searchable-cli-1.0.0.jar \
   --config ./searchable.yaml \
   ingest \
   --namespace default \
@@ -212,7 +212,7 @@ java -jar searchable-cli/target/searchable-cli-1.0.0-SNAPSHOT.jar \
 #### 取込結果の確認
 
 ```bash
-java -jar searchable-cli/target/searchable-cli-1.0.0-SNAPSHOT.jar \
+java -jar searchable-cli/target/searchable-cli-1.0.0.jar \
   --config ./searchable.yaml status
 ```
 
@@ -225,13 +225,13 @@ CLI の `ingest` が終わってから起動する。`searchable.yaml` を作っ
 から webapp を起動すると、同じ `./data` を見にいく。
 
 ```bash
-java -jar examples/webapp/target/webapp-example-1.0.0-SNAPSHOT.jar
+java -jar examples/webapp/target/webapp-example-1.0.0.jar
 ```
 
 別ディレクトリから起動したい場合は webapp 側にも明示する:
 
 ```bash
-java -jar examples/webapp/target/webapp-example-1.0.0-SNAPSHOT.jar \
+java -jar examples/webapp/target/webapp-example-1.0.0.jar \
   --searchable.data-directory=/absolute/path/to/data
 ```
 
@@ -262,7 +262,7 @@ curl 'http://localhost:8080/?q=%E5%BD%A2%E6%85%8B%E7%B4%A0%E8%A7%A3%E6%9E%90'
 取り込まれる。**webapp / MCP / API を止める必要はない**:
 
 ```bash
-java -jar searchable-cli/target/searchable-cli-1.0.0-SNAPSHOT.jar \
+java -jar searchable-cli/target/searchable-cli-1.0.0.jar \
   --config ./searchable.yaml \
   ingest --namespace default ~/sample-docs
 ```
@@ -277,7 +277,7 @@ CLI ingest は **新しいバージョンディレクトリ
 
 仕組みの内訳:
 
-- **H2 メタデータ DB**: `ApplicationConfig.normalizeH2Url` が file モード URL に
+- **H2 メタデータ DB**: `SearchableConfig.normalizeH2Url` が file モード URL に
   `AUTO_SERVER=TRUE` を自動付与するので、CLI とアプリが同じ DB ファイルを
   並行に使える(H2 が裏で TCP サーバーを立てる)。
 - **Lucene インデックス**: CLI は現在の `<ts>/` を触らず別の `<ts>.tmp/` に

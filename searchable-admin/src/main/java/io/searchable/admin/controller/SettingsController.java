@@ -1,7 +1,7 @@
 package io.searchable.admin.controller;
 
 import io.searchable.admin.config.SearchableProperties;
-import io.searchable.core.application.config.GlobalConfigProvider;
+import io.searchable.core.application.config.SearchableGlobalConfigProvider;
 import io.searchable.core.domain.search.SearchOrder;
 import io.searchable.core.domain.search.SearchStrategy;
 import io.searchable.core.domain.search.SearchType;
@@ -22,10 +22,10 @@ import java.util.List;
 @RequestMapping("/settings")
 public class SettingsController {
 
-    private final GlobalConfigProvider provider;
+    private final SearchableGlobalConfigProvider provider;
     private final SearchableProperties properties;
 
-    public SettingsController(final GlobalConfigProvider provider,
+    public SettingsController(final SearchableGlobalConfigProvider provider,
                               final SearchableProperties properties) {
         this.provider = provider;
         this.properties = properties;

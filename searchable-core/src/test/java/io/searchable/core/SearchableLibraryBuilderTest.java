@@ -1,8 +1,8 @@
 package io.searchable.core;
 
-import io.searchable.core.application.config.ApplicationConfig;
-import io.searchable.core.application.config.GlobalConfig;
-import io.searchable.core.application.config.GlobalConfigProvider;
+import io.searchable.core.application.config.SearchableConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfigProvider;
 import io.searchable.core.application.config.IndexConfig;
 import io.searchable.core.application.config.PluginsConfig;
 import io.searchable.core.domain.embedding.EmbeddingProvider;
@@ -38,13 +38,13 @@ class SearchableLibraryBuilderTest {
     @AfterEach
     void tearDown() { db.close(); }
 
-    private ApplicationConfig appConfig() {
-        return new ApplicationConfig(
+    private SearchableConfig appConfig() {
+        return new SearchableConfig(
             tempDir,
             new PersistenceConfig("H2", "jdbc:h2:mem:dummy", "sa", ""),
             new IndexConfig(tempDir.resolve("idx")),
             PluginsConfig.classpathOnly(),
-            GlobalConfig.defaults());
+            SearchableGlobalConfig.defaults());
     }
 
     @Test
@@ -53,8 +53,8 @@ class SearchableLibraryBuilderTest {
         final var metaRepo = new JdbcIndexMetadataRepository(db.dataSource());
         final var dictRepo = new JdbcUserDictionaryRepository(db.dataSource());
         final var docMetaRepo = new JdbcDocumentMetadataRepository(db.dataSource());
-        final var globalCfg = GlobalConfig.defaults();
-        final var globalProvider = new GlobalConfigProvider(globalCfg);
+        final var globalCfg = SearchableGlobalConfig.defaults();
+        final var globalProvider = new SearchableGlobalConfigProvider(globalCfg);
         final EmbeddingProvider embedding = new HashEmbeddingProvider(128);
         final AnalyzerFactory analyzer = AnalyzerFactory.japanese();
         final PluginLoader plugins = new PluginLoader();

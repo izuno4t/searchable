@@ -1,39 +1,40 @@
-# Searchable ベクトル検索利用ガイド
+# Searchable vector search guide
 
-Searchable のベクトル検索 / ハイブリッド検索の有効化手順と
-チューニングポイント。
+This guide summarizes how to enable vector search and hybrid search in
+Searchable, along with key tuning points.
 
-## 1. 仕組み
+## 1. How it works
 
-- 文書登録時、`EmbeddingProvider` がドキュメントから埋め込みベクトルを
-  生成し、Lucene HNSW インデックス（`KnnFloatVectorField`、
-  類似度: `DOT_PRODUCT`）に保存
-- 検索時、クエリ文字列を同じ EmbeddingProvider でベクトル化して
-  k-NN 検索を実行
-- ハイブリッド検索では、全文検索（BM25）とベクトル検索を組み合わせる
+- At document ingestion time, the `EmbeddingProvider` generates an
+  embedding vector from the document and stores it in a Lucene HNSW
+  index (`KnnFloatVectorField`, similarity: `DOT_PRODUCT`).
+- At search time, the query string is vectorized by the same
+  EmbeddingProvider and a k-NN search is executed.
+- Hybrid search combines full-text search (BM25) with vector search.
 
-## 2. 埋め込みプロバイダ
+## 2. Embedding providers
 
-| プロバイダ | 用途 | 設定 |
+| Provider | Use case | Configuration |
 | --- | --- | --- |
-| `hash`（デフォルト） | 開発・テスト用、決定的だが意味的検索は不可 | `searchable.embedding.dimension` |
-| `onnx`（拡張） | 実運用、ONNX形式の埋め込みモデル | `searchable.embedding.model-path` + Tokenizer Bean |
+| `hash` (default) | Development and testing; deterministic but does not support semantic search | `searchable.embedding.dimension` |
+| `onnx` (extension) | Production use; ONNX-format embedding model | `searchable.embedding.model-path` + Tokenizer Bean |
 
-### Hashプロバイダ（デフォルト）
+### Hash provider (default)
 
 ```properties
 searchable.embedding.provider=hash
 searchable.embedding.dimension=384
 ```
 
-- 384次元のSHA-256ベース決定的ベクトル
-- 意味的検索は機能しない（同一テキストには同一ベクトル、それ以外は擬似ランダム）
-- ベクトル経路の挙動確認やパフォーマンステストに有用
+- 384-dimensional SHA-256-based deterministic vector.
+- Semantic search does not work (identical text produces identical
+  vectors; otherwise the output is pseudo-random).
+- Useful for verifying the vector pipeline and for performance testing.
 
-### Onnxプロバイダ（実モデル利用）
+### Onnx provider (real model)
 
-ONNX形式の埋め込みモデルを使う場合、Spring Configuration で
-`EmbeddingProvider` Bean を上書きする。
+To use an ONNX-format embedding model, override the
+`EmbeddingProvider` Bean in your Spring Configuration.
 
 ```java
 @Configuration
@@ -65,36 +66,35 @@ searchable.embedding.dimension=384
 searchable.embedding.max-sequence-length=512
 ```
 
-**注意**: Tokenizer は別途実装が必要（SentencePiece等のモデル固有
-トークナイザ）。`com.searchable.core.domain.embedding.Tokenizer`
-インタフェースを実装し、`encode(text, maxLength)` で
-`{inputIds, attentionMask}` を返す。
+**Note**: The Tokenizer must be implemented separately (a
+model-specific tokenizer such as SentencePiece). Implement the
+`com.searchable.core.domain.embedding.Tokenizer` interface and return
+`{inputIds, attentionMask}` from `encode(text, maxLength)`.
 
-### ONNX モデルの配布・取得・キャッシュ戦略
+### ONNX model distribution, retrieval, and cache strategy
 
-Searchable は ONNX モデルファイルを JAR に同梱しない。
-`OnnxEmbeddingProvider` は `Path modelPath` を受け取るだけで、
-ダウンロードもキャッシュも行わないため、利用者がローカルに
-配置する必要がある。
+Searchable does not bundle ONNX model files in the JAR.
+`OnnxEmbeddingProvider` only accepts a `Path modelPath`; it neither
+downloads nor caches the model, so users must place the file locally.
 
-**推奨モデル**:
+**Recommended models**:
 
-| モデル | 次元 | 約サイズ (ONNX量子化前) | 取得元 |
+| Model | Dimensions | Approx. size (before ONNX quantization) | Source |
 | --- | --- | --- | --- |
-| `intfloat/multilingual-e5-small` | 384 | 約140MB | <https://huggingface.co/intfloat/multilingual-e5-small> |
-| `intfloat/multilingual-e5-base` | 768 | 約470MB | <https://huggingface.co/intfloat/multilingual-e5-base> |
+| `intfloat/multilingual-e5-small` | 384 | ~140MB | <https://huggingface.co/intfloat/multilingual-e5-small> |
+| `intfloat/multilingual-e5-base` | 768 | ~470MB | <https://huggingface.co/intfloat/multilingual-e5-base> |
 
-**取得方法** (Hugging Face からの典型例):
+**How to obtain** (a typical example from Hugging Face):
 
 ```bash
-# huggingface-cli (推奨, git lfs 不要)
+# huggingface-cli (recommended, no git lfs required)
 pip install -U "huggingface_hub[cli]"
 huggingface-cli download intfloat/multilingual-e5-small \
   --include "*.onnx" "tokenizer.json" "sentencepiece.bpe.model" \
   --local-dir ~/.cache/searchable/models/multilingual-e5-small
 ```
 
-`git lfs` を使う場合:
+Using `git lfs`:
 
 ```bash
 git lfs install
@@ -102,36 +102,42 @@ git clone https://huggingface.co/intfloat/multilingual-e5-small \
   ~/.cache/searchable/models/multilingual-e5-small
 ```
 
-**配置パスの規約**: ライブラリは特定のパスを強制しない。
-チーム内で統一する場合は `~/.cache/searchable/models/<model-id>/`
-を出発点として、`application.properties` の
-`searchable.embedding.model-path` を絶対パスで指定する。
+**Path convention**: The library does not enforce a specific path.
+If you want to standardize within a team, start from
+`~/.cache/searchable/models/<model-id>/` and set
+`searchable.embedding.model-path` in `application.properties` to an
+absolute path.
 
-**embedded (Java API) と examples の両経路**:
+**Both the embedded (Java API) and examples paths**:
 
-- Java API で直接利用する場合は `SearchableLibrary.Builder.embeddingProvider(...)`
-  でアプリ側が解決済みの `OnnxEmbeddingProvider` を渡す。
-- examples (REST API / webapp / MCP) では `application.properties` に
-  `searchable.embedding.model-path=/absolute/path/to/model.onnx` を設定。
-  起動時にファイル不在ならアプリは起動失敗 (`IllegalStateException`)。
-- CI / Docker イメージにモデルファイルを含めるかは利用者判断。
-  巨大なバイナリを CI artifact に含めるのが許容できる場合のみ。
-  そうでない場合は `init container` / `entrypoint script` で取得する。
+- When using the Java API directly, pass an already-resolved
+  `OnnxEmbeddingProvider` via
+  `SearchableLibrary.Builder.embeddingProvider(...)` from the
+  application side.
+- For the examples (REST API / webapp / MCP), set
+  `searchable.embedding.model-path=/absolute/path/to/model.onnx` in
+  `application.properties`. If the file is missing at startup, the
+  application will fail to start (`IllegalStateException`).
+- Whether to bundle the model file in a CI image or Docker image is a
+  user decision. Do so only when including large binaries in CI
+  artifacts is acceptable; otherwise, fetch it via an init container
+  or entrypoint script.
 
-**ライセンス確認**: multilingual-e5 系は MIT、それ以外のモデルを
-使う場合はそれぞれのライセンスを必ず確認すること。
+**License check**: The multilingual-e5 family is MIT-licensed. When
+using any other model, be sure to verify its license.
 
-## 3. Namespace 設定
+## 3. Namespace configuration
 
-Namespace の `architecture` を設定することでデフォルト挙動を変更:
+You can change the default behavior by setting `architecture` on the
+Namespace.
 
-| 値 | 動作 |
+| Value | Behavior |
 | --- | --- |
-| `FULL_TEXT` | 全文検索のみ |
-| `VECTOR` | ベクトル検索のみ |
-| `HYBRID` | 全文 + ベクトル検索の組み合わせ |
+| `FULL_TEXT` | Full-text search only |
+| `VECTOR` | Vector search only |
+| `HYBRID` | Combination of full-text and vector search |
 
-### Namespace作成例
+### Namespace creation example
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/namespaces \
@@ -147,18 +153,19 @@ curl -X POST http://localhost:8080/api/v1/namespaces \
   }'
 ```
 
-### `searchStrategy`（ハイブリッド時の戦略）
+### `searchStrategy` (the strategy in hybrid mode)
 
-- `SEQUENTIAL`: primary engine の結果を secondary engine が rerank
-  （実質的に交差）。`searchOrder` で順序を決定
-  - `FULL_TEXT_FIRST`: 全文検索が primary
-  - `VECTOR_FIRST`: ベクトル検索が primary
-- `PARALLEL`: 両エンジンを並列実行 → Reciprocal Rank Fusion (RRF) で
-  union ランキング
+- `SEQUENTIAL`: The secondary engine reranks results from the primary
+  engine (effectively an intersection). The order is determined by
+  `searchOrder`.
+  - `FULL_TEXT_FIRST`: Full-text search is primary.
+  - `VECTOR_FIRST`: Vector search is primary.
+- `PARALLEL`: Both engines run in parallel, and results are merged
+  into a union ranking with Reciprocal Rank Fusion (RRF).
 
-## 4. 検索API
+## 4. Search API
 
-### ベクトル検索
+### Vector search
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/search \
@@ -171,7 +178,7 @@ curl -X POST http://localhost:8080/api/v1/search \
   }'
 ```
 
-### ハイブリッド検索
+### Hybrid search
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/search \
@@ -183,26 +190,27 @@ curl -X POST http://localhost:8080/api/v1/search \
   }'
 ```
 
-### 型省略時の挙動
+### Behavior when the type is omitted
 
-`searchType` を省略した場合、対象 Namespace の `architecture`
-設定が使われる。
+If `searchType` is omitted, the `architecture` setting of the target
+Namespace is used.
 
-### セクション anchor (`SubResult`) の対象範囲
+### Scope of section anchors (`SubResult`)
 
-`SubResult` および `SubResult.anchorUrl` は **full-text 検索でのみ生成**
-される。ベクトル検索(`VECTOR`)単体の結果には `subResults` が含まれない
-(`SubResult` のセクション分割はベクトル空間では意味付けが薄いため、明示的に
-全文検索限定としている)。ハイブリッド検索(`HYBRID`)の結果は内部で
-full-text とベクトルをマージするため、full-text 経由で見つかった文書には
-`subResults` が付き、ベクトル経由で見つかった文書には付かない。詳細は
-[docs/devel/design/architecture/overview.md §5.7](architecture.md) 参照。
+`SubResult` and `SubResult.anchorUrl` are **generated only for
+full-text search**. Standalone vector search (`VECTOR`) results do not
+include `subResults` (section splitting via `SubResult` has weak
+semantics in vector space, so it is explicitly restricted to
+full-text search). Hybrid search (`HYBRID`) results internally merge
+full-text and vector hits, so documents found via full-text carry
+`subResults` while documents found via vector do not.
 
-## 5. インデックス構築
+## 5. Index construction
 
-ベクトル付きインデックスは通常通り `/api/v1/index/documents` または
-`/api/v1/index/batch` で構築できる。`EmbeddingProvider` が有効な
-場合、登録時に自動でベクトルが計算・保存される。
+You can build a vector-enabled index through the usual endpoints
+`/api/v1/index/documents` or `/api/v1/index/batch`. When the
+`EmbeddingProvider` is enabled, vectors are computed and stored
+automatically at ingestion time.
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/index/batch \
@@ -216,89 +224,91 @@ curl -X POST http://localhost:8080/api/v1/index/batch \
   }'
 ```
 
-## 6. 性能特性
+## 6. Performance characteristics
 
-| 件数 | 検索 p99 | インデックス構築 |
+| Count | Search p99 | Index construction |
 | --- | --- | --- |
-| 10万 | 1 ms（ベクトル単体） | 約88秒（HNSW構築含む） |
-| 10万 | 1 ms（全文単体） | 約6秒 |
+| 100k | 1 ms (vector only) | ~88 seconds (including HNSW construction) |
+| 100k | 1 ms (full-text only) | ~6 seconds |
 
-> **計測単位の注意**: 上記 p99 は PoC コードが ms 単位で `long` 丸めしているため
-> "1 ms 未満" を意味する。サブミリ秒の精度は JMH ベースのベンチに置き換える
-> TASK-008 完了後に再計測予定 (参照: `docs/devel/work/tasks/task.md` TASK-007 結果)。
+> **Note on measurement units**: The p99 values above mean "less than
+> 1 ms" because the legacy PoC code rounds `long` values in
+> millisecond units. For the latest sub-millisecond figures, see the
+> Performance section of the README (JMH 1.37, with warm/cold
+> measurements reported separately).
 
-詳細は以下を参照:
+### Reproducing the 88s/100k initial vector index build
 
-- `docs/devel/work/investigations/003-performance.md`（全文検索）
-- `docs/devel/work/investigations/123-vector-performance.md`（ベクトル検索）
+To reproduce the "~88 seconds" above, the following must be aligned.
 
-### ベクトル初期インデックス構築 88s/100k の再現条件
-
-上記の "約88秒" は
-`docs/devel/work/poc/task-123-vector-perf/src/main/java/poc/VectorSearchPerformanceTest.java`
-で計測した値。再現には以下を揃える必要がある:
-
-| 項目 | 値 |
+| Item | Value |
 | --- | --- |
-| ドキュメント数 | 100,000 |
-| ベクトル次元 | 384 |
-| 類似度関数 | `VectorSimilarityFunction.DOT_PRODUCT` |
-| Storage | `MMapDirectory` (一時ディレクトリ) |
-| 並列度 | シングルスレッド (`for` ループによるシリアル `addDocument`) |
+| Document count | 100,000 |
+| Vector dimensions | 384 |
+| Similarity function | `VectorSimilarityFunction.DOT_PRODUCT` |
+| Storage | `MMapDirectory` (temporary directory) |
+| Parallelism | Single-threaded (serial `addDocument` in a `for` loop) |
 | `IndexWriterConfig.RAMBufferSizeMB` | 512 |
-| HNSW パラメーター | Lucene デフォルト (M=16, efConstruction=100) |
+| HNSW parameters | Lucene defaults (M=16, efConstruction=100) |
 | Analyzer | `JapaneseAnalyzer` (Kuromoji) |
-| 埋め込み | SHA-256 ベースのハッシュ (384次元、L2 正規化) — **実モデル非依存** |
-| ハードウェア | macOS / Apple Silicon (PoC README 記載) |
+| Embeddings | SHA-256-based hash (384 dimensions, L2-normalized) — **not dependent on a real model** |
+| Hardware | macOS / Apple Silicon (as documented in the PoC README) |
 | Java | 21 |
-| Lucene | 10.4 (旧 PoC は 10.2; 数値の桁感は同等) |
-| 出力 | `[index] %,d docs (dim=%d) indexed in %,d ms` の3番目 |
+| Lucene | 10.4 (the legacy PoC used 10.2; the order of magnitude is the same) |
+| Output | The third value of `[index] %,d docs (dim=%d) indexed in %,d ms` |
 
-**実モデルを使った場合の倍率**: ハッシュ埋め込みは ONNX 推論より桁違いに速い
-ため、`OnnxEmbeddingProvider` + `multilingual-e5-small` を使うと
-"埋め込み生成時間 + HNSW グラフ構築時間" となり、Apple Silicon でも
-10万件で 20〜40 分程度に伸びるのが一般的 (CPU バウンド)。
-プロダクションでは:
+**Multiplier when using a real model**: Hash embeddings are orders of
+magnitude faster than ONNX inference, so when you use
+`OnnxEmbeddingProvider` + `multilingual-e5-small`, the total becomes
+"embedding generation time + HNSW graph construction time," and on
+Apple Silicon this typically stretches to 20–40 minutes for 100k
+documents (CPU-bound). In production, combine the following to
+shorten the ingestion time.
 
-- バッチ並列度: `parallelStream()` や `ExecutorService` で並列化
-- バッチサイズ: 1,000〜10,000 件ずつ `addDocument` → 周期的に `commit`
-- `RAMBufferSizeMB`: 256〜1024 MB を JVM heap に合わせて設定
+- Batch parallelism: parallelize with `parallelStream()` or
+  `ExecutorService`.
+- Batch size: `addDocument` in chunks of 1,000–10,000 documents and
+  `commit` periodically.
+- `RAMBufferSizeMB`: set to 256–1024 MB according to the JVM heap.
 
-を組み合わせて取得時間を縮める。実装はライブラリ側で固定せず、
-`SearchableLibrary.Builder.embeddingProvider(...)` に渡す前段で
-利用者が制御する。
+The implementation is not fixed on the library side; users control
+this in the stage that precedes
+`SearchableLibrary.Builder.embeddingProvider(...)`.
 
-## 7. チューニング
+## 7. Tuning
 
-- **次元数**: 大きいほど精度向上だがインデックス容量・検索時間が増加。
-  multilingual-e5-small=384, multilingual-e5-base=768 が代表値
-- **HNSW パラメータ**: Lucene のデフォルト設定で十分。必要に応じて
-  `LuceneIndexProvider` を拡張して `IndexWriterConfig` をカスタマイズ
-  (詳細は次節)
-- **バッチサイズ**: インデックス構築時は `RAMBufferSizeMB` を大きくする
-  （デフォルト64MB → 256MB等）と一括投入が高速化
-- **並列ハイブリッド**: Virtual Thread executor を使用するため
-  CPU・I/O のオーバーヘッドは少ないが、両エンジンの最大レイテンシが
-  応答時間になることに注意
+- **Dimensions**: Higher dimensions improve accuracy but increase
+  index size and search time. Representative values are
+  multilingual-e5-small=384 and multilingual-e5-base=768.
+- **HNSW parameters**: Lucene's default settings are sufficient.
+  Extend `LuceneIndexProvider` if necessary to customize
+  `IndexWriterConfig` (see the next section for details).
+- **Batch size**: Increasing `RAMBufferSizeMB` at index construction
+  time (e.g., from the default 64MB to 256MB) accelerates bulk
+  ingestion.
+- **Parallel hybrid**: Because a Virtual Thread executor is used, CPU
+  and I/O overhead is low, but note that response time is the maximum
+  latency of the two engines.
 
-### HNSW パラメーターチューニング指針
+### HNSW parameter tuning guidance
 
-Lucene の HNSW は `Lucene99HnswVectorsFormat` で実装されており、
-構築時の `M` / `efConstruction` と検索時の `topK` が
-レイテンシ・リコール・インデックスサイズを支配する。
+Lucene's HNSW is implemented by `Lucene99HnswVectorsFormat`. The
+build-time `M` / `efConstruction` and the search-time `topK` dominate
+latency, recall, and index size.
 
-| パラメーター | Lucene デフォルト | 動作 | 上げると | 下げると |
+| Parameter | Lucene default | Behavior | Increase to | Decrease to |
 | --- | --- | --- | --- | --- |
-| `M` | 16 | 各ノードの最大接続数 | リコール向上、インデックス容量増、構築時間増 | インデックス縮小、リコール低下 |
-| `efConstruction` | 100 | 構築時の候補探索幅 | リコール向上、構築時間増 | 構築高速化、品質低下 |
-| `k` (検索 `topK`) | API 指定 | 検索時の候補数 | リコール向上、検索レイテンシ増 | 高速化、リコール低下 |
+| `M` | 16 | Maximum connections per node | Improve recall; larger index; longer build time | Shrink index; lower recall |
+| `efConstruction` | 100 | Candidate search width during build | Improve recall; longer build time | Faster build; lower quality |
+| `k` (search `topK`) | API-specified | Number of candidates at search time | Improve recall; higher search latency | Faster; lower recall |
 
-> Lucene 10 では検索時の `ef` を独立に指定する API は無く、`topK` が
-> そのまま探索幅の起点となる。リコール重視時は `topK` を実必要件数より
-> 大きめに取り、アプリ側で post-rerank する。
+> Lucene 10 does not provide an API for specifying search-time `ef`
+> independently; `topK` serves directly as the starting point for the
+> search width. When recall matters, take `topK` larger than the
+> actual required count and post-rerank in the application.
 
-**カスタマイズ方法** (`LuceneIndexProvider` のサブクラスで
-`IndexWriterConfig` を作る箇所を差し替える):
+**How to customize** (replace the part of a `LuceneIndexProvider`
+subclass that builds the `IndexWriterConfig`):
 
 ```java
 final var hnswFormat = new Lucene99HnswVectorsFormat(
@@ -317,36 +327,39 @@ final var codec = new Lucene101Codec() {
 indexWriterConfig.setCodec(codec);
 ```
 
-**チューニング指針** (10万〜100万件規模):
+**Tuning guidance** (at the 100k–1M scale):
 
-- まず Lucene デフォルト (M=16, efConstruction=100) で測定
-- リコール不足を感じたら **M=24** から試す。M=32 以上は
-  インデックスサイズが約 1.5〜2倍に膨らむため、運用容量と相談
-- 構築時間に余裕があれば **efConstruction=200〜400** で
-  リコールを底上げ。100→400 で構築時間は約 3〜4倍
-- 検索レイテンシを切り詰めたいときは API 側の `topK` を下げ、
-  アプリ側のフィルタリングで補う
+- Start by measuring with Lucene's defaults (M=16, efConstruction=100).
+- If recall feels insufficient, try **M=24** first. Going to M=32 or
+  beyond bloats the index size by roughly 1.5–2x, so weigh that
+  against your operational capacity.
+- If you have build-time headroom, raise **efConstruction=200–400** to
+  lift recall. Going from 100 to 400 makes the build time about 3–4x
+  longer.
+- When you need to trim search latency, lower `topK` on the API side
+  and compensate with application-side filtering.
 
-## 8. トラブルシューティング
+## 8. Troubleshooting
 
-### 「ベクトル検索の結果が常に同じ」
+### "Vector search results are always the same"
 
-- Hash プロバイダ使用時は意味的検索は機能しない。Onnx プロバイダ + 実モデル
-  に切り替える必要あり
+- The Hash provider does not implement semantic search. Switch to the
+  Onnx provider with a real model.
 
-### 「ベクトル検索でドキュメントが0件」
+### "Vector search returns zero documents"
 
-- 該当 Namespace の文書登録時に `EmbeddingProvider` が有効だったか確認
-- ベクトル無しで登録された文書は KNN クエリに引っかからない。
-  `/api/v1/index/rebuild` で再構築
+- Verify that the `EmbeddingProvider` was active when documents were
+  ingested into the target Namespace.
+- Documents ingested without a vector are not matched by KNN queries.
+  Rebuild via `/api/v1/index/rebuild`.
 
-### 「ベクトル次元数の不一致エラー」
+### "Vector dimension mismatch error"
 
-- 同一 Namespace 内で異なる次元のベクトルは混在不可
-- 次元を変更する場合は Namespace を削除して再構築
+- Vectors of different dimensions cannot coexist in the same Namespace.
+- To change dimensions, delete the Namespace and rebuild it.
 
 ---
 
 **Document Version**: 1.1
 **Last Updated**: 2026-06-07
-**Status**: Phase 2 (TASK-016 / TASK-017 / TASK-018 反映)
+**Status**: Phase 2 (reflects TASK-016 / TASK-017 / TASK-018)

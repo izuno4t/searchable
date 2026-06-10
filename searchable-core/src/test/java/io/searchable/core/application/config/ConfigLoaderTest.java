@@ -16,7 +16,7 @@ class ConfigLoaderTest {
     @Test
     void loadsFullConfigFromYamlClasspath() {
         final ConfigLoader loader = new ConfigLoader();
-        final ApplicationConfig config;
+        final SearchableConfig config;
         try (InputStream in = getClass().getResourceAsStream("/searchable-test-config.yaml")) {
             assertThat(in).isNotNull();
             config = loader.load(in);
@@ -48,7 +48,7 @@ class ConfigLoaderTest {
     @Test
     void loadsPostgresqlConfigFromYamlClasspath() {
         final ConfigLoader loader = new ConfigLoader();
-        final ApplicationConfig config;
+        final SearchableConfig config;
         try (InputStream in = getClass().getResourceAsStream("/searchable-postgres-config.yaml")) {
             assertThat(in).isNotNull();
             config = loader.load(in);
@@ -73,7 +73,7 @@ class ConfigLoaderTest {
               username: sa
               password: ""
             """;
-        final ApplicationConfig cfg = new ConfigLoader()
+        final SearchableConfig cfg = new ConfigLoader()
             .load(new java.io.ByteArrayInputStream(yaml.getBytes()));
 
         assertThat(cfg.index().directory()).isEqualTo(Path.of("./data/indexes"));

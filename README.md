@@ -4,7 +4,7 @@
 ![Build](https://img.shields.io/badge/Build-Maven-c71a36)
 ![Lucene](https://img.shields.io/badge/Lucene-10.4-blue)
 ![MCP Protocol](https://img.shields.io/badge/MCP-2024--11--05-blueviolet)
-![Version](https://img.shields.io/badge/Version-1.0.0--SNAPSHOT-brightgreen)
+![Version](https://img.shields.io/badge/Version-1.0.0-brightgreen)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > 🇯🇵 **Japanese-optimized hybrid search for Java** — full-text and vector
@@ -59,6 +59,32 @@ back-ends and AI-tool integrations.
 
 ---
 
+## 📍 Project Status
+
+**1.0.0 (stable).** Core API surface is committed; subsequent releases
+follow semantic versioning — additive changes in 1.x minors, breaking
+changes deferred to 2.0.
+
+The Phase 1–5 implementation plans (documented under
+[`docs/devel/work/archive/`](docs/devel/work/archive/)) are complete; roadmap and follow-up
+work live in [`docs/devel/work/plans/project-plan.md`](docs/devel/work/plans/project-plan.md).
+
+---
+
+## ✅ Features
+
+| Capability | Detail |
+| --- | --- |
+| Full-text search | Apache Lucene + Kuromoji, BM25 scoring with per-namespace overrides |
+| Vector search | Lucene HNSW + ONNX Runtime + multilingual-e5 |
+| Hybrid search | Sequential or parallel execution, configurable per namespace |
+| Document formats | Plain Text / Markdown / AsciiDoc / HTML / PDF (PDFBox) / Microsoft Office .docx / .doc / .xlsx / .xls / .pptx / .ppt (Apache POI) |
+| Interfaces | Java API (core); CLI (`searchable-cli`); REST API / MCP / webapp as reference apps in [`examples/`](examples/) |
+| Persistence | H2 (default) or PostgreSQL metadata via HikariCP + file-system Lucene indexes |
+| Operations | Backup / restore of Lucene indexes, user dictionary management, admin UI (`searchable-admin`) |
+
+---
+
 ## 🚀 Quick Start
 
 Get a working search endpoint running in a few minutes via the bundled
@@ -88,7 +114,7 @@ the second packages the REST API example as a fat JAR.
 ### 2. Start the REST API server
 
 ```bash
-java -jar examples/api/target/api-example-1.0.0-SNAPSHOT.jar
+java -jar examples/api/target/api-example-1.0.0.jar
 ```
 
 When you see `Started SearchableApplication`, the server is listening on
@@ -136,7 +162,7 @@ Drop Searchable into a Maven project as a regular dependency:
 <dependency>
   <groupId>io.searchable</groupId>
   <artifactId>searchable-core</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
 </dependency>
 ```
 
@@ -144,7 +170,7 @@ Minimal embedded usage (loads `searchable.yaml`, opens the index, runs
 a search, and closes everything via try-with-resources):
 
 ```java
-ApplicationConfig config = new ConfigLoader().load(Path.of("searchable.yaml"));
+SearchableConfig config = new ConfigLoader().load(Path.of("searchable.yaml"));
 
 try (SearchableLibrary library = SearchableLibrary.fromConfig(config)) {
     SearchResult result = library.searchService().search(
@@ -163,20 +189,6 @@ The `SearchableLibrary.Builder` exposes individual overrides (custom
 embedding provider, in-memory repositories for tests, etc.); see
 [`SearchableLibrary.java`](searchable-core/src/main/java/io/searchable/core/SearchableLibrary.java)
 for the full surface.
-
----
-
-## ✅ Features
-
-| Capability | Detail |
-| --- | --- |
-| Full-text search | Apache Lucene + Kuromoji, BM25 scoring with per-namespace overrides |
-| Vector search | Lucene HNSW + ONNX Runtime + multilingual-e5 |
-| Hybrid search | Sequential or parallel execution, configurable per namespace |
-| Document formats | Plain Text / Markdown / AsciiDoc / HTML / PDF (PDFBox) / Microsoft Office .docx / .doc / .xlsx / .xls / .pptx / .ppt (Apache POI) |
-| Interfaces | Java API (core); CLI (`searchable-cli`); REST API / MCP / webapp as reference apps in [`examples/`](examples/) |
-| Persistence | H2 (default) or PostgreSQL metadata via HikariCP + file-system Lucene indexes |
-| Operations | Backup / restore of Lucene indexes, user dictionary management, admin UI (`searchable-admin`) |
 
 ---
 
@@ -218,29 +230,6 @@ under `examples/search-ui/` is plain HTML + JS.
 
 ---
 
-## 🔌 Extension Points (SPI)
-
-Every cross-cutting concern is behind a small Java interface. Two
-discovery styles are used:
-
-- **ServiceLoader-based** SPIs are picked up automatically from any
-  plugin JAR on the classpath (declare the implementation under
-  `META-INF/services/<interface>`).
-- **Builder-based** SPIs are wired explicitly via
-  [`SearchableLibrary.Builder`](searchable-core/src/main/java/io/searchable/core/SearchableLibrary.java).
-
-| Extension point | Discovery | Default | Typical use |
-| --- | --- | --- | --- |
-| [`DataSourcePlugin`](searchable-plugins/src/main/java/io/searchable/plugin/DataSourcePlugin.java) | ServiceLoader | — | Ingest from external sources (filesystem, S3, Confluence, ...) |
-| [`AiProvider`](searchable-ai/src/main/java/io/searchable/ai/AiProvider.java) | ServiceLoader | Bundled: Anthropic / OpenAI / Ollama (opt-in) | LLM post-processing (summarize / answer with retrieved hits) |
-| [`EmbeddingProvider`](searchable-core/src/main/java/io/searchable/core/domain/embedding/EmbeddingProvider.java) | Builder | ONNX + multilingual-e5 | Swap the vector-embedding backend |
-| [`DocumentParser`](searchable-core/src/main/java/io/searchable/core/domain/parser/DocumentParser.java) | `ParserRegistry.register(...)` | Plain / Markdown / AsciiDoc / HTML / PDF / Office | Add new file-format extractors |
-| [`ChunkingStrategy`](searchable-core/src/main/java/io/searchable/core/domain/chunking/ChunkingStrategy.java) | Builder | — | Control how long documents are split before embedding |
-| `Analyzer` (via `AnalyzerFactory`) | Per-namespace config | `JapaneseAnalyzer` (Kuromoji) | Drop in a different Lucene `Analyzer` (e.g. Sudachi) |
-| Repository SPIs (`NamespaceRepository`, `IndexMetadataRepository`, `UserDictionaryRepository`, `DocumentMetadataRepository`) | Builder | JDBC (H2 / PostgreSQL) | In-memory or alternative stores for tests / embedded scenarios |
-
----
-
 ## 🧩 Modules
 
 **Embeddable core** — the JARs you put on your application's classpath:
@@ -273,6 +262,29 @@ individually, not part of the root build:
 
 ---
 
+## 🔌 Extension Points (SPI)
+
+Every cross-cutting concern is behind a small Java interface. Two
+discovery styles are used:
+
+- **ServiceLoader-based** SPIs are picked up automatically from any
+  plugin JAR on the classpath (declare the implementation under
+  `META-INF/services/<interface>`).
+- **Builder-based** SPIs are wired explicitly via
+  [`SearchableLibrary.Builder`](searchable-core/src/main/java/io/searchable/core/SearchableLibrary.java).
+
+| Extension point | Discovery | Default | Typical use |
+| --- | --- | --- | --- |
+| [`DataSourcePlugin`](searchable-plugins/src/main/java/io/searchable/plugin/DataSourcePlugin.java) | ServiceLoader | — | Ingest from external sources (filesystem, S3, Confluence, ...) |
+| [`AiProvider`](searchable-ai/src/main/java/io/searchable/ai/AiProvider.java) | ServiceLoader | Bundled: Anthropic / OpenAI / Ollama (opt-in) | LLM post-processing (summarize / answer with retrieved hits) |
+| [`EmbeddingProvider`](searchable-core/src/main/java/io/searchable/core/domain/embedding/EmbeddingProvider.java) | Builder | ONNX + multilingual-e5 | Swap the vector-embedding backend |
+| [`DocumentParser`](searchable-core/src/main/java/io/searchable/core/domain/parser/DocumentParser.java) | `ParserRegistry.register(...)` | Plain / Markdown / AsciiDoc / HTML / PDF / Office | Add new file-format extractors |
+| [`ChunkingStrategy`](searchable-core/src/main/java/io/searchable/core/domain/chunking/ChunkingStrategy.java) | Builder | — | Control how long documents are split before embedding |
+| `Analyzer` (via `AnalyzerFactory`) | Per-namespace config | `JapaneseAnalyzer` (Kuromoji) | Drop in a different Lucene `Analyzer` (e.g. Sudachi) |
+| Repository SPIs (`NamespaceRepository`, `IndexMetadataRepository`, `UserDictionaryRepository`, `DocumentMetadataRepository`) | Builder | JDBC (H2 / PostgreSQL) | In-memory or alternative stores for tests / embedded scenarios |
+
+---
+
 ## 🧪 CI
 
 GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml))
@@ -290,39 +302,28 @@ expansion (e.g. 25 LTS preview) is not yet wired up.
 
 ---
 
-## 📍 Project Status
-
-**Pre-1.0 (`1.0.0-SNAPSHOT`).** Core API surface is stable enough to
-build against; minor breaking changes are still possible before the 1.0
-tag. Module layout is being tidied as the codebase approaches release.
-
-The Phase 1–5 implementation plans (documented under
-[`docs/devel/work/archive/`](docs/devel/work/archive/)) are complete; roadmap and follow-up
-work live in [`docs/devel/work/plans/project-plan.md`](docs/devel/work/plans/project-plan.md).
-
----
-
 ## 📚 Documentation
 
-> Many internal references are still Japanese-only (`.ja.md`); a full
-> English translation pass is on the roadmap. English entry points are
-> listed first below.
+User-facing guides live under [`docs/public/`](docs/public/). Every
+guide ships in **both English (`xxx.md`) and Japanese (`xxx.ja.md`)**;
+the table below links the English entry points. Start with **Getting
+Started**, then jump to the topic guide you need.
 
-| Document | Language | When to read it |
-| --- | --- | --- |
-| [Setup Guide](docs/public/setup-guide.md) | en | Detailed installation, configuration, and operational tasks |
-| [Architecture](docs/devel/design/architecture/overview.md) | en | Design rationale and internal structure |
-| [Admin UI Guide](docs/public/admin-ui-guide.md) | en | Operating the `searchable-admin` Spring Boot UI |
-| [Vector Search Guide](docs/public/vector-search-guide.md) | en | Embeddings, HNSW, and hybrid scoring |
-| [Multi-tenancy Guide](docs/public/multi-tenancy-guide.md) | en | What Namespaces do / do not isolate; OOM, QoS, and encryption constraints |
-| [Examples Overview](examples/README.md) | ja | Reference apps: webapp / REST API / MCP / search UI |
-| [Getting Started](docs/public/getting-started.ja.md) | ja | First-time setup in 5–10 minutes |
-| [Usage Guide](docs/public/usage.ja.md) | ja | Day-to-day reference for the Java API, REST API, and MCP server |
-| [CLI Guide](docs/public/cli-guide.ja.md) | ja | `searchable-cli` reference for index management |
-| [API Specification](examples/api/api-specification.ja.md) | ja | Full REST / Java / MCP API specification |
-| [OpenAPI](examples/api/openapi.yaml) | — | Machine-readable REST API definition |
-| [Requirements](docs/devel/requirements.md) | en | Functional and non-functional requirements |
-| [Research Reports](docs/devel/work/investigations/) | mixed | Background investigations behind key technical decisions |
+| Document | When to read it |
+| --- | --- |
+| [Getting Started](docs/public/getting-started.md) | First-time setup in 5–10 minutes |
+| [Setup Guide](docs/public/setup-guide.md) | Detailed installation, configuration, and operational tasks |
+| [Usage Guide](docs/public/usage.md) | Day-to-day reference for the Java API, REST API, and MCP server |
+| [CLI Guide](docs/public/cli-guide.md) | `searchable-cli` reference for index management |
+| [Admin UI Guide](docs/public/admin-ui-guide.md) | Operating the `searchable-admin` Spring Boot UI |
+| [Vector Search Guide](docs/public/vector-search-guide.md) | Embeddings, HNSW, and hybrid scoring |
+| [Chunking Guide](docs/public/chunking-guide.md) | Splitting long documents before embedding |
+| [User Dictionary Guide](docs/public/user-dictionary-guide.md) | Customizing Kuromoji tokenization with user-defined words |
+| [Multi-tenancy Guide](docs/public/multi-tenancy-guide.md) | What Namespaces do / do not isolate; OOM, QoS, and encryption constraints |
+| [Demo Setup](docs/public/demo-setup.md) | Standing up a quick demo environment |
+| [Examples Overview](examples/README.md) | Reference apps: webapp / REST API / MCP / search UI |
+| [API Specification](examples/api/api-specification.ja.md) | Full REST / Java / MCP API specification |
+| [OpenAPI](examples/api/openapi.yaml) | Machine-readable REST API definition |
 
 ---
 

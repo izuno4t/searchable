@@ -15,14 +15,14 @@ import java.util.Objects;
  * {@link AnalyzerType#SUDACHI} requires the optional Sudachi runtime to
  * be on the classpath.
  */
-public record GlobalConfig(
+public record SearchableGlobalConfig(
     SearchType defaultArchitecture,
     SearchStrategy defaultSearchStrategy,
     SearchOrder defaultSearchOrder,
     AnalyzerType analyzer
 ) {
 
-    public GlobalConfig {
+    public SearchableGlobalConfig {
         Objects.requireNonNull(defaultArchitecture, "defaultArchitecture must not be null");
         Objects.requireNonNull(defaultSearchStrategy, "defaultSearchStrategy must not be null");
         Objects.requireNonNull(defaultSearchOrder, "defaultSearchOrder must not be null");
@@ -30,15 +30,15 @@ public record GlobalConfig(
     }
 
     /** Backward-compatible constructor without {@code analyzer}. */
-    public GlobalConfig(final SearchType defaultArchitecture,
+    public SearchableGlobalConfig(final SearchType defaultArchitecture,
                         final SearchStrategy defaultSearchStrategy,
                         final SearchOrder defaultSearchOrder) {
         this(defaultArchitecture, defaultSearchStrategy, defaultSearchOrder,
             AnalyzerType.KUROMOJI);
     }
 
-    public static GlobalConfig defaults() {
-        return new GlobalConfig(
+    public static SearchableGlobalConfig defaults() {
+        return new SearchableGlobalConfig(
             SearchType.FULL_TEXT,
             SearchStrategy.SEQUENTIAL,
             SearchOrder.FULL_TEXT_FIRST,

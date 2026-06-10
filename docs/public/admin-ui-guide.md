@@ -1,107 +1,110 @@
-# Searchable Admin UI 利用ガイド
+# Searchable Admin UI guide
 
-Searchable Admin UI（searchable-ui）の機能と操作手順。
+Features and operating procedures for the Searchable Admin UI
+(searchable-ui).
 
-## 1. 起動
+## 1. Startup
 
 ```bash
 mvn -B clean package
-java -jar searchable-ui/target/searchable-ui-1.0.0-SNAPSHOT.jar
+java -jar searchable-ui/target/searchable-ui-1.0.0.jar
 ```
 
-デフォルトでは `http://localhost:8080` で UI と REST API の両方が
-提供される。
+By default, both the UI and the REST API are served at
+`http://localhost:8080`.
 
-設定ファイルを上書きする場合:
+To override the configuration file:
 
 ```bash
-java -jar searchable-ui-1.0.0-SNAPSHOT.jar \
+java -jar searchable-ui-1.0.0.jar \
   --spring.config.location=/path/to/application.properties
 ```
 
-## 2. 画面構成
+## 2. Screen layout
 
-| ナビ | パス | 内容 |
+| Nav | Path | Contents |
 | --- | --- | --- |
-| Dashboard | `/` | 統計サマリ + 検索レイテンシグラフ |
-| Namespaces | `/namespaces` | Namespace の一覧・作成・編集・削除 |
-| Indexes | `/indexes` | インデックス状態とドキュメント管理 |
-| Upload | `/documents/upload` | ファイルアップロード（自動 parser 選択） |
-| Settings | `/settings` | グローバル設定（新規 Namespace 既定値） |
+| Dashboard | `/` | Statistics summary + search latency graph |
+| Namespaces | `/namespaces` | List, create, edit, and delete Namespaces |
+| Indexes | `/indexes` | Index status and document management |
+| Upload | `/documents/upload` | File upload (automatic parser selection) |
+| Settings | `/settings` | Global settings (defaults for new Namespaces) |
 
-## 3. ダッシュボード
+## 3. Dashboard
 
-`GET /` で表示される。
+Shown at `GET /`.
 
-- **Namespaces**: 登録済み Namespace 数
-- **Documents**: 全 Namespace の合計ドキュメント数
-- **Index Size**: 全 Namespace の合計サイズ（MB）
-- **Search p95**: 直近の検索レイテンシの95パーセンタイル
-- **Search Latency グラフ**: Chart.js による時系列ラインチャート
-  （最大 1,024 サンプル）
+- **Namespaces**: number of registered Namespaces
+- **Documents**: total document count across all Namespaces
+- **Index Size**: total size across all Namespaces (MB)
+- **Search p95**: 95th percentile of recent search latency
+- **Search Latency graph**: a Chart.js time-series line chart
+  (up to 1,024 samples)
 
-検索 API (`/api/v1/search`) が呼ばれるたびにレイテンシを記録し、
-ダッシュボードに反映される。
+Latency is recorded every time the search API
+(`/api/v1/search`) is called and reflected on the dashboard.
 
-## 4. Namespace 管理
+## 4. Namespace management
 
-### 一覧 (`/namespaces`)
+### List (`/namespaces`)
 
-- ID をクリックすると編集画面へ遷移
-- 各行に Edit / Delete ボタン
-- Delete はブラウザの確認ダイアログ付き
+- Clicking an ID navigates to the edit screen
+- Each row has Edit / Delete buttons
+- Delete prompts a browser confirmation dialog
 
-### 新規作成 (`/namespaces/new`)
+### Create (`/namespaces/new`)
 
-| 項目 | 必須 | 制約 |
+| Field | Required | Constraints |
 | --- | --- | --- |
-| ID | はい | `[a-z0-9][a-z0-9_-]{0,63}` |
-| Name | はい | 256文字以下 |
-| Architecture | いいえ | FULL_TEXT / VECTOR / HYBRID |
-| Search Strategy | いいえ | SEQUENTIAL / PARALLEL |
-| Search Order | いいえ | FULL_TEXT_FIRST / VECTOR_FIRST |
+| ID | Yes | `[a-z0-9][a-z0-9_-]{0,63}` |
+| Name | Yes | 256 characters or fewer |
+| Architecture | No | FULL_TEXT / VECTOR / HYBRID |
+| Search Strategy | No | SEQUENTIAL / PARALLEL |
+| Search Order | No | FULL_TEXT_FIRST / VECTOR_FIRST |
 
-選択肢を空（"(global default)"）にするとグローバル設定値を使用。
+Leaving a selection empty ("(global default)") falls back to the
+global configuration value.
 
-### 編集 (`/namespaces/{id}/edit`)
+### Edit (`/namespaces/{id}/edit`)
 
-- ID は変更不可
-- Name と config を同時更新可能
-- 同じ画面から削除も可能
+- The ID cannot be changed
+- Name and config can be updated together
+- Deletion is also available from the same screen
 
-## 5. インデックス管理
+## 5. Index management
 
-### 一覧 (`/indexes`)
+### List (`/indexes`)
 
-各 Namespace の以下を表示:
+Each Namespace shows the following:
 
-- Documents（件数）
-- Size（バイト）
-- Status pill（READY/INDEXING/EMPTY/ERROR、色分け）
-- Last Updated タイムスタンプ
-- View / Rebuild ボタン
+- Documents (count)
+- Size (bytes)
+- Status pill (READY/INDEXING/EMPTY/ERROR, color-coded)
+- Last Updated timestamp
+- View / Rebuild buttons
 
-### 詳細 (`/indexes/{namespaceId}`)
+### Details (`/indexes/{namespaceId}`)
 
-- メトリクスカード(Documents/Size/Status/Last Updated)
-- ドキュメント一覧(最大20件/ページ) — `DocumentMetadataRepository`
-  ベースで取得しており、チャンク分割による重複表示は発生しない
-  - ID、タイトル、indexed_at(本文スニペットは新スキーマでは非表示)
-  - Delete ボタン(確認ダイアログ付き)
-- ページネーション
-- Rebuild ボタン
+- Metrics cards (Documents/Size/Status/Last Updated)
+- Document list (up to 20 per page) — fetched via
+  `DocumentMetadataRepository`, so chunk splitting does not produce
+  duplicate rows
+  - ID, title, indexed_at (body snippets are hidden under the new schema)
+  - Delete button (with confirmation dialog)
+- Pagination
+- Rebuild button
 
-> **再構築の挙動**: 検索を停止せず切り替える方式。新しい空のインデックス
-> ディレクトリを用意し、書き込み完了時にディレクトリ名を不可分に
-> リネームして切り替える。旧ディレクトリは 30 秒の猶予期間を置いてから
-> 削除する。再構築の実行中も検索 API は旧バージョンで結果を返し続ける。
-> 詳細は [docs/devel/design/architecture/overview.md §5.7](architecture.md) を参照。
+> **Rebuild behavior**: the switch happens without stopping search. A new
+> empty index directory is prepared, and the directory name is atomically
+> renamed on write completion to switch over. The old directory is
+> deleted after a 30-second grace period. The search API keeps returning
+> results from the old version while the rebuild is running.
 
-### ドキュメントアップロード (`/documents/upload`)
+### Document upload (`/documents/upload`)
 
-対応形式:
+Supported formats:
 
-- テキスト系: `.txt`, `.text`, `.log`
+- Text family: `.txt`, `.text`, `.log`
 - Markdown: `.md`, `.markdown`
 - AsciiDoc: `.adoc`, `.asciidoc`
 - HTML: `.html`, `.htm`, `.xhtml`
@@ -110,64 +113,66 @@ java -jar searchable-ui-1.0.0-SNAPSHOT.jar \
 - Excel: `.xlsx`, `.xls`
 - PowerPoint: `.pptx`, `.ppt`
 
-最大ファイルサイズ: 64MB（`application.properties`で変更可）。
+Maximum file size: 64 MB (configurable in `application.properties`).
 
-アップロード成功後は対象 Namespace の詳細画面にリダイレクトし、
-flash メッセージで indexing 結果を表示する。
+After a successful upload, the page redirects to the target Namespace's
+details screen and shows the indexing result as a flash message.
 
-## 6. グローバル設定 (`/settings`)
+## 6. Global settings (`/settings`)
 
-新規に作成される Namespace のデフォルト値を設定する画面。
+A screen that sets the default values for newly created Namespaces.
 
 - Default Architecture
 - Default Search Strategy
 - Default Search Order
 
-> **注意**: 既存の Namespace の設定は変更されない。各 Namespace の
-> 設定変更は `/namespaces/{id}/edit` で個別に行う。
+> **Note**: existing Namespace settings are not changed. Per-Namespace
+> configuration changes are made individually at
+> `/namespaces/{id}/edit`.
 
-## 7. エラーページ
+## 7. Error pages
 
-リソース未存在等のエラーは `templates/error.html` で表示される。
+Errors such as missing resources are rendered by
+`templates/error.html`.
 
-| 状況 | HTTP | 表示 |
+| Situation | HTTP | Display |
 | --- | --- | --- |
-| Namespace未存在 | 404 | Not Found |
-| バリデーション失敗（ID等） | 400 | Bad Request |
-| 重複ID | 409 | Conflict |
-| その他 | 500 | Internal Server Error |
+| Namespace not found | 404 | Not Found |
+| Validation failure (ID, etc.) | 400 | Bad Request |
+| Duplicate ID | 409 | Conflict |
+| Other | 500 | Internal Server Error |
 
-## 8. キーボード操作
+## 8. Keyboard interaction
 
-- `Tab` でフォーム要素の遷移
-- フォームは標準HTML5、特殊な操作なし
+- `Tab` to move between form elements
+- Forms are standard HTML5; no special interactions
 
-## 9. トラブルシューティング
+## 9. Troubleshooting
 
-### グラフが描画されない
+### The graph is not drawn
 
-- ブラウザコンソールでChart.js読み込みエラーを確認
-- CDN（jsdelivr.net）への接続を確認
+- Check the browser console for Chart.js loading errors
+- Verify connectivity to the CDN (jsdelivr.net)
 
-### Bootstrap が崩れる
+### Bootstrap layout is broken
 
-- ブラウザがBootstrap 5サポートバージョンか確認
-  （Chrome/Firefox/Edge 最新2バージョン、Safari 13.1+）
+- Verify that the browser is a Bootstrap 5-supported version
+  (latest two versions of Chrome/Firefox/Edge, Safari 13.1+)
 
-### アップロードでサイズエラー
+### Size error during upload
 
-- `searchable-ui` の `application.properties`
-- `spring.servlet.multipart.max-file-size` と `max-request-size` を増やす
+- `searchable-ui` `application.properties`
+- Increase `spring.servlet.multipart.max-file-size` and `max-request-size`
 
-### REST API も使えるか
+### Can the REST API also be used
 
-- 同一ポート(8080)で `/api/v1/*` が利用可能
-- OpenAPI 仕様は `examples/api/openapi.yaml` 参照
+- `/api/v1/*` is available on the same port (8080)
+- See `examples/api/openapi.yaml` for the OpenAPI specification
 
-## 10. デモ環境
+## 10. Demo environment
 
-`docker/` 配下に Docker Compose ベースのデモ環境を提供。
-詳細は `docs/public/demo-setup.md`。
+A Docker Compose-based demo environment is provided under `docker/`.
+See `docs/public/demo-setup.md` for details.
 
 ---
 

@@ -1,7 +1,7 @@
 package io.searchable.core;
 
 import io.searchable.core.application.IndexService;
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.application.NamespaceService;
 import io.searchable.core.domain.document.Document;
 import io.searchable.core.domain.document.DocumentMetadataRecord;
@@ -63,7 +63,7 @@ class CoverageSweepFinalTest {
                 new IndexLayout(tempDir.resolve("idx")), AnalyzerFactory.japanese())) {
             final var nsRepo = new JdbcNamespaceRepository(ds);
             final var mdRepo = new JdbcIndexMetadataRepository(ds);
-            new NamespaceService(nsRepo, mdRepo, provider, GlobalConfig.defaults(), CLOCK)
+            new NamespaceService(nsRepo, mdRepo, provider, SearchableGlobalConfig.defaults(), CLOCK)
                 .create("ns", "N", null);
 
             // Mock the indexer to throw on indexBatch.
@@ -189,7 +189,7 @@ class CoverageSweepFinalTest {
             final var mdRepo = new JdbcIndexMetadataRepository(ds);
             final EmbeddingProvider emb = new HashEmbeddingProvider(64);
             final LuceneIndexer indexer = new LuceneIndexer(provider, emb);
-            new NamespaceService(nsRepo, mdRepo, provider, GlobalConfig.defaults(), CLOCK)
+            new NamespaceService(nsRepo, mdRepo, provider, SearchableGlobalConfig.defaults(), CLOCK)
                 .create("a", "A", null);
             final IndexService svc = new IndexService(nsRepo, mdRepo, provider, indexer, CLOCK);
 

@@ -1,6 +1,6 @@
 package io.searchable.core.application;
 
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.domain.document.Document;
 import io.searchable.core.infrastructure.embedding.HashEmbeddingProvider;
 import io.searchable.core.infrastructure.lucene.AnalyzerFactory;
@@ -39,7 +39,7 @@ class AsyncIndexServiceCloseTest {
             final var nsRepo = new JdbcNamespaceRepository(ds);
             final var mdRepo = new JdbcIndexMetadataRepository(ds);
             final Clock clock = Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC);
-            new NamespaceService(nsRepo, mdRepo, provider, GlobalConfig.defaults(), clock)
+            new NamespaceService(nsRepo, mdRepo, provider, SearchableGlobalConfig.defaults(), clock)
                 .create("ns", "N", null);
             final IndexService svc = new IndexService(nsRepo, mdRepo, provider,
                 new LuceneIndexer(provider, new HashEmbeddingProvider(64)), clock);

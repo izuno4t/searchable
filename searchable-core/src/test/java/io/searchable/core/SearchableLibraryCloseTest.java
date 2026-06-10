@@ -1,7 +1,7 @@
 package io.searchable.core;
 
-import io.searchable.core.application.config.ApplicationConfig;
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.application.config.IndexConfig;
 import io.searchable.core.application.config.PluginsConfig;
 import io.searchable.core.domain.embedding.EmbeddingProvider;
@@ -27,13 +27,13 @@ class SearchableLibraryCloseTest {
         doThrow(new RuntimeException("close-boom")).when(failing).close();
 
         try (SearchableLibrary lib = SearchableLibrary.builder()
-                .applicationConfig(new ApplicationConfig(
+                .applicationConfig(new SearchableConfig(
                     tempDir,
                     new PersistenceConfig("H2", "jdbc:h2:mem:lib-close-x;DB_CLOSE_DELAY=-1",
                         "sa", ""),
                     new IndexConfig(tempDir.resolve("idx")),
                     PluginsConfig.classpathOnly(),
-                    GlobalConfig.defaults()))
+                    SearchableGlobalConfig.defaults()))
                 .embeddingProvider(failing)
                 .build()) {
             // EmbeddingProvider passed via builder is NOT registered as a

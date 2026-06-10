@@ -43,7 +43,7 @@ class ConfigLoaderExtraTest {
               username: sa
               password: ""
             """);
-        final ApplicationConfig cfg = new ConfigLoader().load(file);
+        final SearchableConfig cfg = new ConfigLoader().load(file);
         // Per ADR-0002 the loader rewrites relative paths against the config
         // file's parent: data-directory and the embedded H2 file path both
         // resolve to <tempDir>/data and <tempDir>/data/x respectively.

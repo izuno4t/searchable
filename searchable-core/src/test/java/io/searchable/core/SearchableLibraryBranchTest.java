@@ -1,7 +1,7 @@
 package io.searchable.core;
 
-import io.searchable.core.application.config.ApplicationConfig;
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.application.config.IndexConfig;
 import io.searchable.core.application.config.PluginsConfig;
 import io.searchable.core.infrastructure.persistence.PersistenceConfig;
@@ -18,13 +18,13 @@ class SearchableLibraryBranchTest {
 
     @TempDir Path tempDir;
 
-    private ApplicationConfig appConfig() {
-        return new ApplicationConfig(
+    private SearchableConfig appConfig() {
+        return new SearchableConfig(
             tempDir,
             new PersistenceConfig("H2", "jdbc:h2:mem:branch-test;DB_CLOSE_DELAY=-1", "sa", ""),
             new IndexConfig(tempDir.resolve("idx")),
             PluginsConfig.classpathOnly(),
-            GlobalConfig.defaults());
+            SearchableGlobalConfig.defaults());
     }
 
     @Test
@@ -55,7 +55,7 @@ class SearchableLibraryBranchTest {
     void globalConfigOverloadInstallsProvider() {
         try (SearchableLibrary lib = SearchableLibrary.builder()
                 .applicationConfig(appConfig())
-                .globalConfig(GlobalConfig.defaults())
+                .globalConfig(SearchableGlobalConfig.defaults())
                 .build()) {
             assertThat(lib.globalConfigProvider().current()).isNotNull();
         }

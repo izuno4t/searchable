@@ -1,6 +1,6 @@
 package io.searchable.example.api.config;
 
-import io.searchable.core.application.config.ApplicationConfig;
+import io.searchable.core.application.config.SearchableConfig;
 import jakarta.annotation.PostConstruct;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -84,7 +84,7 @@ public class SearchableProperties {
         if (embedding.getModelPath() != null) {
             embedding.setModelPath(resolveAgainst(embedding.getModelPath(), dataDirectory));
         }
-        persistence.setUrl(ApplicationConfig.normalizeH2Url(persistence.getUrl(), dataDirectory));
+        persistence.setUrl(SearchableConfig.normalizeH2Url(persistence.getUrl(), dataDirectory));
     }
 
     private static Path resolveAgainst(final Path p, final Path base) {

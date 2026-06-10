@@ -5,16 +5,16 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class GlobalConfigProviderTest {
+class SearchableGlobalConfigProviderTest {
 
     @Test
     void exposesInitialAndUpdates() {
-        final GlobalConfig initial = GlobalConfig.defaults();
-        final GlobalConfigProvider provider = new GlobalConfigProvider(initial);
+        final SearchableGlobalConfig initial = SearchableGlobalConfig.defaults();
+        final SearchableGlobalConfigProvider provider = new SearchableGlobalConfigProvider(initial);
 
         assertThat(provider.current()).isSameAs(initial);
 
-        final GlobalConfig next = new GlobalConfig(
+        final SearchableGlobalConfig next = new SearchableGlobalConfig(
             io.searchable.core.domain.search.SearchType.HYBRID,
             io.searchable.core.domain.search.SearchStrategy.PARALLEL,
             io.searchable.core.domain.search.SearchOrder.VECTOR_FIRST);
@@ -24,9 +24,9 @@ class GlobalConfigProviderTest {
 
     @Test
     void rejectsNullInitialOrUpdate() {
-        assertThatThrownBy(() -> new GlobalConfigProvider(null))
+        assertThatThrownBy(() -> new SearchableGlobalConfigProvider(null))
             .isInstanceOf(NullPointerException.class);
-        final GlobalConfigProvider provider = new GlobalConfigProvider(GlobalConfig.defaults());
+        final SearchableGlobalConfigProvider provider = new SearchableGlobalConfigProvider(SearchableGlobalConfig.defaults());
         assertThatThrownBy(() -> provider.update(null))
             .isInstanceOf(NullPointerException.class);
     }

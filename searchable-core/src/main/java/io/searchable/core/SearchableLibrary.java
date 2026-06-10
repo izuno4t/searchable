@@ -7,9 +7,9 @@ import io.searchable.core.application.IndexStatisticsService;
 import io.searchable.core.application.NamespaceService;
 import io.searchable.core.application.SearchResultEnricher;
 import io.searchable.core.application.SearchService;
-import io.searchable.core.application.config.ApplicationConfig;
-import io.searchable.core.application.config.GlobalConfig;
-import io.searchable.core.application.config.GlobalConfigProvider;
+import io.searchable.core.application.config.SearchableConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfigProvider;
 import io.searchable.core.domain.dictionary.UserDictionaryRepository;
 import io.searchable.core.domain.dictionary.UserDictionaryResolver;
 import io.searchable.core.domain.document.DocumentMetadataRepository;
@@ -44,7 +44,7 @@ import java.util.Objects;
  * Top-level facade for embedding the Searchable library.
  *
  * <p>Wires together persistence (JDBC repositories), Lucene infrastructure,
- * and the application-layer services from a single {@link ApplicationConfig}.
+ * and the application-layer services from a single {@link SearchableConfig}.
  * The {@link Builder} allows individual collaborators to be overridden for
  * tests or advanced setups.
  *
@@ -57,12 +57,12 @@ public final class SearchableLibrary implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(SearchableLibrary.class);
     private static final int DEFAULT_EMBEDDING_DIMENSION = 128;
 
-    private final ApplicationConfig configuration;
+    private final SearchableConfig configuration;
     private final NamespaceRepository namespaceRepository;
     private final IndexMetadataRepository indexMetadataRepository;
     private final UserDictionaryRepository dictionaryRepository;
     private final DocumentMetadataRepository documentMetadataRepository;
-    private final GlobalConfigProvider globalConfigProvider;
+    private final SearchableGlobalConfigProvider globalConfigProvider;
     private final EmbeddingProvider embeddingProvider;
     private final LuceneIndexProvider indexProvider;
     private final LuceneIndexer indexer;
@@ -97,7 +97,7 @@ public final class SearchableLibrary implements AutoCloseable {
         this.closeables = b.closeables;
     }
 
-    public ApplicationConfig configuration() {
+    public SearchableConfig configuration() {
         return configuration;
     }
 
@@ -117,7 +117,7 @@ public final class SearchableLibrary implements AutoCloseable {
         return documentMetadataRepository;
     }
 
-    public GlobalConfigProvider globalConfigProvider() {
+    public SearchableGlobalConfigProvider globalConfigProvider() {
         return globalConfigProvider;
     }
 
@@ -212,7 +212,7 @@ public final class SearchableLibrary implements AutoCloseable {
      * sensible defaults (Hash embedding, JDBC repositories, file-system
      * Lucene directory, schema auto-initialization).
      */
-    public static SearchableLibrary fromConfig(final ApplicationConfig config) {
+    public static SearchableLibrary fromConfig(final SearchableConfig config) {
         return builder().applicationConfig(config).build();
     }
 
@@ -224,7 +224,7 @@ public final class SearchableLibrary implements AutoCloseable {
      */
     public static final class Builder {
 
-        private ApplicationConfig applicationConfig;
+        private SearchableConfig applicationConfig;
         private DataSource dataSource;
         private boolean initializeSchema = true;
         private boolean readOnly = false;
@@ -232,7 +232,7 @@ public final class SearchableLibrary implements AutoCloseable {
         private IndexMetadataRepository indexMetadataRepository;
         private UserDictionaryRepository dictionaryRepository;
         private DocumentMetadataRepository documentMetadataRepository;
-        private GlobalConfigProvider globalConfigProvider;
+        private SearchableGlobalConfigProvider globalConfigProvider;
         private EmbeddingProvider embeddingProvider;
         private AnalyzerFactory analyzerFactory;
         private LuceneIndexProvider indexProvider;
@@ -250,7 +250,7 @@ public final class SearchableLibrary implements AutoCloseable {
 
         private Builder() { }
 
-        public Builder applicationConfig(final ApplicationConfig config) {
+        public Builder applicationConfig(final SearchableConfig config) {
             this.applicationConfig = Objects.requireNonNull(config, "config must not be null");
             return this;
         }
@@ -297,12 +297,12 @@ public final class SearchableLibrary implements AutoCloseable {
             return this;
         }
 
-        public Builder globalConfig(final GlobalConfig globalConfig) {
-            this.globalConfigProvider = new GlobalConfigProvider(globalConfig);
+        public Builder globalConfig(final SearchableGlobalConfig globalConfig) {
+            this.globalConfigProvider = new SearchableGlobalConfigProvider(globalConfig);
             return this;
         }
 
-        public Builder globalConfigProvider(final GlobalConfigProvider provider) {
+        public Builder globalConfigProvider(final SearchableGlobalConfigProvider provider) {
             this.globalConfigProvider = provider;
             return this;
         }
@@ -355,7 +355,7 @@ public final class SearchableLibrary implements AutoCloseable {
                 documentMetadataRepository = new JdbcDocumentMetadataRepository(dataSource);
             }
             if (globalConfigProvider == null) {
-                globalConfigProvider = new GlobalConfigProvider(applicationConfig.global());
+                globalConfigProvider = new SearchableGlobalConfigProvider(applicationConfig.global());
             }
 
             // Lucene + analyzer.

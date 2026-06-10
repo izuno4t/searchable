@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.searchable.core.application.HybridSearchOrchestrator;
 import io.searchable.core.application.NamespaceService;
 import io.searchable.core.application.SearchService;
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.domain.document.Document;
 import io.searchable.core.infrastructure.lucene.LuceneFullTextSearcher;
 import io.searchable.core.infrastructure.lucene.LuceneIndexer;
@@ -53,7 +53,7 @@ class SearchDocumentsToolIntegrationTest {
         final JdbcNamespaceRepository nsRepo = new JdbcNamespaceRepository(db.dataSource());
         final NamespaceService nsService = new NamespaceService(nsRepo,
             new JdbcIndexMetadataRepository(db.dataSource()), index.provider(),
-            GlobalConfig.defaults(),
+            SearchableGlobalConfig.defaults(),
             Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC));
         final LuceneIndexer indexer = new LuceneIndexer(index.provider(), embedding);
         final LuceneFullTextSearcher ft = new LuceneFullTextSearcher(index.provider());

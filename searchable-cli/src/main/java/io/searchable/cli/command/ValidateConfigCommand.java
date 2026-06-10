@@ -1,6 +1,6 @@
 package io.searchable.cli.command;
 
-import io.searchable.core.application.config.ApplicationConfig;
+import io.searchable.core.application.config.SearchableConfig;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
@@ -17,7 +17,7 @@ public final class ValidateConfigCommand implements Callable<Integer> {
     @Override
     public Integer call() {
         try {
-            final ApplicationConfig config = io.searchable.cli.CliRuntime.loadConfig(parent.configPath);
+            final SearchableConfig config = io.searchable.cli.CliRuntime.loadConfig(parent.configPath);
             System.out.println("OK: " + parent.configPath);
             System.out.println("  data-directory : " + config.dataDirectory());
             System.out.println("  persistence    : " + config.persistence().type() + " " + config.persistence().url());

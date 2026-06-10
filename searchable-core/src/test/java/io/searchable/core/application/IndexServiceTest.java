@@ -1,6 +1,6 @@
 package io.searchable.core.application;
 
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.domain.document.Document;
 import io.searchable.core.domain.index.IndexMetadata;
 import io.searchable.core.domain.index.IndexStatus;
@@ -52,7 +52,7 @@ class IndexServiceTest {
         final JdbcIndexMetadataRepository md = new JdbcIndexMetadataRepository(dataSource);
         final Clock fixed = Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC);
         namespaceService = new NamespaceService(namespaces, md, indexProvider,
-            GlobalConfig.defaults(), fixed);
+            SearchableGlobalConfig.defaults(), fixed);
         indexService = new IndexService(namespaces, md, indexProvider,
             new LuceneIndexer(indexProvider), fixed);
         namespaceService.create("ns-1", "n", null);

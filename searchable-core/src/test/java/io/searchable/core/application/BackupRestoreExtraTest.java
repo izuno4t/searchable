@@ -1,6 +1,6 @@
 package io.searchable.core.application;
 
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.domain.embedding.EmbeddingProvider;
 import io.searchable.core.infrastructure.embedding.HashEmbeddingProvider;
 import io.searchable.core.infrastructure.lucene.AnalyzerFactory;
@@ -49,7 +49,7 @@ class BackupRestoreExtraTest {
         final var metaRepo = new JdbcIndexMetadataRepository(dataSource);
         final EmbeddingProvider embedding = new HashEmbeddingProvider(128);
         final Clock clock = Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC);
-        new NamespaceService(nsRepo, metaRepo, provider, GlobalConfig.defaults(), clock)
+        new NamespaceService(nsRepo, metaRepo, provider, SearchableGlobalConfig.defaults(), clock)
             .create("bk_ns", "BK", null);
     }
 

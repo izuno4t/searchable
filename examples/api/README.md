@@ -16,7 +16,7 @@ reactor), so use `-f` to point at its POM. The build requires
 ```bash
 mvn -B clean install -DskipTests           # at repository root
 mvn -B -f examples/api/pom.xml package
-java -jar examples/api/target/api-example-1.0.0-SNAPSHOT.jar \
+java -jar examples/api/target/api-example-1.0.0.jar \
      --spring.config.location=examples/api/application.properties
 ```
 

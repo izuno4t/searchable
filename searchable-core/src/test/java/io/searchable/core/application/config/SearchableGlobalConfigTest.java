@@ -9,11 +9,11 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class GlobalConfigTest {
+class SearchableGlobalConfigTest {
 
     @Test
     void defaultsExposesKuromoji() {
-        final GlobalConfig cfg = GlobalConfig.defaults();
+        final SearchableGlobalConfig cfg = SearchableGlobalConfig.defaults();
         assertThat(cfg.analyzer()).isEqualTo(AnalyzerType.KUROMOJI);
         assertThat(cfg.defaultArchitecture()).isEqualTo(SearchType.FULL_TEXT);
         assertThat(cfg.defaultSearchStrategy()).isEqualTo(SearchStrategy.SEQUENTIAL);
@@ -22,14 +22,14 @@ class GlobalConfigTest {
 
     @Test
     void backwardCompatibleConstructorDefaultsToKuromoji() {
-        final GlobalConfig cfg = new GlobalConfig(
+        final SearchableGlobalConfig cfg = new SearchableGlobalConfig(
             SearchType.HYBRID, SearchStrategy.PARALLEL, SearchOrder.VECTOR_FIRST);
         assertThat(cfg.analyzer()).isEqualTo(AnalyzerType.KUROMOJI);
     }
 
     @Test
     void nullAnalyzerBecomesKuromoji() {
-        final GlobalConfig cfg = new GlobalConfig(
+        final SearchableGlobalConfig cfg = new SearchableGlobalConfig(
             SearchType.HYBRID, SearchStrategy.PARALLEL, SearchOrder.VECTOR_FIRST, null);
         assertThat(cfg.analyzer()).isEqualTo(AnalyzerType.KUROMOJI);
     }
@@ -37,13 +37,13 @@ class GlobalConfigTest {
     @Test
     void rejectsNullRequiredFields() {
         assertThatThrownBy(() ->
-            new GlobalConfig(null, SearchStrategy.SEQUENTIAL, SearchOrder.FULL_TEXT_FIRST, AnalyzerType.KUROMOJI))
+            new SearchableGlobalConfig(null, SearchStrategy.SEQUENTIAL, SearchOrder.FULL_TEXT_FIRST, AnalyzerType.KUROMOJI))
             .isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() ->
-            new GlobalConfig(SearchType.FULL_TEXT, null, SearchOrder.FULL_TEXT_FIRST, AnalyzerType.KUROMOJI))
+            new SearchableGlobalConfig(SearchType.FULL_TEXT, null, SearchOrder.FULL_TEXT_FIRST, AnalyzerType.KUROMOJI))
             .isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() ->
-            new GlobalConfig(SearchType.FULL_TEXT, SearchStrategy.SEQUENTIAL, null, AnalyzerType.KUROMOJI))
+            new SearchableGlobalConfig(SearchType.FULL_TEXT, SearchStrategy.SEQUENTIAL, null, AnalyzerType.KUROMOJI))
             .isInstanceOf(NullPointerException.class);
     }
 }

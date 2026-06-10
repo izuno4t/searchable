@@ -9,8 +9,8 @@ import io.searchable.core.application.NamespaceService;
 import io.searchable.core.application.RestoreService;
 import io.searchable.core.application.SearchPerformanceMonitor;
 import io.searchable.core.application.SearchService;
-import io.searchable.core.application.config.GlobalConfig;
-import io.searchable.core.application.config.GlobalConfigProvider;
+import io.searchable.core.application.config.SearchableGlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfigProvider;
 import io.searchable.core.domain.document.Document;
 import io.searchable.core.domain.embedding.EmbeddingProvider;
 import io.searchable.core.domain.namespace.NamespaceConfigPatch;
@@ -98,7 +98,7 @@ class CoverageSweepFinal4Test {
             final var mdRepo = new JdbcIndexMetadataRepository(ds);
             final EmbeddingProvider emb = new HashEmbeddingProvider(64);
             final LuceneIndexer indexer = new LuceneIndexer(provider, emb);
-            new NamespaceService(nsRepo, mdRepo, provider, GlobalConfig.defaults(), CLOCK)
+            new NamespaceService(nsRepo, mdRepo, provider, SearchableGlobalConfig.defaults(), CLOCK)
                 .create("a", "A", null);
             indexer.index(Document.builder().id("d").namespaceId("a").title("t").content("c").build());
 
@@ -109,7 +109,7 @@ class CoverageSweepFinal4Test {
             try {
                 // Multi-namespace path with deletion of one to trigger
                 // applyIndexWeight on empty hits side.
-                new NamespaceService(nsRepo, mdRepo, provider, GlobalConfig.defaults(), CLOCK)
+                new NamespaceService(nsRepo, mdRepo, provider, SearchableGlobalConfig.defaults(), CLOCK)
                     .create("b", "B",
                         new NamespaceConfigPatch(null, null, null, null, null, 2.0, null));
                 final var r = svc.search(SearchRequest.builder()
@@ -218,7 +218,7 @@ class CoverageSweepFinal4Test {
                 new IndexLayout(tempDir.resolve("isd")), AnalyzerFactory.japanese())) {
             final var nsRepo = new JdbcNamespaceRepository(ds);
             final var mdRepo = new JdbcIndexMetadataRepository(ds);
-            new NamespaceService(nsRepo, mdRepo, provider, GlobalConfig.defaults(), CLOCK)
+            new NamespaceService(nsRepo, mdRepo, provider, SearchableGlobalConfig.defaults(), CLOCK)
                 .create("dn", "D", null);
             final var indexer = new LuceneIndexer(provider, new HashEmbeddingProvider(64));
             final var svc = new IndexService(nsRepo, mdRepo, provider, indexer, CLOCK);
@@ -242,7 +242,7 @@ class CoverageSweepFinal4Test {
             final var nsRepo = new JdbcNamespaceRepository(ds);
             final var mdRepo = new JdbcIndexMetadataRepository(ds);
             final var docMetaRepo = new JdbcDocumentMetadataRepository(ds);
-            new NamespaceService(nsRepo, mdRepo, provider, GlobalConfig.defaults(), CLOCK)
+            new NamespaceService(nsRepo, mdRepo, provider, SearchableGlobalConfig.defaults(), CLOCK)
                 .create("ic", "IC", null);
             final var indexer = new LuceneIndexer(provider, new HashEmbeddingProvider(64));
             final var svc = new IndexService(nsRepo, mdRepo, provider, indexer, docMetaRepo, CLOCK);

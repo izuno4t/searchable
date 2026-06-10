@@ -74,16 +74,16 @@
 
 ### 実装契約
 
-`ApplicationConfig` に `static normalize(ApplicationConfig raw, Path base)` を
-追加する。`normalize` は path を絶対化した **新しい `ApplicationConfig` を返す**
+`SearchableConfig` に `static normalize(SearchableConfig raw, Path base)` を
+追加する。`normalize` は path を絶対化した **新しい `SearchableConfig` を返す**
 不変な変換とし、呼び出し側で挿入する位置を 2 箇所に限定する:
 
 - `ConfigLoader.load(Path file)` の戻り直前(`base = file.toAbsolutePath().getParent()`)
 - `examples/webapp/SearchableWebappApplication#searchableLibrary` ビルド時
   (`base = Path.of("").toAbsolutePath()` で CWD)
 
-`ApplicationConfig` 自身の record コンストラクタには「絶対パス必須」のような
-不変条件を **追加しない**。直接 `new ApplicationConfig(...)` を呼ぶ既存テストや
+`SearchableConfig` 自身の record コンストラクタには「絶対パス必須」のような
+不変条件を **追加しない**。直接 `new SearchableConfig(...)` を呼ぶ既存テストや
 今後のテストヘルパーが壊れないようにするため。
 
 ### 後方互換
@@ -113,11 +113,11 @@
 
 ### コード
 
-- `searchable-core/src/main/java/io/searchable/core/application/config/ApplicationConfig.java`
-  に `normalize(ApplicationConfig, Path)` を追加
+- `searchable-core/src/main/java/io/searchable/core/application/config/SearchableConfig.java`
+  に `normalize(SearchableConfig, Path)` を追加
 - `ConfigLoader.load(Path file)` に正規化呼び出しを挿入
 - `IndexConfig` / `PluginsConfig` / `PersistenceConfig` には変更を加えない
-  (正規化は `ApplicationConfig` 側で完結させ、各サブ config を再構築する形にする)
+  (正規化は `SearchableConfig` 側で完結させ、各サブ config を再構築する形にする)
 - `SearchableWebappApplication` の `@Bean searchableLibrary` で正規化を実施
 - `SearchableLibrary` の初期化ログ(`log.info("SearchableLibrary initialized ...")`)
   はすでに `dataDirectory` 等を出しているので追加変更は不要。`indexDirectory` /
@@ -155,5 +155,5 @@
 
 - 本 ADR の議論経緯: チャットログ(M2 着手直後の M1 残務調査時、2026-06-01)
 - Spring Boot の relative path 解決(`spring.config.location` 等)の挙動は本件
-  と独立。webapp 側で Spring Boot による解決を経た値を `ApplicationConfig` に
+  と独立。webapp 側で Spring Boot による解決を経た値を `SearchableConfig` に
   渡したあとに本 normalizer を通す設計

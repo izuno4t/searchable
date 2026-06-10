@@ -1,6 +1,6 @@
 package io.searchable.admin.form;
 
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.domain.search.SearchOrder;
 import io.searchable.core.domain.search.SearchStrategy;
 import io.searchable.core.domain.search.SearchType;
@@ -20,7 +20,7 @@ public class GlobalConfigForm {
     @NotNull
     private SearchOrder defaultSearchOrder;
 
-    public static GlobalConfigForm from(final GlobalConfig config) {
+    public static GlobalConfigForm from(final SearchableGlobalConfig config) {
         final GlobalConfigForm form = new GlobalConfigForm();
         form.defaultArchitecture = config.defaultArchitecture();
         form.defaultSearchStrategy = config.defaultSearchStrategy();
@@ -28,8 +28,8 @@ public class GlobalConfigForm {
         return form;
     }
 
-    public GlobalConfig toGlobalConfig() {
-        return new GlobalConfig(defaultArchitecture, defaultSearchStrategy, defaultSearchOrder);
+    public SearchableGlobalConfig toGlobalConfig() {
+        return new SearchableGlobalConfig(defaultArchitecture, defaultSearchStrategy, defaultSearchOrder);
     }
 
     public SearchType getDefaultArchitecture() { return defaultArchitecture; }

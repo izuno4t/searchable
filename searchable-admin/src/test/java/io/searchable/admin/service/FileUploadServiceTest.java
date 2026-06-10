@@ -1,7 +1,7 @@
 package io.searchable.admin.service;
 
 import io.searchable.core.application.IndexService;
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.application.NamespaceService;
 import io.searchable.core.domain.embedding.EmbeddingProvider;
 import io.searchable.core.infrastructure.embedding.HashEmbeddingProvider;
@@ -56,7 +56,7 @@ class FileUploadServiceTest {
         final LuceneIndexer indexer = new LuceneIndexer(provider, embedding);
         final Clock clock = Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC);
         final IndexService indexService = new IndexService(nsRepo, mdRepo, provider, indexer, clock);
-        new NamespaceService(nsRepo, mdRepo, provider, GlobalConfig.defaults(), clock)
+        new NamespaceService(nsRepo, mdRepo, provider, SearchableGlobalConfig.defaults(), clock)
             .create("up_ns", "U", null);
         service = new FileUploadService(indexService, clock);
     }

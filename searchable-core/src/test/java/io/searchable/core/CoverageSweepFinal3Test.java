@@ -165,7 +165,7 @@ class CoverageSweepFinal3Test {
                 new io.searchable.core.infrastructure.persistence.jdbc.JdbcNamespaceRepository(ds),
                 new io.searchable.core.infrastructure.persistence.jdbc.JdbcIndexMetadataRepository(ds),
                 provider,
-                io.searchable.core.application.config.GlobalConfig.defaults(),
+                io.searchable.core.application.config.SearchableGlobalConfig.defaults(),
                 java.time.Clock.fixed(java.time.Instant.parse("2026-05-15T00:00:00Z"),
                     java.time.ZoneOffset.UTC))
                 .create("ns", "N", null);
@@ -199,7 +199,7 @@ class CoverageSweepFinal3Test {
                 new io.searchable.core.infrastructure.persistence.jdbc.JdbcNamespaceRepository(ds),
                 new io.searchable.core.infrastructure.persistence.jdbc.JdbcIndexMetadataRepository(ds),
                 provider,
-                io.searchable.core.application.config.GlobalConfig.defaults(),
+                io.searchable.core.application.config.SearchableGlobalConfig.defaults(),
                 java.time.Clock.fixed(java.time.Instant.parse("2026-05-15T00:00:00Z"),
                     java.time.ZoneOffset.UTC))
                 .create("ns", "N", null);

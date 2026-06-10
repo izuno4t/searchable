@@ -1,8 +1,8 @@
 package io.searchable.example.webapp;
 
 import io.searchable.core.SearchableLibrary;
-import io.searchable.core.application.config.ApplicationConfig;
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.application.config.IndexConfig;
 import io.searchable.core.application.config.PluginsConfig;
 import io.searchable.core.infrastructure.persistence.PersistenceConfig;
@@ -40,16 +40,16 @@ public class SearchableWebappApplication {
     public SearchableLibrary searchableLibrary(
             @Value("${searchable.data-directory:./data}") final Path dataDirectory,
             @Value("${searchable.persistence.url:jdbc:h2:./data/webapp;MODE=PostgreSQL}") final String dbUrl) {
-        final ApplicationConfig raw = new ApplicationConfig(
+        final SearchableConfig raw = new SearchableConfig(
             dataDirectory,
             new PersistenceConfig("H2", dbUrl, "sa", ""),
             new IndexConfig(dataDirectory.resolve("indexes")),
             PluginsConfig.classpathOnly(),
-            GlobalConfig.defaults());
+            SearchableGlobalConfig.defaults());
         // Resolve relative paths against the JVM CWD because no config-file
         // anchor exists when paths come from Spring `@Value` injection.
         // See docs/devel/adr/0002-data-directory-relative-path-resolution.md.
-        final ApplicationConfig config = ApplicationConfig.normalize(raw, Path.of("").toAbsolutePath());
+        final SearchableConfig config = SearchableConfig.normalize(raw, Path.of("").toAbsolutePath());
         return SearchableLibrary.builder()
             .applicationConfig(config)
             .readOnly(true)

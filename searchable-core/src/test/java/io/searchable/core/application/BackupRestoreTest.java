@@ -1,6 +1,6 @@
 package io.searchable.core.application;
 
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.domain.document.Document;
 import io.searchable.core.domain.embedding.EmbeddingProvider;
 import io.searchable.core.domain.search.SearchRequest;
@@ -53,7 +53,7 @@ class BackupRestoreTest {
         final EmbeddingProvider embedding = new HashEmbeddingProvider(128);
         indexer = new LuceneIndexer(provider, embedding);
         namespaceService = new NamespaceService(nsRepo, metaRepo, provider,
-            GlobalConfig.defaults(),
+            SearchableGlobalConfig.defaults(),
             Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC));
     }
 

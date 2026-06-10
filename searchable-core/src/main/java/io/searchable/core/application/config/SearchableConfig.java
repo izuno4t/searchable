@@ -15,23 +15,23 @@ import java.util.Objects;
  * {@code plugins.directory}, and any file path embedded in
  * {@code persistence.url}) should be resolved to absolute paths before the
  * config is handed to {@code SearchableLibrary}. Use
- * {@link #normalize(ApplicationConfig, Path)} for that.
+ * {@link #normalize(SearchableConfig, Path)} for that.
  * See {@code docs/devel/adr/0002-data-directory-relative-path-resolution.md}.
  */
-public record ApplicationConfig(
+public record SearchableConfig(
     Path dataDirectory,
     PersistenceConfig persistence,
     IndexConfig index,
     PluginsConfig plugins,
-    GlobalConfig global
+    SearchableGlobalConfig global
 ) {
 
-    public ApplicationConfig {
+    public SearchableConfig {
         Objects.requireNonNull(dataDirectory, "dataDirectory must not be null");
         Objects.requireNonNull(persistence, "persistence must not be null");
         index = index == null ? IndexConfig.defaults() : index;
         plugins = plugins == null ? PluginsConfig.classpathOnly() : plugins;
-        global = global == null ? GlobalConfig.defaults() : global;
+        global = global == null ? SearchableGlobalConfig.defaults() : global;
     }
 
     /**
@@ -57,12 +57,12 @@ public record ApplicationConfig(
      *       are left untouched.</li>
      * </ul>
      */
-    public static ApplicationConfig normalize(final ApplicationConfig raw, final Path base) {
+    public static SearchableConfig normalize(final SearchableConfig raw, final Path base) {
         Objects.requireNonNull(raw, "raw must not be null");
         Objects.requireNonNull(base, "base must not be null");
         final Path absoluteBase = base.toAbsolutePath().normalize();
         final Path absoluteData = resolveAgainst(raw.dataDirectory, absoluteBase);
-        return new ApplicationConfig(
+        return new SearchableConfig(
             absoluteData,
             normalizePersistence(raw.persistence, absoluteData),
             normalizeIndex(raw.index, absoluteData),
@@ -131,7 +131,7 @@ public record ApplicationConfig(
      *
      * <p>Exposed for use by other property-binding sites (e.g. Spring Boot
      * {@code @ConfigurationProperties}) that need the same rewriting rule
-     * without going through {@link #normalize(ApplicationConfig, Path)}.
+     * without going through {@link #normalize(SearchableConfig, Path)}.
      */
     public static String normalizeH2Url(final String url, final Path absoluteBase) {
         final String prefix = "jdbc:h2:";

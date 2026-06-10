@@ -1,7 +1,7 @@
 package io.searchable.core;
 
-import io.searchable.core.application.config.ApplicationConfig;
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.application.config.IndexConfig;
 import io.searchable.core.application.config.PluginsConfig;
 import io.searchable.core.domain.document.Document;
@@ -40,7 +40,7 @@ class SearchableLibraryTest {
     }
 
     @Test
-    void buildsLibraryFromApplicationConfigUsingProvidedDataSource() {
+    void buildsLibraryFromSearchableConfigUsingProvidedDataSource() {
         try (SearchableLibrary library = SearchableLibrary.builder()
                 .applicationConfig(applicationConfig())
                 .dataSource(database.dataSource())
@@ -59,7 +59,7 @@ class SearchableLibraryTest {
     }
 
     @Test
-    void requiresApplicationConfig() {
+    void requiresSearchableConfig() {
         assertThatThrownBy(() -> SearchableLibrary.builder().build())
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("applicationConfig");
@@ -100,7 +100,7 @@ class SearchableLibraryTest {
 
     @Test
     void readOnlyModeAllowsSearchButRejectsWriteServices() {
-        final ApplicationConfig cfg = applicationConfig();
+        final SearchableConfig cfg = applicationConfig();
         // First build a writable library and create one namespace + document
         // so the read-only library has something to query.
         try (SearchableLibrary writable = SearchableLibrary.builder()
@@ -154,12 +154,12 @@ class SearchableLibraryTest {
         library.close();
     }
 
-    private ApplicationConfig applicationConfig() {
-        return new ApplicationConfig(
+    private SearchableConfig applicationConfig() {
+        return new SearchableConfig(
             tempDir,
             new PersistenceConfig("H2", "jdbc:h2:mem:dummy", "sa", ""),
             new IndexConfig(tempDir.resolve("indexes")),
             PluginsConfig.classpathOnly(),
-            GlobalConfig.defaults());
+            SearchableGlobalConfig.defaults());
     }
 }

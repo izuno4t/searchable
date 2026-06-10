@@ -29,7 +29,7 @@ SearchableLibrary library = SearchableLibrary.builder()
 SearchableLibrary library = SearchableLibrary.builder()
     .dataDirectory("/path/to/data")
     .persistenceType(PersistenceType.H2)
-    .globalConfig(GlobalConfig.builder()
+    .globalConfig(SearchableGlobalConfig.builder()
         .defaultSearchArchitecture(SearchArchitecture.HYBRID)
         .build())
     .build();
@@ -226,13 +226,13 @@ MCP サーバーは [`examples/mcp/`](../examples/mcp/) にリファレンス実
 stdio モード (Claude Desktop など、プロセス起動型クライアント):
 
 ```bash
-java -jar examples/mcp/target/mcp-example-1.0.0-SNAPSHOT.jar --mode stdio
+java -jar examples/mcp/target/mcp-example-1.0.0.jar --mode stdio
 ```
 
 SSE モード (HTTP 経由):
 
 ```bash
-java -jar examples/mcp/target/mcp-example-1.0.0-SNAPSHOT.jar --mode sse --port 8080
+java -jar examples/mcp/target/mcp-example-1.0.0.jar --mode sse --port 8080
 ```
 
 ### 4.2 Claude Desktop からの利用
@@ -246,7 +246,7 @@ java -jar examples/mcp/target/mcp-example-1.0.0-SNAPSHOT.jar --mode sse --port 8
       "command": "java",
       "args": [
         "-jar",
-        "/path/to/mcp-example-1.0.0-SNAPSHOT.jar",
+        "/path/to/mcp-example-1.0.0.jar",
         "--mode",
         "stdio"
       ],

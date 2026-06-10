@@ -3,7 +3,7 @@ package io.searchable.core;
 import io.searchable.core.application.FacetAggregator;
 import io.searchable.core.application.NamespaceService;
 import io.searchable.core.application.SearchPerformanceMonitor;
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.domain.namespace.AiConfig;
 import io.searchable.core.domain.namespace.EmbeddingConfig;
 import io.searchable.core.domain.namespace.NamespaceConfigPatch;
@@ -53,7 +53,7 @@ class CoverageSweepFinal5Test {
                 new IndexLayout(tempDir.resolve("ad")), AnalyzerFactory.japanese())) {
             final var svc = new NamespaceService(new JdbcNamespaceRepository(ds),
                 new JdbcIndexMetadataRepository(ds), provider,
-                GlobalConfig.defaults(), CLOCK);
+                SearchableGlobalConfig.defaults(), CLOCK);
             final var patch = new NamespaceConfigPatch(
                 SearchType.HYBRID,
                 SearchStrategy.PARALLEL,
@@ -81,7 +81,7 @@ class CoverageSweepFinal5Test {
                 new IndexLayout(tempDir.resolve("nm")), AnalyzerFactory.japanese())) {
             final var svc = new NamespaceService(new JdbcNamespaceRepository(ds),
                 new JdbcIndexMetadataRepository(ds), provider,
-                GlobalConfig.defaults(), CLOCK);
+                SearchableGlobalConfig.defaults(), CLOCK);
             org.assertj.core.api.Assertions.assertThatThrownBy(() -> svc.rename("none", "X"))
                 .isInstanceOf(java.util.NoSuchElementException.class);
             org.assertj.core.api.Assertions.assertThatThrownBy(() ->

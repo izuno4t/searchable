@@ -1,18 +1,18 @@
-# Searchable - セットアップガイド
+# Searchable - Setup guide
 
-Phase 1 構成（全文検索コア + REST API）のセットアップ手順。
+Setup steps for the Phase 1 configuration (full-text search core + REST API).
 
-## 1. 必要環境
+## 1. Prerequisites
 
-| 項目 | バージョン |
+| Item | Version |
 | --- | --- |
-| Java | 21 以上 |
-| Maven | 3.9 以上 |
+| Java | 21 or later |
+| Maven | 3.9 or later |
 | OS | macOS / Linux / Windows |
-| メモリ | 1GB 以上推奨 |
-| ディスク | データ量に応じて確保 |
+| Memory | 1GB or more recommended |
+| Disk | Provision according to data volume |
 
-## 2. ビルド
+## 2. Build
 
 ```bash
 git clone <repository-url>
@@ -20,18 +20,19 @@ cd searchable
 mvn -B clean package
 ```
 
-主要な生成物:
+The main artifacts are as follows.
 
-- `searchable-plugins/target/searchable-plugins-1.0.0-SNAPSHOT.jar`
-- `searchable-core/target/searchable-core-1.0.0-SNAPSHOT.jar`
-- `searchable-api/target/searchable-api-1.0.0-SNAPSHOT.jar`
-  （Spring Boot fat jar、~37MB）
+- `searchable-plugins/target/searchable-plugins-1.0.0.jar`
+- `searchable-core/target/searchable-core-1.0.0.jar`
+- `searchable-api/target/searchable-api-1.0.0.jar`
+  (Spring Boot fat jar, ~37MB)
 
-## 3. 設定
+## 3. Configuration
 
-REST API サーバーの設定は
-`searchable-api/src/main/resources/application.properties` に記述する。
-本番運用時は、外部の `application.properties` で上書きする。
+Configure the REST API server in
+`searchable-api/src/main/resources/application.properties`. For
+production use, override these values with an external
+`application.properties`.
 
 ```properties
 server.port=8080
@@ -47,41 +48,41 @@ searchable.global.default-search-strategy=SEQUENTIAL
 searchable.global.default-search-order=FULL_TEXT_FIRST
 ```
 
-### プラグインを利用する場合
+### Using plugins
 
-プラグインJARを配置するディレクトリを設定する。
+Configure the directory where plugin JARs are placed.
 
 ```properties
 searchable.plugins.directory=./plugins
 ```
 
-サンプル: `examples/filesystem-plugin/` を参照。
+See `examples/filesystem-plugin/` for a sample.
 
-## 4. 起動
+## 4. Starting the server
 
-### スタンドアロンサーバーモード
+### Standalone server mode
 
 ```bash
-java -jar searchable-api/target/searchable-api-1.0.0-SNAPSHOT.jar
+java -jar searchable-api/target/searchable-api-1.0.0.jar
 ```
 
-外部設定ファイルを指定する場合:
+To specify an external configuration file:
 
 ```bash
-java -jar searchable-api/target/searchable-api-1.0.0-SNAPSHOT.jar \
+java -jar searchable-api/target/searchable-api-1.0.0.jar \
   --spring.config.location=/path/to/application.properties
 ```
 
-### 起動確認
+### Startup verification
 
 ```bash
 curl http://localhost:8080/api/v1/namespaces
 # → {"namespaces":[],"total":0}
 ```
 
-## 5. 基本操作
+## 5. Basic operations
 
-### Namespace 作成
+### Create a Namespace
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/namespaces \
@@ -93,7 +94,7 @@ curl -X POST http://localhost:8080/api/v1/namespaces \
   }'
 ```
 
-### ドキュメント登録
+### Register a document
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/index/documents \
@@ -108,7 +109,7 @@ curl -X POST http://localhost:8080/api/v1/index/documents \
   }'
 ```
 
-### バッチ登録
+### Batch registration
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/index/batch \
@@ -122,7 +123,7 @@ curl -X POST http://localhost:8080/api/v1/index/batch \
   }'
 ```
 
-### 検索
+### Search
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/search \
@@ -134,92 +135,98 @@ curl -X POST http://localhost:8080/api/v1/search \
   }'
 ```
 
-### Namespace 削除
+### Delete a Namespace
 
 ```bash
 curl -X DELETE http://localhost:8080/api/v1/namespaces/project-a
 ```
 
-## 6. データの構成
+## 6. Data layout
 
 ```text
 ./data/
-├── metadata.mv.db        # H2 メタデータDB
+├── metadata.mv.db        # H2 metadata DB
 └── indexes/
-    └── <namespace-id>/    # Namespace ごとの Lucene インデックス
+    └── <namespace-id>/    # Per-Namespace Lucene index
         ├── segments_N
         ├── *.cfs
         └── ...
 ```
 
-## 7. ログ
+## 7. Logging
 
-`logback-spring.xml` を上書きしてカスタマイズ可能。
-デフォルトでは標準出力に出力し、ログレベルは `com.searchable=INFO`。
+You can customize logging by overriding `logback-spring.xml`. By
+default, logs are written to standard output, and the log level is
+`com.searchable=INFO`.
 
-## 8. メタデータ DB スキーマの更新と既存インデックスの互換性
+## 8. Metadata DB schema updates and compatibility with existing indexes
 
-文書レベルのメタデータ(`title` / `metadata.url` / `category` 等)は
-`DOCUMENT_METADATA` テーブルに移されました(`docs/devel/design/architecture/overview.md` §5.7)。
-旧バージョンで作成された Lucene インデックスには `metadataJson` /
-`namespaceId` の stored field が残っていますが、新バージョンの検索処理は
-これらを読まないため、**検索結果の `SearchHit.metadata` は空** になります
-(セクションアンカーも生成されません)。
+Document-level metadata (`title` / `metadata.url` / `category`, etc.)
+has been moved to the `DOCUMENT_METADATA` table. Lucene indexes
+created by older versions still contain the `metadataJson` /
+`namespaceId` stored fields, but the new search code does not read
+them, so **`SearchHit.metadata` in search results will be empty** (and
+section anchors are not generated).
 
-### 推奨手順: 再構築
+### Recommended procedure: rebuild
 
-新バージョンに上げた直後に namespace ごとに再取込を行ってください。
+Re-ingest each Namespace immediately after upgrading to the new
+version.
 
 ```bash
-# 1. メタデータ DB スキーマを最新にする(SchemaInitializer が
-#    起動時に CREATE TABLE IF NOT EXISTS を自動実行する)
+# 1. Bring the metadata DB schema up to date (SchemaInitializer
+#    automatically runs CREATE TABLE IF NOT EXISTS at startup)
 java -jar searchable-cli.jar --config ./searchable.yaml status
 
-# 2. namespace のインデックスをクリアして再取込
+# 2. Clear the Namespace index and re-ingest
 java -jar searchable-cli.jar --config ./searchable.yaml \
     rebuild --namespace <namespace-id>
 java -jar searchable-cli.jar --config ./searchable.yaml \
     ingest --namespace <namespace-id> --source-type file <path>
 ```
 
-`searchable-cli` の `ingest` は新仕様に従って `metadata.url` を自動で
-埋めます。`examples/api` / `examples/webapp` 経由の再取込でも、それぞれの
-取込処理が `metadata.url` を設定するように更新済みです。
+`searchable-cli`'s `ingest` automatically populates `metadata.url`
+according to the new specification. Re-ingestion through
+`examples/api` / `examples/webapp` has also been updated so that each
+ingestion path sets `metadata.url`.
 
-### 移行期間に再取込できない場合
+### When re-ingestion is not possible during the migration window
 
-旧インデックスのまま検索すること自体は可能(ヒットは返る)ですが、
-以下の機能は **新たに取り込んだ文書でないと有効になりません**:
+You can still search against the old index (hits are returned), but
+the following features **only take effect for newly ingested
+documents**.
 
-- `SearchHit.metadata.url` での元文書リンク
-- `SubResult.anchorUrl` (セクションアンカー)
-- `DocumentBrowser` での文書一覧と件数(メタデータ DB ベースに変更)
+- Original-document links via `SearchHit.metadata.url`
+- `SubResult.anchorUrl` (section anchors)
+- Document list and count in `DocumentBrowser` (now based on the
+  metadata DB)
 
-移行期間中は admin / webapp の文書一覧画面が空に見える可能性が
-あるため、計画的に `rebuild` + `ingest` を実施してください。
+During the migration window, the document list screen in admin /
+webapp may appear empty, so plan and execute `rebuild` + `ingest`
+accordingly.
 
-## 8. テスト実行
+## 8. Running tests
 
 ```bash
-# 全モジュール
+# All modules
 mvn -B test
 
-# searchable-core のみ
+# searchable-core only
 mvn -B -pl searchable-core -am test
 
-# searchable-api のみ
+# searchable-api only
 mvn -B -pl searchable-api -am test
 ```
 
-## 9. トラブルシューティング
+## 9. Troubleshooting
 
-### ポートが使用中
+### Port already in use
 
 ```properties
 server.port=8081
 ```
 
-### インデックスを再構築したい
+### Rebuilding the index
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/index/rebuild \
@@ -227,9 +234,9 @@ curl -X POST http://localhost:8080/api/v1/index/rebuild \
   -d '{"namespaceId": "project-a"}'
 ```
 
-### 設定変更後の挙動が反映されない
+### Configuration changes do not take effect
 
-`application.properties` の場所を確認し、サーバーを再起動する。
+Check the location of `application.properties` and restart the server.
 
 ---
 

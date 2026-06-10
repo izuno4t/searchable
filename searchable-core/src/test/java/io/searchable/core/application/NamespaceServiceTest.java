@@ -1,6 +1,6 @@
 package io.searchable.core.application;
 
-import io.searchable.core.application.config.GlobalConfig;
+import io.searchable.core.application.config.SearchableGlobalConfig;
 import io.searchable.core.domain.namespace.Namespace;
 import io.searchable.core.domain.namespace.NamespaceConfigPatch;
 import io.searchable.core.domain.search.SearchOrder;
@@ -52,7 +52,7 @@ class NamespaceServiceTest {
             new JdbcNamespaceRepository(dataSource),
             new JdbcIndexMetadataRepository(dataSource),
             indexProvider,
-            GlobalConfig.defaults(),
+            SearchableGlobalConfig.defaults(),
             Clock.fixed(Instant.parse("2026-05-15T00:00:00Z"), ZoneOffset.UTC)
         );
     }

@@ -621,7 +621,7 @@ SearchableLibrary library = SearchableLibrary.builder()
 SearchableLibrary library = SearchableLibrary.builder()
     .dataDirectory("/path/to/data")
     .persistenceType(PersistenceType.H2)
-    .globalConfig(GlobalConfig.builder()
+    .globalConfig(SearchableGlobalConfig.builder()
         .defaultSearchArchitecture(SearchArchitecture.HYBRID)
         .build())
     .build();
