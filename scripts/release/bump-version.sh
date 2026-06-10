@@ -61,6 +61,24 @@ if [ ! -x "$MVNW" ]; then
   exit 1
 fi
 
+# ANSI colour helpers (disabled if stdout is not a TTY). Defined early
+# so the pre-check below can use them.
+if [ -t 1 ]; then
+  R=$'\033[1;31m'  # bold red
+  Y=$'\033[1;33m'  # bold yellow
+  G=$'\033[1;32m'  # bold green
+  N=$'\033[0m'     # reset
+else
+  R= Y= G= N=
+fi
+banner() {
+  local colour="$1" emoji="$2" title="$3"
+  local bar='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+  printf '\n%s%s%s\n' "$colour" "$bar" "$N"
+  printf '%s %s  %s%s\n' "$colour" "$emoji" "$title" "$N"
+  printf '%s%s%s\n\n' "$colour" "$bar" "$N"
+}
+
 # Current root version, for the dry-run banner.
 CURRENT=$(grep -m1 -oE '<version>[^<]+</version>' "$ROOT_POM" \
   | sed -E 's|</?version>||g')
@@ -73,6 +91,32 @@ if [ "$CURRENT" = "$NEW" ]; then
   echo "Already at $NEW -- nothing to do."
   exit 0
 fi
+
+# Pre-check: any version-shaped literal in the excluded paths means
+# someone accidentally hard-coded a project version into a doc that the
+# bump script intentionally never touches. Fail BEFORE any pom or doc
+# is modified, so the working tree stays clean and the human can fix
+# the offending file before retrying.
+echo ""
+echo "Pre-check: forbidding auto-bump patterns in excluded paths"
+GUARD_PATTERN='(<version>|-)[0-9]+\.[0-9]+\.[0-9]+([-.A-Za-z0-9]*)?(</version>|\.jar)'
+GUARD_HITS=$(grep -rnE \
+  --include='*.md' \
+  --exclude-dir=.git \
+  --exclude-dir=target \
+  --exclude-dir=node_modules \
+  --exclude-dir=archive \
+  -e "$GUARD_PATTERN" \
+  CLAUDE.md docs/devel/ 2>/dev/null || true)
+if [ -n "$GUARD_HITS" ]; then
+  banner "$R" "🚨" "FORBIDDEN: auto-bump pattern in dev-only doc"
+  printf '%s    %s%s\n' "$R" "$GUARD_HITS" "$N"
+  printf '\n%sCLAUDE.md と docs/devel/ は bump-version.sh の対象外です。%s\n' "$R" "$N"
+  printf '%sproject-version literal を削除するか、user-facing な場所に移してください。%s\n' "$R" "$N"
+  banner "$R" "❌" "BUMP ABORTED (no files modified)"
+  exit 1
+fi
+printf '%s ✅  Pre-check OK%s — no project-version literals in excluded paths.\n' "$G" "$N"
 
 # GNU sed accepts `-i`; BSD/macOS sed requires `-i ''` (empty backup ext).
 SED_INPLACE=("-i")
@@ -119,15 +163,18 @@ done
 
 echo ""
 echo "[3/3] Updating dev-version-tracking refs in *.md (JAR filename + POM <version>)"
-# Only the two patterns that legitimately track the working dev version:
+# Scope: user-facing docs only (README.md, docs/public/**, examples/**,
+# searchable-cli/README.md). Anything under docs/devel/ is internal
+# developer documentation that never tracks the working dev version.
+#
+# Auto-bump targets only two unambiguous patterns:
 #   - `-CURRENT.jar` : output of `mvn package` against the current pom
 #   - `<version>CURRENT</version>` : Maven coordinate snippets in docs
-# Badges (`Version-X-...`), status text (`**X (stable)**`), and similar
-# prose live in a curated checklist in docs/devel/operation/release.md §4
-# because they need contextual judgement (badge points at last released,
-# status wording differs by stage). Files under docs/devel/work/ are
-# history-or-future docs and are never auto-bumped.
-EXCLUDE_REGEX='^(\./)?(docs/devel/work/|.*/archive/)'
+# Badges, status text, OpenAPI/JSON version fields, and similar prose
+# need contextual judgement and are NOT auto-bumped. They're listed in
+# the Advisory section below for manual review.
+EXCLUDE_REGEX='^(\./)?(docs/devel/|CLAUDE\.md(:|$)|.*/archive/)'
+
 PATTERNS=(
   "<version>${CURRENT}</version>:<version>${NEW}</version>"
   "-${CURRENT}.jar:-${NEW}.jar"
@@ -143,30 +190,60 @@ for spec in "${PATTERNS[@]}"; do
       echo "  - ${doc#./}"
       SEEN[$doc]=1
     fi
-  done < <(grep -rlF "$old" . \
+  done < <(grep -rlF \
     --include='*.md' \
     --exclude-dir=.git \
     --exclude-dir=target \
-    --exclude-dir=node_modules)
+    --exclude-dir=node_modules \
+    -e "$old" .)
 done
 
 echo ""
 echo "=== Checking that no auto-bump pattern leaks for $CURRENT ==="
+LEAK_FOUND=0
 for pat in "<version>${CURRENT}</version>" "-${CURRENT}.jar"; do
-  LEAKS=$(grep -rlF "$pat" "$REPO_ROOT" \
+  LEAKS=$(grep -rlF \
     --include='*.xml' --include='*.md' \
     --exclude-dir=.git \
     --exclude-dir=target \
     --exclude-dir=node_modules \
+    -e "$pat" "$REPO_ROOT" \
     | sed "s|^$REPO_ROOT/||" \
     | { grep -vE "$EXCLUDE_REGEX" || true; }) || true
   if [ -n "$LEAKS" ]; then
-    echo "ERROR: $pat still in:" >&2
-    printf '  %s\n' $LEAKS >&2
-    exit 1
+    banner "$R" "🚨" "LEAK: pattern '$pat' still present after bump"
+    printf '%s    %s%s\n' "$R" "$LEAKS" "$N"
+    LEAK_FOUND=1
   fi
 done
-echo "OK: no $CURRENT auto-bump pattern remains outside history paths."
+if [ "$LEAK_FOUND" = "1" ]; then
+  banner "$R" "❌" "BUMP ABORTED — investigate the leaked references above"
+  exit 1
+fi
+printf '%s ✅  OK%s — no %s auto-bump pattern remains outside history paths.\n' "$G" "$N" "$CURRENT"
+
+# Non-fatal advisory: other plain-literal CURRENT references that are
+# NOT part of the auto-bump pattern set (badges, OpenAPI version,
+# server info, etc.). They might or might not need a manual update.
+echo ""
+echo "=== Advisory: other $CURRENT literals (NOT auto-bumped, manual review) ==="
+OTHER=$(grep -rnF \
+  --include='*.md' --include='*.xml' --include='*.json' \
+  --include='*.yaml' --include='*.yml' --include='*.properties' \
+  --exclude-dir=.git \
+  --exclude-dir=target \
+  --exclude-dir=node_modules \
+  -e "$CURRENT" "$REPO_ROOT" \
+  | grep -vE "<version>${CURRENT}</version>|-${CURRENT}\\.jar" \
+  | sed "s|^$REPO_ROOT/||" \
+  | { grep -vE "$EXCLUDE_REGEX" || true; } || true)
+if [ -n "$OTHER" ]; then
+  banner "$Y" "⚠️" "MANUAL REVIEW: $CURRENT literals NOT covered by auto-bump"
+  printf '%s%s%s\n' "$Y" "$OTHER" "$N"
+  printf '\n%s💡 Check each against the release.md §4 checklist and decide whether to bump.%s\n' "$Y" "$N"
+else
+  printf '%s ✅  OK%s — no other %s literals to review.\n' "$G" "$N" "$CURRENT"
+fi
 
 echo ""
 echo "=== Verifying reactor integrity (./mvnw -B -q clean install -DskipTests) ==="
