@@ -1,0 +1,66 @@
+name: Release
+
+# Tag-driven release to Maven Central via Sonatype Central Portal.
+# Trigger by pushing a tag matching v*, e.g.:
+#   git tag v1.0.0 && git push origin v1.0.0
+#
+# Required GitHub Secrets:
+#   - CENTRAL_USERNAME  : Central Portal token user (from https://central.sonatype.com/account)
+#   - CENTRAL_TOKEN     : Central Portal token password
+#   - GPG_PRIVATE_KEY   : ASCII-armored GPG private key (gpg --export-secret-keys --armor <key-id>)
+#   - GPG_PASSPHRASE    : Passphrase for the GPG key
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  MAVEN_OPTS: "-Xmx2g -Dfile.encoding=UTF-8"
+  MAVEN_CLI_OPTS: "--batch-mode --no-transfer-progress --errors -Dstyle.color=always"
+
+jobs:
+  deploy:
+    name: Deploy to Maven Central
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK 21 + Central Portal credentials + GPG key
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_TOKEN
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: GPG_PASSPHRASE
+
+      - name: Verify tag matches pom version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          # Reject any tag that is not a strict semver-style version.
+          # Defence-in-depth against tag-name injection even though tag
+          # creation already requires repo write access.
+          if ! [[ "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$ ]]; then
+            echo "::error::Invalid tag format: $TAG"
+            exit 1
+          fi
+          POM_VERSION=$(./mvnw -B -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+          if [ "$TAG" != "$POM_VERSION" ]; then
+            echo "::error::Tag $TAG does not match pom version $POM_VERSION"
+            exit 1
+          fi
+
+      - name: Build, sign, and deploy
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: ./mvnw $MAVEN_CLI_OPTS -Prelease -DskipTests deploy

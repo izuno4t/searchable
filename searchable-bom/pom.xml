@@ -13,7 +13,7 @@
          (the examples/ apps, downstream projects) import it without
          pulling in the rest of the parent pom's build configuration. -->
 
-    <groupId>io.searchable</groupId>
+    <groupId>io.github.searchable-io</groupId>
     <artifactId>searchable-bom</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
@@ -75,27 +75,27 @@
         <dependencies>
             <!-- Sub-modules -->
             <dependency>
-                <groupId>io.searchable</groupId>
+                <groupId>io.github.searchable-io</groupId>
                 <artifactId>searchable-plugins</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.searchable</groupId>
+                <groupId>io.github.searchable-io</groupId>
                 <artifactId>searchable-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.searchable</groupId>
+                <groupId>io.github.searchable-io</groupId>
                 <artifactId>searchable-ai</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.searchable</groupId>
+                <groupId>io.github.searchable-io</groupId>
                 <artifactId>searchable-cli</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.searchable</groupId>
+                <groupId>io.github.searchable-io</groupId>
                 <artifactId>searchable-testkit</artifactId>
                 <version>${project.version}</version>
             </dependency>

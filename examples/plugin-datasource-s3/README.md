@@ -1,4 +1,4 @@
-# Searchable S3 DataSource Plugin (Example)
+# <img src="../../assets/logo.svg" alt="" width="28" height="28"> Searchable S3 DataSource Plugin (Example)
 
 Reference implementation of a `DataSourcePlugin` that ingests documents
 from an S3-compatible object store. This module is **outside the main
@@ -38,7 +38,7 @@ In an app that embeds `searchable-core`:
 
 ```xml
 <dependency>
-  <groupId>io.searchable.example</groupId>
+  <groupId>io.github.searchable-io.example</groupId>
   <artifactId>plugin-datasource-s3-example</artifactId>
   <version>1.0.0</version>
 </dependency>

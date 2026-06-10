@@ -1,4 +1,4 @@
-# Searchable MCP Server (Example)
+# <img src="../../assets/logo.svg" alt="" width="28" height="28"> Searchable MCP Server (Example)
 
 Sample [Model Context Protocol](https://modelcontextprotocol.io/) server that
 exposes `searchable-core`'s hybrid search to AI clients such as Claude

@@ -1,4 +1,4 @@
-# Searchable Webapp (Example)
+# <img src="../../assets/logo.svg" alt="" width="28" height="28"> Searchable Webapp (Example)
 
 Library-embedded webapp built on Spring Boot + Thymeleaf. The same JVM
 process owns the Lucene index and serves the search UI — the

@@ -1,4 +1,4 @@
-# Searchable REST API (Example)
+# <img src="../../assets/logo.svg" alt="" width="28" height="28"> Searchable REST API (Example)
 
 Sample REST API server (Spring Boot) on top of `searchable-core`.
 

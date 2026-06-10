@@ -1,4 +1,4 @@
-# 🔍 Searchable
+# <img src="assets/logo.svg" alt="" width="36" height="36"> Searchable
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Build](https://img.shields.io/badge/Build-Maven-c71a36)
@@ -160,7 +160,7 @@ Drop Searchable into a Maven project as a regular dependency:
 
 ```xml
 <dependency>
-  <groupId>io.searchable</groupId>
+  <groupId>io.github.searchable-io</groupId>
   <artifactId>searchable-core</artifactId>
   <version>1.0.0</version>
 </dependency>

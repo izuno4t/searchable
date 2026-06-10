@@ -1,4 +1,4 @@
-# Searchable UI (Example)
+# <img src="../../assets/logo.svg" alt="" width="28" height="28"> Searchable UI (Example)
 
 Vanilla HTML + JS + CSS client for the [`examples/api`](../api) REST
 server. The UI is intentionally framework-free so it can be served from

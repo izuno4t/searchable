@@ -5,7 +5,7 @@
              https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.searchable.example</groupId>
+    <groupId>io.github.searchable-io.example</groupId>
     <artifactId>mcp-example</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
@@ -27,7 +27,7 @@
             <!-- Inherit versions from the core build so jackson / logback /
                  junit / assertj stay in sync without per-example pinning. -->
             <dependency>
-                <groupId>io.searchable</groupId>
+                <groupId>io.github.searchable-io</groupId>
                 <artifactId>searchable-bom</artifactId>
                 <version>${searchable.version}</version>
                 <type>pom</type>
@@ -38,7 +38,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.searchable</groupId>
+            <groupId>io.github.searchable-io</groupId>
             <artifactId>searchable-core</artifactId>
         </dependency>
 
@@ -71,7 +71,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.searchable</groupId>
+            <groupId>io.github.searchable-io</groupId>
             <artifactId>searchable-testkit</artifactId>
             <scope>test</scope>
         </dependency>

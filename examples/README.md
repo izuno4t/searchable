@@ -1,4 +1,4 @@
-# Searchable サンプルアプリケーション
+# <img src="../assets/logo.svg" alt="" width="28" height="28"> Searchable サンプルアプリケーション
 
 Searchable の代表的な **3 つの利用パターン** を、それぞれサンプル
 アプリケーションとして提供する。各サンプルは独立した Maven / 静的
@@ -222,5 +222,5 @@ index:
   追加実装することを推奨
 - ただし `examples/api` と `examples/mcp` は **API Key 認証** をサポートし、
   軽度の本番利用に耐える品質を目指す
-- パッケージは `io.searchable.example.*` 系列、Maven groupId は
-  `io.searchable.example`
+- Java パッケージは `io.searchable.example.*` 系列、Maven groupId は
+  `io.github.searchable-io.example`

@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.searchable</groupId>
+        <groupId>io.github.searchable-io</groupId>
         <artifactId>searchable-parent</artifactId>
         <version>1.0.0</version>
     </parent>
@@ -21,7 +21,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.searchable</groupId>
+            <groupId>io.github.searchable-io</groupId>
             <artifactId>searchable-core</artifactId>
         </dependency>
 
@@ -37,7 +37,7 @@
         </dependency>
 
         <dependency>
-            <groupId>io.searchable</groupId>
+            <groupId>io.github.searchable-io</groupId>
             <artifactId>searchable-testkit</artifactId>
             <scope>test</scope>
         </dependency>

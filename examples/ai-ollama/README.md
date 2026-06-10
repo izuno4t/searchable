@@ -1,4 +1,4 @@
-# Searchable + Ollama (Example)
+# <img src="../../assets/logo.svg" alt="" width="28" height="28"> Searchable + Ollama (Example)
 
 Configuration reference for running `searchable-admin` against a local
 [Ollama](https://ollama.com) server for AI summarisation.

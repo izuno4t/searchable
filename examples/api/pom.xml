@@ -12,7 +12,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>io.searchable.example</groupId>
+    <groupId>io.github.searchable-io.example</groupId>
     <artifactId>api-example</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
@@ -34,7 +34,7 @@
                  so searchable-bom's pins (e.g. jackson 2.19.0) override
                  the Spring Boot defaults where they differ. -->
             <dependency>
-                <groupId>io.searchable</groupId>
+                <groupId>io.github.searchable-io</groupId>
                 <artifactId>searchable-bom</artifactId>
                 <version>${searchable.version}</version>
                 <type>pom</type>
@@ -45,7 +45,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.searchable</groupId>
+            <groupId>io.github.searchable-io</groupId>
             <artifactId>searchable-core</artifactId>
         </dependency>
 
@@ -80,7 +80,7 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>io.searchable</groupId>
+            <groupId>io.github.searchable-io</groupId>
             <artifactId>searchable-testkit</artifactId>
             <scope>test</scope>
         </dependency>
