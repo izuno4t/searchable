@@ -7,7 +7,7 @@ Features and operating procedures for the Searchable Admin UI
 
 ```bash
 mvn -B clean package
-java -jar searchable-ui/target/searchable-ui-1.0.0.jar
+java -jar searchable-ui/target/searchable-ui-1.0.1-SNAPSHOT.jar
 ```
 
 By default, both the UI and the REST API are served at
@@ -16,7 +16,7 @@ By default, both the UI and the REST API are served at
 To override the configuration file:
 
 ```bash
-java -jar searchable-ui-1.0.0.jar \
+java -jar searchable-ui-1.0.1-SNAPSHOT.jar \
   --spring.config.location=/path/to/application.properties
 ```
 

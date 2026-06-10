@@ -515,7 +515,17 @@
                                 on https://central.sonatype.com.
                             -->
                             <autoPublish>true</autoPublish>
-                            <waitUntil>published</waitUntil>
+                            <!--
+                                Return as soon as Sonatype reports the
+                                deployment VALIDATED. Setting this to
+                                `published` blocks the CI job for the
+                                15min - several hours it takes the
+                                bundle to actually propagate to Maven
+                                Central, which is wasted runner time;
+                                propagation continues asynchronously
+                                once validation succeeds.
+                            -->
+                            <waitUntil>validated</waitUntil>
                         </configuration>
                     </plugin>
                 </plugins>

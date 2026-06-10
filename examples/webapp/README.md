@@ -13,7 +13,7 @@ reactor). Install the library first, then build and launch:
 ```bash
 mvn -B clean install -DskipTests           # at repository root
 mvn -B -f examples/webapp/pom.xml package
-java -jar examples/webapp/target/webapp-example-1.0.0.jar
+java -jar examples/webapp/target/webapp-example-1.0.1-SNAPSHOT.jar
 ```
 
 The app listens on `http://localhost:8080`.
@@ -46,7 +46,7 @@ writes the resulting index under `./data/webapp/indexes`.
 # Source directory: wherever the documents actually live.
 SOURCE_DIR=~/Documents/handbook
 
-java -jar examples/webapp/target/webapp-example-1.0.0.jar \
+java -jar examples/webapp/target/webapp-example-1.0.1-SNAPSHOT.jar \
      --searchable.ingest.enabled=true \
      --searchable.ingest.namespace=default \
      --searchable.ingest.source="$SOURCE_DIR"

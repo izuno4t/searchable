@@ -59,12 +59,12 @@ the root POM's reactor, so use `-f` to point to its POM.
 ./mvnw -B -f examples/api/pom.xml package
 ```
 
-Artifact: `examples/api/target/api-example-1.0.0.jar`
+Artifact: `examples/api/target/api-example-1.0.1-SNAPSHOT.jar`
 
 ### A.2 Start it
 
 ```bash
-java -jar examples/api/target/api-example-1.0.0.jar \
+java -jar examples/api/target/api-example-1.0.1-SNAPSHOT.jar \
      --spring.config.location=examples/api/application.properties
 ```
 
@@ -142,8 +142,8 @@ webapp that reads that index and search from a browser.
 
 Artifacts:
 
-- `searchable-cli/target/searchable-cli-1.0.0.jar`
-- `examples/webapp/target/webapp-example-1.0.0.jar`
+- `searchable-cli/target/searchable-cli-1.0.1-SNAPSHOT.jar`
+- `examples/webapp/target/webapp-example-1.0.1-SNAPSHOT.jar`
 
 ### B.2 Prepare documents
 
@@ -203,7 +203,7 @@ persistence:
 #### Run ingest
 
 ```bash
-java -jar searchable-cli/target/searchable-cli-1.0.0.jar \
+java -jar searchable-cli/target/searchable-cli-1.0.1-SNAPSHOT.jar \
   --config ./searchable.yaml \
   ingest \
   --namespace default \
@@ -223,7 +223,7 @@ When it finishes, the index
 #### Check the ingestion result
 
 ```bash
-java -jar searchable-cli/target/searchable-cli-1.0.0.jar \
+java -jar searchable-cli/target/searchable-cli-1.0.1-SNAPSHOT.jar \
   --config ./searchable.yaml status
 ```
 
@@ -238,14 +238,14 @@ directory where you created `searchable.yaml` makes it look at the same
 `./data`.
 
 ```bash
-java -jar examples/webapp/target/webapp-example-1.0.0.jar
+java -jar examples/webapp/target/webapp-example-1.0.1-SNAPSHOT.jar
 ```
 
 To start it from a different directory, specify the path explicitly on
 the webapp side as well:
 
 ```bash
-java -jar examples/webapp/target/webapp-example-1.0.0.jar \
+java -jar examples/webapp/target/webapp-example-1.0.1-SNAPSHOT.jar \
   --searchable.data-directory=/absolute/path/to/data
 ```
 
@@ -278,7 +278,7 @@ Drop new files into `~/sample-docs/` and run `ingest` again to take them
 in. **There is no need to stop the webapp / MCP / API**:
 
 ```bash
-java -jar searchable-cli/target/searchable-cli-1.0.0.jar \
+java -jar searchable-cli/target/searchable-cli-1.0.1-SNAPSHOT.jar \
   --config ./searchable.yaml \
   ingest --namespace default ~/sample-docs
 ```

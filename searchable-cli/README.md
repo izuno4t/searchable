@@ -23,7 +23,7 @@ mvn -pl searchable-cli -am clean package
 
 Build outputs:
 
-- `searchable-cli/target/searchable-cli-1.0.0.jar` — main jar
+- `searchable-cli/target/searchable-cli-1.0.1-SNAPSHOT.jar` — main jar
 - `searchable-cli/target/lib/` — runtime dependencies (copied by
   `maven-dependency-plugin`)
 - `searchable-cli/src/main/scripts/searchable` — launcher shell script
@@ -51,7 +51,7 @@ SEARCHABLE_HOME=/opt/searchable \
 You can also invoke the jar directly:
 
 ```bash
-java -jar searchable-cli/target/searchable-cli-1.0.0.jar \
+java -jar searchable-cli/target/searchable-cli-1.0.1-SNAPSHOT.jar \
   --config ./config/searchable.yaml --help
 ```
 

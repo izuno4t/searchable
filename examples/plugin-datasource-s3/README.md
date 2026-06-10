@@ -40,7 +40,7 @@ In an app that embeds `searchable-core`:
 <dependency>
   <groupId>io.github.searchable-io.example</groupId>
   <artifactId>plugin-datasource-s3-example</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1-SNAPSHOT</version>
 </dependency>
 ```
 

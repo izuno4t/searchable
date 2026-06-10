@@ -6,7 +6,7 @@ Searchable Admin UI（searchable-ui）の機能と操作手順。
 
 ```bash
 mvn -B clean package
-java -jar searchable-ui/target/searchable-ui-1.0.0.jar
+java -jar searchable-ui/target/searchable-ui-1.0.1-SNAPSHOT.jar
 ```
 
 デフォルトでは `http://localhost:8080` で UI と REST API の両方が
@@ -15,7 +15,7 @@ java -jar searchable-ui/target/searchable-ui-1.0.0.jar
 設定ファイルを上書きする場合:
 
 ```bash
-java -jar searchable-ui-1.0.0.jar \
+java -jar searchable-ui-1.0.1-SNAPSHOT.jar \
   --spring.config.location=/path/to/application.properties
 ```
 

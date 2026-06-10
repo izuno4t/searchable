@@ -12,7 +12,7 @@
 - AI クライアント (Claude Desktop 等) から Searchable の検索機能を呼び出す
   ためのリファレンス実装
 - `io.searchable.example.mcp` パッケージで提供
-- 成果物: `mcp-example-1.0.0.jar` + 依存 JAR 群
+- 成果物: `mcp-example-1.0.1-SNAPSHOT.jar` + 依存 JAR 群
 
 ## 2. 機能要件
 

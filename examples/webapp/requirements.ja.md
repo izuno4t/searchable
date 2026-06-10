@@ -15,7 +15,7 @@
 - **利用パターン**: Searchable をライブラリとして直接組み込み
 - 1 プロセスで **書込(インデクシング)+ 検索 + UI 表示** をすべて担当
 - `io.searchable.example.webapp` パッケージで提供
-- 成果物: `webapp-example-1.0.0.jar` (Spring Boot fat jar)
+- 成果物: `webapp-example-1.0.1-SNAPSHOT.jar` (Spring Boot fat jar)
 
 ## 2. 機能要件
 

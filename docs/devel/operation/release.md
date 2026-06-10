@@ -103,9 +103,45 @@ git diff -- '*pom.xml'
 
 ```bash
 ./scripts/release/bump-version.sh 1.0.1
-./mvnw -B clean install -DskipTests
-git diff -- '*pom.xml' | head -40   # 確認
-git add '*pom.xml'
+```
+
+スクリプトは pom.xml と `*.md` 内の `<version>...</version>` まで
+自動で書き換える。**それ以外で version をリテラルで埋め込んでいる
+箇所は機械的に判定できないので手動更新する**。下のチェックリストを
+1 件ずつ確認すること(漏れがあると一見動くがバッジや起動コマンドが
+古い version を指すことになる)。
+
+#### リリース時 手動更新チェックリスト
+
+| 種別 | パターン | 対象ファイル |
+| --- | --- | --- |
+| shields.io バッジ | `Version-${OLD}-brightgreen` → `Version-${NEW}-brightgreen` | `README.md`(冒頭バッジ) |
+| Status 文 (英) | ``**${OLD} (stable).**`` の数字と `(stable)` ラベル | `README.md` 概要セクション |
+| Status 文 | ``**Status**: \`${OLD}\` (released).`` の数字と `(released)` ラベル | `CLAUDE.md` 冒頭 |
+| MCP レスポンス例 | `"version":"${OLD}"` → `"version":"${NEW}"` | `examples/mcp/README.md`(serverInfo 例示) |
+| 設定例コメント | `# version: ${OLD}` → `# version: ${NEW}` | `examples/mcp/mcp-capabilities.yaml`, `examples/mcp/README.md` |
+| API レスポンス例 | `"version": "${OLD}"` → `"version": "${NEW}"` | `examples/api/api-specification.ja.md` |
+
+JAR ファイル名 (`-${OLD}.jar` → `-${NEW}.jar`) の置換対象:
+
+- `docs/public/usage.md` / `docs/public/usage.ja.md`
+- `docs/public/admin-ui-guide.md` / `docs/public/admin-ui-guide.ja.md`
+- `examples/api/requirements.ja.md`
+- `examples/mcp/requirements.ja.md` / `examples/mcp/guide.ja.md` / `examples/mcp/README.md`
+- `examples/webapp/requirements.ja.md`
+
+> `(stable)` / `(released)` ラベルは数字と一緒に意味が変わる。
+> release → release bump (1.0.0 → 1.0.1) ならそのまま。
+> release → SNAPSHOT bump (1.0.1 → 1.0.2-SNAPSHOT) のときは
+> `(stable)` → `(development)`、`(released)` → `(SNAPSHOT)` 等に
+> 書き換える。
+
+#### コミット
+
+```bash
+./mvnw -B clean install -DskipTests   # 整合性ビルド
+git diff                              # 全変更を確認
+git add -A
 git commit -m "chore: release 1.0.1"
 ```
 

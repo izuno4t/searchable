@@ -22,9 +22,9 @@ mvn -B clean package
 
 The main artifacts are as follows.
 
-- `searchable-plugins/target/searchable-plugins-1.0.0.jar`
-- `searchable-core/target/searchable-core-1.0.0.jar`
-- `searchable-api/target/searchable-api-1.0.0.jar`
+- `searchable-plugins/target/searchable-plugins-1.0.1-SNAPSHOT.jar`
+- `searchable-core/target/searchable-core-1.0.1-SNAPSHOT.jar`
+- `searchable-api/target/searchable-api-1.0.1-SNAPSHOT.jar`
   (Spring Boot fat jar, ~37MB)
 
 ## 3. Configuration
@@ -63,13 +63,13 @@ See `examples/filesystem-plugin/` for a sample.
 ### Standalone server mode
 
 ```bash
-java -jar searchable-api/target/searchable-api-1.0.0.jar
+java -jar searchable-api/target/searchable-api-1.0.1-SNAPSHOT.jar
 ```
 
 To specify an external configuration file:
 
 ```bash
-java -jar searchable-api/target/searchable-api-1.0.0.jar \
+java -jar searchable-api/target/searchable-api-1.0.1-SNAPSHOT.jar \
   --spring.config.location=/path/to/application.properties
 ```
 

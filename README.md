@@ -114,7 +114,7 @@ the second packages the REST API example as a fat JAR.
 ### 2. Start the REST API server
 
 ```bash
-java -jar examples/api/target/api-example-1.0.0.jar
+java -jar examples/api/target/api-example-1.0.1-SNAPSHOT.jar
 ```
 
 When you see `Started SearchableApplication`, the server is listening on
@@ -162,7 +162,7 @@ Drop Searchable into a Maven project as a regular dependency:
 <dependency>
   <groupId>io.github.searchable-io</groupId>
   <artifactId>searchable-core</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1-SNAPSHOT</version>
 </dependency>
 ```
 

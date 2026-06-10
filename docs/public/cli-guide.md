@@ -15,8 +15,8 @@ inspection, and configuration validation for indexes.
 ```bash
 mvn -B -f searchable-cli/pom.xml clean package
 # Artifacts:
-#   searchable-cli/target/searchable-cli-1.0.0.jar          (executable fat jar)
-#   searchable-cli/target/original-searchable-cli-1.0.0.jar (pre-shade original, for reference)
+#   searchable-cli/target/searchable-cli-1.0.1-SNAPSHOT.jar          (executable fat jar)
+#   searchable-cli/target/original-searchable-cli-1.0.1-SNAPSHOT.jar (pre-shade original, for reference)
 #   searchable-cli/src/main/scripts/searchable                       (launcher shell script)
 ```
 
@@ -27,7 +27,7 @@ there is no need to place a sibling `lib/` directory.
 Direct launch:
 
 ```bash
-java -jar searchable-cli/target/searchable-cli-1.0.0.jar \
+java -jar searchable-cli/target/searchable-cli-1.0.1-SNAPSHOT.jar \
   --config /path/to/searchable.yaml <subcommand> [args]
 ```
 

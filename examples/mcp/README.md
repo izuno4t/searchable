@@ -25,7 +25,7 @@ mvn -B -f examples/mcp/pom.xml package
 
 Artifacts:
 
-- `examples/mcp/target/mcp-example-1.0.0.jar`
+- `examples/mcp/target/mcp-example-1.0.1-SNAPSHOT.jar`
 - `examples/mcp/target/lib/` (runtime dependencies)
 
 ## Configuration
@@ -117,7 +117,7 @@ The MCP client launches the server as a child process and speaks stdio;
 manual invocation is useful for debugging:
 
 ```bash
-java -jar examples/mcp/target/mcp-example-1.0.0.jar \
+java -jar examples/mcp/target/mcp-example-1.0.1-SNAPSHOT.jar \
   --config /absolute/path/to/searchable.yaml \
   --mcp-capabilities /absolute/path/to/mcp-capabilities.yaml
 ```
@@ -219,7 +219,7 @@ documents** — useful for catching config issues early:
   printf '%s\n' '{"jsonrpc":"2.0","method":"notifications/initialized"}'
   printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   printf '%s\n' '{"jsonrpc":"2.0","id":3,"method":"ping"}'
-} | java -jar examples/mcp/target/mcp-example-1.0.0.jar \
+} | java -jar examples/mcp/target/mcp-example-1.0.1-SNAPSHOT.jar \
        --config ./searchable.yaml \
        --mcp-capabilities ./mcp-capabilities.yaml
 ```
@@ -247,7 +247,7 @@ pattern with a `tools/call` frame:
   printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"manual","version":"0.0"}}}'
   printf '%s\n' '{"jsonrpc":"2.0","method":"notifications/initialized"}'
   printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"search_documents","arguments":{"query":"形態素解析","namespace_ids":["default"]}}}'
-} | java -jar examples/mcp/target/mcp-example-1.0.0.jar \
+} | java -jar examples/mcp/target/mcp-example-1.0.1-SNAPSHOT.jar \
        --config ./searchable.yaml \
        --mcp-capabilities ./mcp-capabilities.yaml
 ```
@@ -285,7 +285,7 @@ resolve.
       "command": "java",
       "args": [
         "-jar",
-        "/absolute/path/to/mcp-example-1.0.0.jar",
+        "/absolute/path/to/mcp-example-1.0.1-SNAPSHOT.jar",
         "--config",
         "/absolute/path/to/searchable.yaml",
         "--mcp-capabilities",

@@ -232,13 +232,13 @@ A reference implementation of the MCP server is in
 stdio mode (for process-launched clients such as Claude Desktop):
 
 ```bash
-java -jar examples/mcp/target/mcp-example-1.0.0.jar --mode stdio
+java -jar examples/mcp/target/mcp-example-1.0.1-SNAPSHOT.jar --mode stdio
 ```
 
 SSE mode (over HTTP):
 
 ```bash
-java -jar examples/mcp/target/mcp-example-1.0.0.jar --mode sse --port 8080
+java -jar examples/mcp/target/mcp-example-1.0.1-SNAPSHOT.jar --mode sse --port 8080
 ```
 
 ### 4.2 Use from Claude Desktop
@@ -252,7 +252,7 @@ Add to `claude_desktop_config.json`:
       "command": "java",
       "args": [
         "-jar",
-        "/path/to/mcp-example-1.0.0.jar",
+        "/path/to/mcp-example-1.0.1-SNAPSHOT.jar",
         "--mode",
         "stdio"
       ],

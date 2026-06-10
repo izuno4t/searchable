@@ -22,9 +22,9 @@ mvn -B clean package
 
 主要な生成物は次のとおりです。
 
-- `searchable-plugins/target/searchable-plugins-1.0.0.jar`
-- `searchable-core/target/searchable-core-1.0.0.jar`
-- `searchable-api/target/searchable-api-1.0.0.jar`
+- `searchable-plugins/target/searchable-plugins-1.0.1-SNAPSHOT.jar`
+- `searchable-core/target/searchable-core-1.0.1-SNAPSHOT.jar`
+- `searchable-api/target/searchable-api-1.0.1-SNAPSHOT.jar`
   （Spring Boot fat jar、~37MB）
 
 ## 3. 設定
@@ -62,13 +62,13 @@ searchable.plugins.directory=./plugins
 ### スタンドアロンサーバーモード
 
 ```bash
-java -jar searchable-api/target/searchable-api-1.0.0.jar
+java -jar searchable-api/target/searchable-api-1.0.1-SNAPSHOT.jar
 ```
 
 外部設定ファイルを指定する場合は次のようにします。
 
 ```bash
-java -jar searchable-api/target/searchable-api-1.0.0.jar \
+java -jar searchable-api/target/searchable-api-1.0.1-SNAPSHOT.jar \
   --spring.config.location=/path/to/application.properties
 ```
 
