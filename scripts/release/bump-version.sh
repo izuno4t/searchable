@@ -84,8 +84,15 @@ fi
 
 MVN_OPTS=(-B -q -DgenerateBackupPoms=false)
 
+# `-DprocessAllModules=true` is required for searchable-bom to be
+# updated. Without it, versions:set silently skips the BOM because it
+# has no <parent> ref linking back to searchable-parent (intentional,
+# to avoid the parent → import-BOM → parent cycle), and the default
+# traversal only walks parent-linked sub-modules.
 echo "[1/2] Updating main reactor (searchable-parent + BOM + 6 submodules)"
-"$MVNW" "${MVN_OPTS[@]}" versions:set -DnewVersion="$NEW"
+"$MVNW" "${MVN_OPTS[@]}" versions:set \
+  -DnewVersion="$NEW" \
+  -DprocessAllModules=true
 
 EXAMPLE_POMS=(
   examples/api/pom.xml
@@ -101,10 +108,6 @@ for pom in "${EXAMPLE_POMS[@]}"; do
     echo "  skip (missing): $pom"
     continue
   fi
-  # Each example has exactly:
-  #   <version>OLD</version>           ← the example artifact itself
-  #   <searchable.version>OLD</searchable.version>  ← the BOM coordinate
-  # Both are flat one-line elements, so literal replacement is safe.
   if grep -qE "<(version|searchable\.version)>${CURRENT}</(version|searchable\.version)>" "$pom"; then
     sed "${SED_INPLACE[@]}" \
       -e "s|<version>${CURRENT}</version>|<version>${NEW}</version>|g" \
