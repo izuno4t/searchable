@@ -1,18 +1,23 @@
-name: Release
+name: Publish
 
-# Tag-driven release to Maven Central via Sonatype Central Portal.
-# Trigger by pushing a tag matching v*, e.g.:
-#   git tag v1.0.0 && git push origin v1.0.0
+# Publishes artifacts to Sonatype Central Portal on every push to main.
+# The pom's <version> is the source of truth:
+#   *-SNAPSHOT  → published to the Central snapshot repository
+#   otherwise   → published to Maven Central as a release (signed)
+# central-publishing-maven-plugin auto-routes based on the suffix, so a
+# single workflow covers both modes.
+#
+# To cut a release: bump every pom.xml from X.Y.Z-SNAPSHOT to X.Y.Z,
+# commit, and push to main. Bump back to the next SNAPSHOT afterwards.
 #
 # Required GitHub Secrets:
-#   - CENTRAL_USERNAME  : Central Portal token user (from https://central.sonatype.com/account)
+#   - CENTRAL_USERNAME  : Central Portal token user (https://central.sonatype.com/account)
 #   - CENTRAL_TOKEN     : Central Portal token password
-#   - GPG_PRIVATE_KEY   : ASCII-armored GPG private key (gpg --export-secret-keys --armor <key-id>)
+#   - GPG_PRIVATE_KEY   : ASCII-armored GPG private key
 #   - GPG_PASSPHRASE    : Passphrase for the GPG key
 on:
   push:
-    tags:
-      - "v*"
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -23,8 +28,8 @@ env:
   MAVEN_CLI_OPTS: "--batch-mode --no-transfer-progress --errors -Dstyle.color=always"
 
 jobs:
-  deploy:
-    name: Deploy to Maven Central
+  publish:
+    name: Publish to Sonatype Central
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -42,33 +47,25 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: GPG_PASSPHRASE
 
-      - name: Verify tag matches pom version
+      - name: Detect pom version
+        id: version
         run: |
-          TAG="${GITHUB_REF#refs/tags/v}"
-          # Reject any tag that is not a strict semver-style version.
-          # Defence-in-depth against tag-name injection even though tag
-          # creation already requires repo write access.
-          if ! [[ "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$ ]]; then
-            echo "::error::Invalid tag format: $TAG"
+          POM_VERSION=$(grep -m1 -oP '(?<=<version>)[^<]+' pom.xml)
+          echo "Pom version: $POM_VERSION"
+          # Reject anything that is not a strict semver-style version
+          # (with optional -SNAPSHOT or other qualifier).
+          if ! [[ "$POM_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$ ]]; then
+            echo "::error::Invalid pom version: $POM_VERSION"
             exit 1
           fi
-          # Read project.version via maven-help-plugin (pinned in
-          # pluginManagement). The `if !` wrapper is required because
-          # `bash -e` aborts the script silently if a command
-          # substitution exits non-zero — without the wrapper, a mvn
-          # failure here would kill the step before the error line below
-          # ever runs.
-          if ! POM_VERSION=$(./mvnw -B -q --non-recursive \
-                help:evaluate -Dexpression=project.version -DforceStdout); then
-            echo "::error::Failed to read project.version via maven-help-plugin"
-            exit 1
-          fi
-          if [ "$TAG" != "$POM_VERSION" ]; then
-            echo "::error::Tag $TAG does not match pom version $POM_VERSION"
-            exit 1
+          echo "version=$POM_VERSION" >> "$GITHUB_OUTPUT"
+          if [[ "$POM_VERSION" == *-SNAPSHOT ]]; then
+            echo "kind=snapshot" >> "$GITHUB_OUTPUT"
+          else
+            echo "kind=release" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Build, sign, and deploy
+      - name: Deploy ${{ steps.version.outputs.kind }} (${{ steps.version.outputs.version }})
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}

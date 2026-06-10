@@ -7,7 +7,7 @@
 
     <groupId>io.github.searchable-io.example</groupId>
     <artifactId>mcp-example</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Searchable MCP Server (Example)</name>
     <description>
