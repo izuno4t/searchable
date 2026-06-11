@@ -107,6 +107,18 @@ class IndexLayoutExtraBranchTest {
     }
 
     @Test
+    void promoteRejectsTmpDirNameThatDoesNotParseAsTimestamp() throws Exception {
+        final IndexLayout l = layout();
+        // Build a dir whose name ends in .tmp but the stem is not a valid
+        // version timestamp; should hit the L155 false branch.
+        final Path bogus = l.namespaceDir("ns").resolve("notatimestamp.tmp");
+        Files.createDirectories(bogus);
+        assertThatThrownBy(() -> l.promote(bogus))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("does not parse");
+    }
+
+    @Test
     void deleteRecursivelyRejectsNullPath() {
         assertThatThrownBy(() -> layout().deleteRecursively(null))
             .isInstanceOf(NullPointerException.class);

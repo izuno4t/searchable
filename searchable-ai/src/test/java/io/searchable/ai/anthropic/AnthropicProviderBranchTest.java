@@ -122,6 +122,31 @@ class AnthropicProviderBranchTest {
     }
 
     @Test
+    void missingUsageNodeProducesEmptyUsageMap() throws Exception {
+        // No `usage` object in the response → `usageNode.isObject()` false
+        // branch fires and usage stays empty.
+        server.setNext(FakeHttpServer.CannedResponse.ok(
+            "{\"model\":\"claude\",\"content\":[{\"type\":\"text\",\"text\":\"ok\"}]}"));
+        final AiResponse r = provider.summarize(AiRequest.builder().query("q").build());
+        assertThat(r.usage()).isEmpty();
+    }
+
+    @Test
+    void duplicateContextSourceIdsDeduplicatedInCitations() {
+        // Two context items share a sourceId: the second iteration hits the
+        // `hits.contains(sourceId)` true short-circuit.
+        final List<String> hits = AnthropicProvider.extractCitations(
+            "see [d-1]",
+            AiRequest.builder()
+                .query("q")
+                .context(List.of(
+                    new AiContextItem("d-1", "T1", "x", Map.of()),
+                    new AiContextItem("d-1", "T2", "y", Map.of())))
+                .build());
+        assertThat(hits).containsExactly("d-1");
+    }
+
+    @Test
     void extractCitationsEmptyWhenNoMarker() {
         final List<String> hits = AnthropicProvider.extractCitations(
             "plain text",
@@ -130,6 +155,18 @@ class AnthropicProviderBranchTest {
                 .context(List.of(new AiContextItem("doc-x", "X", "x", Map.of())))
                 .build());
         assertThat(hits).isEmpty();
+    }
+
+    @Test
+    void blankSystemPropertiesFallThroughToDefaults() throws Exception {
+        // Empty/whitespace system properties hit the `!prop.isBlank()=false`
+        // branch in resolveBaseUrl / resolveApiKey / resolveApiVersion.
+        runWith("searchable.ai.anthropic.base-url", "   ", () ->
+            runWith("searchable.ai.anthropic.api-key", "   ", () ->
+                runWith("searchable.ai.anthropic.api-version", "   ", () -> {
+                    final AnthropicProvider p = new AnthropicProvider();
+                    assertThat(p.toString()).contains("baseUrl=");
+                })));
     }
 
     @Test

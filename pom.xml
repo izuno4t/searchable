@@ -336,43 +336,30 @@
                 <configuration>
                     <excludes>
                         <!--
-                            SearchableCli (CLI module):
-                            main() calls System.exit(int); JUnit cannot
-                            invoke it without terminating the JVM and
-                            killing sibling tests. Java 17+ deprecates
-                            SecurityManager so the conventional
-                            "catch the exit" trick is no longer
-                            available. The picocli-driven sub-commands
-                            (which contain the actual logic) are covered
-                            by CliCommandTest.
+                            SearchableCli: main() calls System.exit(int);
+                            JUnit cannot invoke it without terminating
+                            the JVM and killing sibling tests. Java 17+
+                            deprecates SecurityManager so the
+                            conventional "catch the exit" trick is no
+                            longer available. The picocli-driven
+                            sub-commands (which contain the actual
+                            logic) are covered by CliCommandTest.
 
-                            VersionProvider depends on
+                            SearchableCli$VersionProvider depends on
                             Package.getImplementationVersion(), which is
                             null when classes are loaded from
                             target/classes rather than from a packaged
                             jar — so the "version != null" arm of the
                             ternary is unreachable from unit tests.
 
-                            AnsiText reads NO_COLOR and TERM environment
-                            variables inside its detect() helper to decide
-                            whether ANSI escapes are emitted. Mutating
-                            the JVM environment at runtime is unsupported
-                            on Java 17+ (reflecting on
-                            ProcessEnvironment is blocked by module
-                            access on Java 25), so the env-var branches
-                            are unreachable from JUnit. The
-                            searchable.ansi=always/never override paths
-                            and the styling methods themselves remain
-                            covered by AnsiTextTest.
-
-                            SighupListener installs a real SIGHUP handler
-                            via sun.misc.Signal; the handler body only
-                            executes when the JVM actually receives
-                            SIGHUP. Delivering that signal from a test
-                            would tear down surefire because kill -HUP
-                            against the JVM PID stops the test process.
-                            The install / uninstall paths remain covered
-                            by SighupListenerTest.
+                            IngestCommand contains an interactive
+                            "Create namespace? [Y/n]" prompt routed
+                            through System.console(). JUnit attaches no
+                            terminal so Console is null inside surefire,
+                            making the readLine arm unreachable. Tests
+                            cannot reach the readLine path without
+                            spawning a controlling-terminal child
+                            process.
 
                             StatusCommand renders aggregate index
                             statistics through a private humanBytes()
@@ -380,168 +367,12 @@
                             four divisions. The {@code unit == 4} early
                             exit only fires for index sizes &gt;= 1 PB,
                             which cannot be produced by surefire under
-                            tmpfs-backed @TempDir storage. The covered
-                            byte / KB / MB / GB / TB branches plus the
-                            null-lastUpdated path are reached by
-                            CliCommandExtraBranchTest.
-
-                            IngestCommand contains an interactive
-                            "Create namespace? [Y/n]" prompt routed
-                            through System.console(). JUnit attaches no
-                            terminal so Console is null inside surefire,
-                            making the readLine arm unreachable. The
-                            non-interactive {@code create-namespace} flag path
-                            and the early-return when no TTY is attached
-                            are covered by CliCommandTest. Tests cannot
-                            reach the readLine path without spawning a
-                            controlling-terminal child process.
-
-                            LuceneIndexProvider, LuceneIndexer,
-                            LuceneFullTextSearcher, LuceneIndexContext,
-                            LuceneVectorSearcher, SudachiAnalyzerFactory
-                            and IndexLayout sit directly on top of
-                            Lucene's NIO / MMap / SearcherManager APIs.
-                            The remaining uncovered branches are
-                            IOException catches around DirectoryReader
-                            reopen, MMap promotion races, and
-                            best-effort file-system cleanup on
-                            cross-process rebuild handoff. Triggering
-                            them requires either a hostile file system
-                            or a second JVM holding write.lock; neither
-                            is reproducible from a single surefire
-                            process. The happy paths plus the
-                            recoverable error cases (missing dir, blank
-                            namespace, invalid version) are covered by
-                            LuceneIndexProviderTest, LuceneIndexerTest,
-                            IndexLayoutTest, etc.
-
-                            JdbcDocumentMetadataRepository,
-                            JdbcIndexMetadataRepository,
-                            JdbcUserDictionaryRepository,
-                            DataSourceFactory, SchemaInitializer, and
-                            IndexService each carry SQLException catch
-                            blocks that re-wrap into IllegalStateException.
-                            Reaching those catches requires injecting a
-                            SQL failure mid-transaction; the only way to
-                            do so from JUnit is to mock the
-                            DataSource→Connection→PreparedStatement
-                            chain at depth, which couples test code to
-                            implementation detail and is brittle across
-                            schema changes. The committed business
-                            paths plus the input-validation branches
-                            (null, blank, missing) are covered by their
-                            respective *Test classes.
-
-                            PidRegistry's `kill -HUP` retry / IOException
-                            paths only fire when ProcessBuilder.start()
-                            itself fails (PATH missing, fd exhaustion,
-                            etc.). Reproducing that from a JUnit process
-                            would mean breaking the test JVM. The
-                            happy-path SIGHUP delivery is covered by
-                            PidRegistryBroadcastTest using a sacrificial
-                            child process; the stale-PID cleanup and
-                            empty-directory paths are covered by
-                            PidRegistryTest. PidFile's catch blocks
-                            cover Files.createDirectories /
-                            Files.writeString failures that POSIX
-                            permissions can reproduce on macOS / Linux
-                            but not on tmpfs without POSIX views, so
-                            those branches are skipped when the file
-                            store does not expose POSIX attributes.
-
-                            OpenAiProvider, AnthropicProvider, and
-                            OllamaProvider each have
-                            System.getenv("OPENAI_API_KEY") /
-                            ("ANTHROPIC_API_KEY") / ("OLLAMA_BASE_URL")
-                            fall-through branches inside their
-                            resolveBaseUrl / resolveApiKey /
-                            resolveApiVersion helpers. As with AnsiText,
-                            mutating the JVM environment at runtime is
-                            unsupported on Java 17+. The system-property
-                            override branches, request-shaping logic,
-                            and HTTP error mapping are covered by the
-                            respective *Test classes. They also have
-                            IOException catches around
-                            ObjectMapper.writeValueAsString that never
-                            fire for the small POJO payloads they
-                            serialise; no test input can reach those
-                            catches without subclassing Jackson, which
-                            is out of scope here.
-
-                            OfficeDocumentParser's POI ExtractorFactory
-                            branches require valid Word 97-2003 / OLE2
-                            binary fixtures. BACKLOG-014 tracks
-                            generating those fixtures; until that
-                            backlog item lands the HWPF-only branches
-                            are unreachable from unit tests.
-
-                            SearchableLibrary.Builder has fully covered
-                            happy-path branches; the remaining 1 line is
-                            the @Override toString on a nested record
-                            JaCoCo cannot distinguish from synthetic
-                            members.
-
-                            HashEmbeddingProvider, SectionChunkingStrategy,
-                            and SearchableConfig have 1 residual line
-                            each that is a defensive guard against
-                            states the public surface does not permit
-                            (negative dimension after IAE, null heading
-                            inside a non-null section list, blank H2 URL
-                            after the upstream normalize). These guards
-                            exist to satisfy SpotBugs / nullability
-                            contracts; their bodies are unreachable from
-                            valid call sites.
+                            tmpfs-backed @TempDir storage.
                         -->
                         <exclude>io/searchable/cli/SearchableCli.class</exclude>
                         <exclude>io/searchable/cli/SearchableCli$VersionProvider.class</exclude>
                         <exclude>io/searchable/cli/command/IngestCommand.class</exclude>
                         <exclude>io/searchable/cli/command/StatusCommand.class</exclude>
-                        <exclude>io/searchable/core/util/AnsiText.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/runtime/SighupListener.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/runtime/PidRegistry.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/runtime/PidFile.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/lucene/LuceneIndexProvider.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/lucene/LuceneIndexProvider$BuildHandle.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/lucene/LuceneIndexer.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/lucene/LuceneFullTextSearcher.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/lucene/LuceneFullTextSearcher$*.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/lucene/LuceneVectorSearcher.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/lucene/LuceneIndexContext.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/lucene/IndexLayout.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/lucene/SudachiAnalyzerFactory.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/persistence/jdbc/JdbcDocumentMetadataRepository.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/persistence/jdbc/JdbcIndexMetadataRepository.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/dictionary/JdbcUserDictionaryRepository.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/persistence/DataSourceFactory.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/persistence/SchemaInitializer.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/plugin/PluginLoader.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/parser/OfficeDocumentParser.class</exclude>
-                        <exclude>io/searchable/core/application/IndexService.class</exclude>
-                        <exclude>io/searchable/core/application/config/SearchableConfig.class</exclude>
-                        <exclude>io/searchable/core/application/SearchService.class</exclude>
-                        <exclude>io/searchable/core/application/BackupService.class</exclude>
-                        <exclude>io/searchable/core/application/DictionaryService.class</exclude>
-                        <exclude>io/searchable/core/application/FacetAggregator.class</exclude>
-                        <exclude>io/searchable/core/application/AnchorUrls.class</exclude>
-                        <exclude>io/searchable/core/SearchableLibrary.class</exclude>
-                        <exclude>io/searchable/core/SearchableLibrary$Builder.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/lucene/LuceneDocumentMapper.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/chunking/SectionChunkingStrategy.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/chunking/SentenceChunkingStrategy.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/chunking/FixedSizeChunkingStrategy.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/embedding/HashEmbeddingProvider.class</exclude>
-                        <exclude>io/searchable/core/domain/parser/DocumentParser.class</exclude>
-                        <exclude>io/searchable/core/domain/document/DocumentMetadataRecord.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/parser/HtmlParser.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/parser/PdfParser.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/parser/MarkdownParser.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/parser/PlainTextParser.class</exclude>
-                        <exclude>io/searchable/core/infrastructure/parser/AsciiDocParser.class</exclude>
-                        <exclude>io/searchable/ai/openai/OpenAiProvider.class</exclude>
-                        <exclude>io/searchable/ai/anthropic/AnthropicProvider.class</exclude>
-                        <exclude>io/searchable/ai/ollama/OllamaProvider.class</exclude>
-                        <exclude>io/searchable/ai/SummaryService.class</exclude>
-                        <exclude>io/searchable/ai/internal/HttpProviderSupport.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>

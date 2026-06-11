@@ -60,4 +60,28 @@ class SearchableLibraryBranchTest {
             assertThat(lib.globalConfigProvider().current()).isNotNull();
         }
     }
+
+    @Test
+    void sudachiAnalyzerTypeTakesNonKuromojiBranch() {
+        // analyzerType != KUROMOJI: builder falls back to AnalyzerFactory.forType
+        // (Sudachi loader returns Kuromoji at runtime when the optional
+        // classes are absent, but the branch is taken regardless).
+        final SearchableGlobalConfig defaults = SearchableGlobalConfig.defaults();
+        final SearchableGlobalConfig sudachi = new SearchableGlobalConfig(
+            defaults.defaultArchitecture(),
+            defaults.defaultSearchStrategy(),
+            defaults.defaultSearchOrder(),
+            io.searchable.core.infrastructure.lucene.AnalyzerType.SUDACHI);
+        final SearchableConfig cfg = new SearchableConfig(
+            tempDir,
+            new PersistenceConfig("H2", "jdbc:h2:mem:branch-sudachi;DB_CLOSE_DELAY=-1", "sa", ""),
+            new IndexConfig(tempDir.resolve("sudachi-idx")),
+            PluginsConfig.classpathOnly(),
+            sudachi);
+        try (SearchableLibrary lib = SearchableLibrary.builder()
+                .applicationConfig(cfg)
+                .build()) {
+            assertThat(lib).isNotNull();
+        }
+    }
 }

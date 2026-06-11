@@ -68,6 +68,17 @@ class FacetAggregatorBranchTest {
     }
 
     @Test
+    void contentReturnsEmptyForNullContent() {
+        // SearchHit.content may be null when lazy-loading is enabled; the
+        // `content == null` branch of extractFromContent must short-circuit.
+        final SearchHit nullContentHit = new SearchHit(
+            "d", "ns", "t", null, 1.0, Map.of(), Map.of());
+        final var spec = FacetSpec.content("tag", "tag");
+        assertThat(FacetAggregator.aggregate(List.of(nullContentHit), List.of(spec)).get("tag"))
+            .isEmpty();
+    }
+
+    @Test
     void contentFindsAllMatchesIncludingMultipleSameKey() {
         final List<SearchHit> hits = List.of(hit(Map.of(),
             "前文 [tag:alpha] 本文 [tag:beta] その他 [tag:alpha]"));

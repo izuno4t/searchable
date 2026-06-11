@@ -46,6 +46,24 @@ class PidFileBranchTest {
     }
 
     @Test
+    void openOverwritesExistingPidFileWithLivePid() throws Exception {
+        // Pre-create a PID file with this process's own PID so it is BOTH
+        // > 0 and reported live by ProcessHandle.of(). Hits the warn branch.
+        final Path pidDir = PidFile.directoryFor(tempDir);
+        Files.createDirectories(pidDir);
+        final long ownPid = ProcessHandle.current().pid();
+        Files.writeString(pidDir.resolve("dup.pid"), Long.toString(ownPid));
+
+        final PidFile reopened = PidFile.open(tempDir, "dup");
+        try {
+            assertThat(reopened.pid()).isEqualTo(ownPid);
+            assertThat(Files.readString(reopened.path())).isEqualTo(Long.toString(ownPid));
+        } finally {
+            reopened.close();
+        }
+    }
+
+    @Test
     void openWrapsWriteFailureInUncheckedIo() throws Exception {
         org.junit.jupiter.api.Assumptions.assumeTrue(
             Files.getFileStore(tempDir).supportsFileAttributeView("posix"),

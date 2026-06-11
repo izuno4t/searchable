@@ -98,6 +98,34 @@ class OpenAiProviderBranchTest {
     }
 
     @Test
+    void missingUsageNodeProducesEmptyUsageMap() throws Exception {
+        // No `usage` field in the response → `usageNode.isObject()` returns
+        // false and the for-loop is skipped, leaving usage as an empty map.
+        server.setNext(FakeHttpServer.CannedResponse.ok(
+            "{\"model\":\"gpt-4o-mini\","
+                + "\"choices\":[{\"message\":{\"content\":\"ok\"}}]}"));
+        final AiResponse r = provider.summarize(AiRequest.builder().query("q").build());
+        assertThat(r.text()).isEqualTo("ok");
+        assertThat(r.usage()).isEmpty();
+    }
+
+    @Test
+    void extractCitationsSkipsDuplicateSourceIdInContext() {
+        // Same sourceId appearing twice in the request context: the second
+        // pass through the loop hits `hits.contains(item.sourceId())==true`
+        // so it is not added a second time.
+        final List<String> hits = OpenAiProvider.extractCitations(
+            "see [doc-1]",
+            AiRequest.builder()
+                .query("q")
+                .context(List.of(
+                    new AiContextItem("doc-1", "D", "x", Map.of()),
+                    new AiContextItem("doc-1", "D again", "y", Map.of())))
+                .build());
+        assertThat(hits).containsExactly("doc-1");
+    }
+
+    @Test
     void usageNodeWithMixedTypesCopied() throws Exception {
         server.setNext(FakeHttpServer.CannedResponse.ok("""
             {
@@ -132,6 +160,18 @@ class OpenAiProviderBranchTest {
                 .context(List.of(new AiContextItem("doc-1", "D", "x", Map.of())))
                 .build());
         assertThat(hits).containsExactly("doc-1");
+    }
+
+    @Test
+    void blankSystemPropertiesFallThroughToDefaults() throws Exception {
+        // Blank base-url/api-key system properties: the `!prop.isBlank()=false`
+        // branch in both resolveBaseUrl and resolveApiKey runs.
+        runWith("searchable.ai.openai.base-url", "   ", () -> {
+            runWith("searchable.ai.openai.api-key", "   ", () -> {
+                final OpenAiProvider p = new OpenAiProvider();
+                assertThat(p.toString()).contains("baseUrl=");
+            });
+        });
     }
 
     @Test

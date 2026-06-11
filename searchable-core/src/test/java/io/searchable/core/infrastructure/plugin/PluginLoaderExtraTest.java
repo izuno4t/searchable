@@ -43,6 +43,26 @@ class PluginLoaderExtraTest {
     }
 
     @Test
+    void secondLoadReusesCachedExternalClassLoader() throws IOException {
+        // Build an empty jar so the external loader initialises on first call,
+        // then call loadAll twice to exercise the cached (`externalClassLoader != null`)
+        // branch of PluginLoader.externalClassLoader().
+        final Path jar = tempDir.resolve("cached.jar");
+        try (var zos = new java.util.zip.ZipOutputStream(Files.newOutputStream(jar))) {
+            zos.putNextEntry(new java.util.zip.ZipEntry("placeholder.txt"));
+            zos.write("noop".getBytes());
+            zos.closeEntry();
+        }
+        try (PluginLoader loader = new PluginLoader(tempDir)) {
+            // First call → builds & caches the URLClassLoader.
+            loader.loadDataSourcePlugins();
+            // Second call → returns the cached classloader (covered branch).
+            assertThat(loader.loadDataSourcePlugins())
+                .extracting(DataSourcePlugin::name).contains("filesystem");
+        }
+    }
+
+    @Test
     void closeAfterLoadingExternalJarReleasesClassloader() throws IOException {
         // Create a phantom (empty) jar so the external class loader gets built;
         // the loader does not try to read service files, so an empty jar is fine.

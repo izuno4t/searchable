@@ -76,6 +76,20 @@ class LuceneVectorSearcherTest {
     }
 
     @Test
+    void lazyLoadOmitsContent() {
+        indexer.indexBatch("ns", List.of(
+            doc("d1", "Lucene入門", "全文検索エンジンの解説")
+        ));
+        final SearchResult result = searcher.search("ns",
+            SearchRequest.builder()
+                .query("Lucene入門")
+                .options(new io.searchable.core.domain.search.SearchOptions(true, 100, true, true))
+                .build());
+        assertThat(result.hits()).isNotEmpty();
+        assertThat(result.hits().get(0).content()).isNull();
+    }
+
+    @Test
     void searcherWorksOnEmptyNamespace() {
         provider.getOrCreate("ns");
         final SearchResult result = searcher.search("ns",

@@ -72,6 +72,24 @@ class JdbcUserDictionaryRepositoryExtraTest {
     }
 
     @Test
+    void parseEntriesHandlesNullCsvColumn() throws Exception {
+        // Insert a row with ENTRIES_CSV set to SQL NULL so the
+        // parseEntries `csv == null` short-circuit branch runs on load.
+        try (var c = db.dataSource().getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                 "MERGE INTO USER_DICTIONARY (SCOPE_KEY, NAME, ENTRIES_CSV, UPDATED_AT) "
+                 + "KEY (SCOPE_KEY) VALUES (?, ?, ?, ?)")) {
+            ps.setString(1, "GLOBAL");
+            ps.setString(2, "null-csv");
+            ps.setString(3, null);
+            ps.setTimestamp(4, Timestamp.from(Instant.now()));
+            ps.executeUpdate();
+        }
+        final UserDictionary loaded = repository.find(DictionaryScope.GLOBAL).orElseThrow();
+        assertThat(loaded.entries()).isEmpty();
+    }
+
+    @Test
     void sqlErrorsWrappedAsIllegalState() throws Exception {
         try (var c = db.dataSource().getConnection(); var s = c.createStatement()) {
             s.execute("DROP TABLE USER_DICTIONARY");

@@ -89,6 +89,68 @@ class SummaryServiceBranchTest {
     }
 
     @Test
+    void summarize_upstreamFailureWithFallbackEnabled_returnsFallback() throws AiException {
+        // Provider throws UPSTREAM. With fallback enabled, shouldFallback's
+        // `e.kind() == TIMEOUT` branch evaluates false and `e.kind() == UPSTREAM`
+        // evaluates true → fallback response returned.
+        final ThrowingProvider thrower = new ThrowingProvider("up",
+            new AiException(AiException.Kind.UPSTREAM, "down"));
+        final AiProviderRegistry registry = new AiProviderRegistry(List.of(thrower));
+        final SummaryService service = new SummaryService(registry,
+            new SummaryConfig("up", null,
+                java.time.Duration.ofSeconds(5), 128, 0.2, 5, 2000, true));
+
+        final AiResponse r = service.summarize("q", List.of());
+        assertThat(SummaryService.isFallback(r)).isTrue();
+        assertThat(r.usage().get("error.kind")).isEqualTo("UPSTREAM");
+        registry.close();
+    }
+
+    @Test
+    void summarize_unknownKindWithFallbackEnabled_returnsFallback() throws AiException {
+        // UNKNOWN kind hits the third arm of the shouldFallback OR-chain.
+        final ThrowingProvider thrower = new ThrowingProvider("un",
+            new AiException(AiException.Kind.UNKNOWN, "what"));
+        final AiProviderRegistry registry = new AiProviderRegistry(List.of(thrower));
+        final SummaryService service = new SummaryService(registry,
+            new SummaryConfig("un", null,
+                java.time.Duration.ofSeconds(5), 128, 0.2, 5, 2000, true));
+
+        final AiResponse r = service.summarize("q", List.of());
+        assertThat(SummaryService.isFallback(r)).isTrue();
+        registry.close();
+    }
+
+    @Test
+    void summarize_authFailureWithFallbackEnabledIsRethrown() {
+        // AUTH errors are never eligible for fallback even when enabled —
+        // covers shouldFallback's all-three-false path.
+        final ThrowingProvider thrower = new ThrowingProvider("auth",
+            new AiException(AiException.Kind.AUTH, "no key"));
+        final AiProviderRegistry registry = new AiProviderRegistry(List.of(thrower));
+        final SummaryService service = new SummaryService(registry,
+            new SummaryConfig("auth", null,
+                java.time.Duration.ofSeconds(5), 128, 0.2, 5, 2000, true));
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.summarize("q", List.of()))
+            .isInstanceOf(AiException.class)
+            .extracting("kind").isEqualTo(AiException.Kind.AUTH);
+        registry.close();
+    }
+
+    private static final class ThrowingProvider implements AiProvider {
+        private final String name;
+        private final AiException error;
+        ThrowingProvider(final String name, final AiException error) {
+            this.name = name; this.error = error;
+        }
+        @Override public String name() { return name; }
+        @Override public AiResponse summarize(final AiRequest request) throws AiException {
+            throw error;
+        }
+    }
+
+    @Test
     void summarize_maxContextCharsCutsListMidway() throws AiException {
         // We exercise limitContext indirectly via toContextItems + a stub
         // provider that echoes the size of the context it received.

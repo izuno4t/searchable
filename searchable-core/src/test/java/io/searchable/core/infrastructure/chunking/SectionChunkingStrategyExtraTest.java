@@ -114,6 +114,34 @@ class SectionChunkingStrategyExtraTest {
     }
 
     @Test
+    void nonBlankHeadingAtDefaultWeightSkipsRepetition() {
+        // Level 7 has DEFAULT_WEIGHT = 1.0, so repetitionsForWeight returns 0.
+        // With a non-blank heading this exercises the `extra <= 0` early-exit.
+        final DocumentParser stub = new DocumentParser() {
+            @Override public String name() { return "noboost"; }
+            @Override public List<String> supportedExtensions() { return List.of(".nb"); }
+            @Override public ParsedDocument parse(final String source, final String fallback) {
+                return new ParsedDocument("t", source, Map.of("format", "noboost"),
+                    List.of(new Section(7, "minor", "body")));
+            }
+        };
+        final ParserRegistry registry = new ParserRegistry().register(stub);
+        final SectionChunkingStrategy strat = new SectionChunkingStrategy(
+            registry, new WholeDocumentChunkingStrategy());
+
+        final Document doc = Document.builder().id("d").namespaceId("ns")
+            .title("t").content("c").metadata(Map.of("format", "noboost")).build();
+
+        final List<Chunk> chunks = strat.chunk(doc);
+        assertThat(chunks).hasSize(1);
+        // The heading appears exactly once when extra <= 0.
+        final String text = chunks.get(0).text();
+        final long occurrences = text.lines()
+            .filter(l -> l.equals("minor")).count();
+        assertThat(occurrences).isEqualTo(1L);
+    }
+
+    @Test
     void rejectsNullDependencies() {
         assertThatThrownBy(() -> new SectionChunkingStrategy(null, new WholeDocumentChunkingStrategy()))
             .isInstanceOf(NullPointerException.class);

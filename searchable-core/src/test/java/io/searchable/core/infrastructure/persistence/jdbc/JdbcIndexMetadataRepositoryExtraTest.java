@@ -69,6 +69,27 @@ class JdbcIndexMetadataRepositoryExtraTest {
     }
 
     @Test
+    void deserializeStatisticsHandlesBlankJsonColumn() throws Exception {
+        // STATISTICS_JSON explicitly set to a blank string forces the
+        // `json.isBlank()` branch of deserializeStatistics.
+        try (var c = db.dataSource().getConnection();
+             var ps = c.prepareStatement(
+                 "MERGE INTO INDEX_METADATA (NAMESPACE_ID, DOCUMENT_COUNT, "
+                 + "INDEX_SIZE_BYTES, STATUS, LAST_UPDATED, STATISTICS_JSON) "
+                 + "KEY (NAMESPACE_ID) VALUES (?, ?, ?, ?, ?, ?)")) {
+            ps.setString(1, "ns-a");
+            ps.setLong(2, 0);
+            ps.setLong(3, 0);
+            ps.setString(4, IndexStatus.EMPTY.name());
+            ps.setTimestamp(5, java.sql.Timestamp.from(T0));
+            ps.setString(6, "   ");
+            ps.executeUpdate();
+        }
+        final IndexMetadata loaded = metadata.findByNamespaceId("ns-a").orElseThrow();
+        assertThat(loaded.statistics()).isEmpty();
+    }
+
+    @Test
     void sqlErrorsWrappedAsIllegalState() throws Exception {
         try (var c = db.dataSource().getConnection(); var s = c.createStatement()) {
             s.execute("DROP TABLE INDEX_METADATA");

@@ -87,6 +87,25 @@ class PidRegistryTest {
     }
 
     @Test
+    void broadcastSighupSkipsOnNonUnixPlatform() throws Exception {
+        // Temporarily flip os.name to a Windows-ish value so the constructor
+        // sets unixLike=false and the early-return branch fires.
+        final String prev = System.getProperty("os.name");
+        System.setProperty("os.name", "Windows 99");
+        try {
+            final Path dir = PidFile.directoryFor(tempDir);
+            Files.createDirectories(dir);
+            Files.writeString(dir.resolve("anything.pid"), "12345");
+
+            final PidRegistry r = new PidRegistry(tempDir);
+            assertThat(r.broadcastSighup()).isZero();
+        } finally {
+            if (prev == null) System.clearProperty("os.name");
+            else System.setProperty("os.name", prev);
+        }
+    }
+
+    @Test
     void registeredCountReportsZeroAfterRegistrySeesEmptyDir() throws Exception {
         final Path dir = PidFile.directoryFor(tempDir);
         Files.createDirectories(dir); // empty directory

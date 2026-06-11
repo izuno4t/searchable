@@ -145,6 +145,43 @@ class JdbcDocumentMetadataRepositoryTest {
     }
 
     @Test
+    void saveAndLoadWithFullySpecifiedSource() {
+        // Round-trip a DocumentSource carrying both contentHash and
+        // sourceUpdated to cover the non-null branches in save() (L92, L97)
+        // and the (sourceType != null && sourceLocation != null) branch in map().
+        final io.searchable.core.domain.document.DocumentSource src =
+            new io.searchable.core.domain.document.DocumentSource(
+                "file", "file:///abs/doc.md", "sha256:abc", T1);
+        repo.save(new DocumentMetadataRecord("ns", "with-src", "T",
+            Map.of("k", "v"), T0, src));
+
+        final DocumentMetadataRecord found = repo.findById("ns", "with-src").orElseThrow();
+        assertThat(found.source()).isNotNull();
+        assertThat(found.source().contentHash()).isEqualTo("sha256:abc");
+        assertThat(found.source().sourceUpdated()).isEqualTo(T1);
+    }
+
+    @Test
+    void mapHandlesBlankMetadataJsonColumn() throws Exception {
+        // Insert a row whose METADATA_JSON column is the empty string so
+        // deserializeMetadata's `json.isBlank()` short-circuit is hit on load.
+        try (var c = dataSource.getConnection();
+             var ps = c.prepareStatement(
+                 "MERGE INTO DOCUMENT_METADATA (NAMESPACE_ID, DOCUMENT_ID, TITLE, "
+                 + "METADATA_JSON, INDEXED_AT) KEY (NAMESPACE_ID, DOCUMENT_ID) "
+                 + "VALUES (?, ?, ?, ?, ?)")) {
+            ps.setString(1, "ns");
+            ps.setString(2, "blank-meta");
+            ps.setString(3, "T");
+            ps.setString(4, "   ");
+            ps.setTimestamp(5, java.sql.Timestamp.from(T0));
+            ps.executeUpdate();
+        }
+        final DocumentMetadataRecord r = repo.findById("ns", "blank-meta").orElseThrow();
+        assertThat(r.metadata()).isEmpty();
+    }
+
+    @Test
     void rejectsNullArgs() {
         assertThatThrownBy(() -> new JdbcDocumentMetadataRepository(null))
             .isInstanceOf(NullPointerException.class);

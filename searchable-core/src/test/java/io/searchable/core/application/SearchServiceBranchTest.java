@@ -130,4 +130,18 @@ class SearchServiceBranchTest {
                 .searchType(SearchType.HYBRID).build()))
             .isInstanceOf(java.util.NoSuchElementException.class);
     }
+
+    @Test
+    void fanOutAcrossTwoEmptyNamespacesProducesEmptyResult() {
+        // Two namespaces, neither has any indexed documents. The aggregate
+        // path hits targets.size() > 1, walks both, and ends with
+        // all.isEmpty()==true so maxScore=0 is returned via the true branch.
+        namespaceService.create("ns_e1", "E1", null);
+        namespaceService.create("ns_e2", "E2", null);
+        final SearchResult r = searchService.search(SearchRequest.builder()
+            .query("nothing-matches")
+            .namespaceIds(List.of("ns_e1", "ns_e2")).build());
+        assertThat(r.hits()).isEmpty();
+        assertThat(r.totalHits()).isZero();
+    }
 }

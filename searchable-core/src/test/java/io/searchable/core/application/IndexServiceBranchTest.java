@@ -131,6 +131,35 @@ class IndexServiceBranchTest {
     }
 
     @Test
+    void deleteReturnsFalseWhenIndexerReportsNoRemoval() {
+        // Delete a non-existent document → indexer returns false →
+        // covers the `if (removed)` false branch in IndexService.delete().
+        final IndexService service = new IndexService(namespaces, metadata, provider, indexer,
+            metadataRepo, clock);
+        assertThat(service.delete("bn", "never-existed")).isFalse();
+    }
+
+    @Test
+    void deleteWithoutMetadataRepoSkipsMetadataDelete() {
+        // No metadata repo configured: indexes the doc, deletes it, and the
+        // delete path takes the `documentMetadata == null` false branch.
+        final IndexService service = new IndexService(namespaces, metadata, provider, indexer, clock);
+        final Document d = Document.builder().id("dx").namespaceId("bn")
+            .title("t").content("c").build();
+        service.index(d);
+        assertThat(service.delete("bn", "dx")).isTrue();
+    }
+
+    @Test
+    void rebuildFromWithoutMetadataRepoSkipsMetadataPersistence() {
+        // documentMetadata == null branch inside rebuildFrom.
+        final IndexService service = new IndexService(namespaces, metadata, provider, indexer, clock);
+        final Document d = Document.builder().id("rb").namespaceId("bn")
+            .title("t").content("c").build();
+        assertThat(service.rebuildFrom("bn", List.of(d))).isEqualTo(1);
+    }
+
+    @Test
     void rebuildResetsLifecycleStatusToReady() {
         final IndexService service = new IndexService(namespaces, metadata, provider, indexer,
             metadataRepo, clock);

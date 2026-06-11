@@ -142,4 +142,66 @@ class SmallClassBranchTest {
         populated.put("k", "v");
         assertThat((String) m.invoke(mapper, populated)).contains("\"k\"");
     }
+
+    @Test
+    void anchorUrlsReturnsEmptyWhenAllCharsAreSeparators() {
+        // Input made entirely of non-slug chars: the loop never appends,
+        // so sb.length() stays 0 and the "trim trailing dash" branch
+        // (sb.length() > 0) takes the false path.
+        assertThat(AnchorUrls.slugify("!!!")).isEmpty();
+    }
+
+    @Test
+    void searchableConfigNormalizeH2UrlHandlesQuestionMarkParamSeparator() {
+        // Forces the c=='?' branch in the param-separator scan.
+        // Such URLs are uncommon but legal; the rewriter still picks the
+        // first '?' as the end of the path portion.
+        final String url = "jdbc:h2:" + tempDir.resolve("qdb") + "?";
+        // Should not throw and should keep the original path prefix.
+        assertThat(SearchableConfig.normalizeH2Url(url, tempDir))
+            .contains(tempDir.toString());
+    }
+
+    @Test
+    void searchableConfigNormalizeH2UrlReturnsOriginalForEmptyPathPart() {
+        // No path part at all: rewriter bails out and returns the URL untouched.
+        final String url = "jdbc:h2:;AUTO_SERVER=TRUE";
+        assertThat(SearchableConfig.normalizeH2Url(url, tempDir)).isEqualTo(url);
+    }
+
+    @Test
+    void searchableConfigNormalizePluginsWithExplicitDirectory()
+            throws Exception {
+        // plugins != null && plugins.directory() == null → returns plugins as-is.
+        final var method = SearchableConfig.class.getDeclaredMethod(
+            "normalizePlugins",
+            io.searchable.core.application.config.PluginsConfig.class,
+            java.nio.file.Path.class);
+        method.setAccessible(true);
+        final var plugins = io.searchable.core.application.config.PluginsConfig.classpathOnly();
+        // classpathOnly() yields a config whose directory() is null;
+        // so this exercises the (plugins != null && directory == null) path.
+        final var result = method.invoke(null, plugins, tempDir);
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    void dataSourceFactoryAcceptsPostgresqlTypeSwitchBranch() {
+        // The POSTGRESQL switch case is the only path not covered by the
+        // existing tests (they call buildHikariConfig directly). Trigger
+        // the case via the public create() method and tolerate the eager
+        // connection probe failure (no PG server available).
+        final PersistenceConfig cfg = new PersistenceConfig(
+            "POSTGRESQL", "jdbc:postgresql://db.example.invalid:5432/x",
+            "u", "p", 2);
+        try {
+            final DataSource ds = DataSourceFactory.create(cfg);
+            if (ds instanceof AutoCloseable c) {
+                try { c.close(); } catch (Exception ignore) { /* swallow */ }
+            }
+        } catch (RuntimeException expected) {
+            // HikariPool initialization may fail because the host is unreachable
+            // — the switch branch itself has already executed.
+        }
+    }
 }

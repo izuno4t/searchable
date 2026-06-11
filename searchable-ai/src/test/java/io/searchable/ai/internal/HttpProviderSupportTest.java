@@ -72,6 +72,14 @@ class HttpProviderSupportTest {
     }
 
     @Test
+    void mapStatusUnknownFor600AndAbove() {
+        // status >= 500 true && status < 600 false: covers the upstream
+        // upper-bound branch where the code is out of the 5xx range.
+        assertThat(HttpProviderSupport.mapStatus(600)).isEqualTo(AiException.Kind.UNKNOWN);
+        assertThat(HttpProviderSupport.mapStatus(999)).isEqualTo(AiException.Kind.UNKNOWN);
+    }
+
+    @Test
     void toExceptionTruncatesLongBody() {
         final String longBody = "x".repeat(2000);
         final AiException ex = HttpProviderSupport.toException(

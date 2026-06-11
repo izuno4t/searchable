@@ -118,6 +118,30 @@ class OllamaProviderBranchTest {
     }
 
     @Test
+    void explicitNullUsageFieldIsSkipped() throws Exception {
+        // JSON null for a usage field: putIfPresent's `!node.isNull()` branch
+        // must take the false path so the value is NOT copied.
+        server.setNext(FakeHttpServer.CannedResponse.ok(
+            "{\"model\":\"x\",\"response\":\"ok\",\"prompt_eval_count\":null}"));
+        final AiResponse r = provider.summarize(AiRequest.builder().query("q").build());
+        assertThat(r.usage()).doesNotContainKey("prompt_eval_count");
+    }
+
+    @Test
+    void duplicateContextSourceIdsDeduplicatedInCitations() {
+        // Exercises `hits.contains(sourceId)` true path in extractCitations.
+        final List<String> hits = OllamaProvider.extractCitations(
+            "see [d-1]",
+            AiRequest.builder()
+                .query("q")
+                .context(List.of(
+                    new AiContextItem("d-1", "T1", "x", Map.of()),
+                    new AiContextItem("d-1", "T2", "y", Map.of())))
+                .build());
+        assertThat(hits).containsExactly("d-1");
+    }
+
+    @Test
     void absentUsageFieldsAreSkipped() throws Exception {
         server.setNext(FakeHttpServer.CannedResponse.ok(
             "{\"model\":\"x\",\"response\":\"ok\"}"));
@@ -141,6 +165,18 @@ class OllamaProviderBranchTest {
                 .context(List.of(new AiContextItem("d", "T", "x", Map.of())))
                 .build());
         assertThat(hits).isEmpty();
+    }
+
+    @Test
+    void blankSystemPropertiesAreIgnored() throws Exception {
+        // Empty/whitespace system properties fall through to the env-var
+        // check so the `!prop.isBlank()` false branch in resolveBaseUrl and
+        // resolveDefaultModel is exercised.
+        runWith("searchable.ai.ollama.base-url", "   ", () ->
+            runWith("searchable.ai.ollama.default-model", "   ", () -> {
+                final OllamaProvider p = new OllamaProvider();
+                assertThat(p.toString()).contains("baseUrl=");
+            }));
     }
 
     @Test

@@ -147,6 +147,17 @@ class LuceneIndexerBranchTest {
     }
 
     @Test
+    void rebuildRejectsDocumentBelongingToDifferentNamespace() {
+        // The mismatch check inside the rebuild loop throws an
+        // IllegalArgumentException; covers L138 of LuceneIndexer.
+        provider.getOrCreate("real-ns");
+        final Document foreign = doc("OTHER", "x");
+        assertThatThrownBy(() -> indexer.rebuild("real-ns", List.of(foreign)))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("does not belong to namespace");
+    }
+
+    @Test
     void apiRejectsNullArgs() {
         assertThatThrownBy(() -> indexer.index(null)).isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> indexer.indexBatch(null, List.of()))
