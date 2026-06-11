@@ -24,6 +24,6 @@ public record DocumentSummary(
         Objects.requireNonNull(id, "id must not be null");
         Objects.requireNonNull(namespaceId, "namespaceId must not be null");
         Objects.requireNonNull(title, "title must not be null");
-        snippet = snippet == null ? "" : snippet;
+        snippet = Objects.requireNonNullElse(snippet, "");
     }
 }
