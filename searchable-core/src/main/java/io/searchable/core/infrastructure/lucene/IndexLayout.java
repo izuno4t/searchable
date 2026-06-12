@@ -71,11 +71,23 @@ public final class IndexLayout {
 
     /** Returns {@code <root>/<namespaceId>/}. */
     public Path namespaceDir(final String namespaceId) {
+        validateNamespaceId(namespaceId);
+        return rootDirectory.resolve(namespaceId);
+    }
+
+    /**
+     * Throws {@link IllegalArgumentException} when {@code namespaceId} does
+     * not match the {@code [a-z0-9][a-z0-9_-]{0,63}} pattern that bounds
+     * every on-disk directory under {@link #rootDirectory()}. Callers that
+     * build paths from untrusted input (CLI/admin/restore) should invoke
+     * this at the boundary instead of relying on downstream resolution to
+     * catch traversal attempts.
+     */
+    public static void validateNamespaceId(final String namespaceId) {
         Objects.requireNonNull(namespaceId, "namespaceId must not be null");
         if (!NAMESPACE_ID.matcher(namespaceId).matches()) {
             throw new IllegalArgumentException("Invalid namespaceId: " + namespaceId);
         }
-        return rootDirectory.resolve(namespaceId);
     }
 
     /**

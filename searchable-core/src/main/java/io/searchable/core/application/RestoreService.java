@@ -55,6 +55,10 @@ public final class RestoreService {
         try (var stream = Files.list(indexes)) {
             stream.filter(Files::isDirectory).forEach(p -> {
                 final String ns = p.getFileName().toString();
+                // Reject directory names that would not be accepted as a
+                // namespaceId on write — a corrupt or hand-crafted backup
+                // must not get past the entry validator.
+                IndexLayout.validateNamespaceId(ns);
                 restoreOne(source, ns);
                 restored.add(ns);
             });
@@ -68,7 +72,7 @@ public final class RestoreService {
     /** Restore a single namespace from the backup. */
     public void restoreOne(final Path source, final String namespaceId) {
         Objects.requireNonNull(source, "source must not be null");
-        Objects.requireNonNull(namespaceId, "namespaceId must not be null");
+        IndexLayout.validateNamespaceId(namespaceId);
         final Path backupDir = source.resolve("indexes").resolve(namespaceId);
         if (!Files.isDirectory(backupDir)) {
             throw new IllegalStateException(

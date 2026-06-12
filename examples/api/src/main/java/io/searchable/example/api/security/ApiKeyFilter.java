@@ -9,7 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Objects;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 
 /**
  * Servlet filter that enforces the {@code X-API-Key} header when the API
@@ -37,7 +38,7 @@ public final class ApiKeyFilter extends OncePerRequestFilter {
             return;
         }
         final String supplied = request.getHeader(HEADER);
-        if (!Objects.equals(supplied, properties.getApi().getKey())) {
+        if (!constantTimeEquals(supplied, properties.getApi().getKey())) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write(
@@ -46,5 +47,25 @@ public final class ApiKeyFilter extends OncePerRequestFilter {
             return;
         }
         chain.doFilter(request, response);
+    }
+
+    /**
+     * Compare two API keys in time independent of the length of any
+     * shared prefix. {@link MessageDigest#isEqual(byte[], byte[])} is
+     * documented as time-constant for inputs of equal length; we pad the
+     * shorter value so length differences do not leak via early-exit.
+     */
+    private static boolean constantTimeEquals(final String a, final String b) {
+        if (a == null || b == null) {
+            return false;
+        }
+        final byte[] x = a.getBytes(StandardCharsets.UTF_8);
+        final byte[] y = b.getBytes(StandardCharsets.UTF_8);
+        final int len = Math.max(x.length, y.length);
+        final byte[] xp = new byte[len];
+        final byte[] yp = new byte[len];
+        System.arraycopy(x, 0, xp, 0, x.length);
+        System.arraycopy(y, 0, yp, 0, y.length);
+        return MessageDigest.isEqual(xp, yp) && x.length == y.length;
     }
 }

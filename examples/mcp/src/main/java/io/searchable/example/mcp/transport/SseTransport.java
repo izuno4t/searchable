@@ -14,8 +14,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -52,15 +54,43 @@ public final class SseTransport {
         this.apiKey = apiKey == null || apiKey.isBlank() ? null : apiKey;
     }
 
-    /** Start listening on the given port. Blocks the calling thread once started. */
+    /**
+     * Default bind address. Loopback only — exposing the transport on a
+     * routable interface requires the explicit {@link #start(String, int)}
+     * overload to avoid accidentally publishing an unauthenticated
+     * search endpoint on the LAN.
+     */
+    public static final String DEFAULT_BIND_ADDRESS = "127.0.0.1";
+
+    /**
+     * Start listening on the loopback interface at {@code port}. Equivalent
+     * to {@code start(DEFAULT_BIND_ADDRESS, port)}; preserved for callers
+     * that should not be exposed off-host. Blocks the calling thread once
+     * started.
+     */
     public void start(final int port) throws IOException {
-        http = HttpServer.create(new InetSocketAddress(port), 0);
+        start(DEFAULT_BIND_ADDRESS, port);
+    }
+
+    /**
+     * Start listening on {@code bindAddress:port}. Pass {@code "0.0.0.0"}
+     * (or a routable address) to publish on the LAN — only do that when
+     * an API key is configured.
+     */
+    public void start(final String bindAddress, final int port) throws IOException {
+        Objects.requireNonNull(bindAddress, "bindAddress must not be null");
+        final InetAddress address = InetAddress.getByName(bindAddress);
+        http = HttpServer.create(new InetSocketAddress(address, port), 0);
         http.createContext("/sse", new SseHandler());
         http.createContext("/messages", new MessagesHandler());
         http.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         http.start();
-        log.info("MCP SSE listening on :{} (apiKey {})",
-            port, apiKey != null ? "required" : "disabled");
+        if (!address.isLoopbackAddress() && apiKey == null) {
+            log.warn("MCP SSE bound to {} without an API key — endpoint is "
+                + "reachable by anyone who can route to this host", bindAddress);
+        }
+        log.info("MCP SSE listening on {}:{} (apiKey {})",
+            bindAddress, port, apiKey != null ? "required" : "disabled");
     }
 
     public void stop() {
@@ -81,7 +111,7 @@ public final class SseTransport {
             return true;
         }
         final var provided = exchange.getRequestHeaders().getFirst("X-API-Key");
-        if (apiKey.equals(provided)) {
+        if (constantTimeEquals(apiKey, provided)) {
             return true;
         }
         final byte[] body = "{\"error\":\"INVALID_API_KEY\"}".getBytes(StandardCharsets.UTF_8);
@@ -90,6 +120,25 @@ public final class SseTransport {
             out.write(body);
         }
         return false;
+    }
+
+    /**
+     * Compare two API keys in time independent of the length of any
+     * shared prefix. See the matching helper in
+     * {@code ApiKeyFilter} (examples/api).
+     */
+    private static boolean constantTimeEquals(final String a, final String b) {
+        if (a == null || b == null) {
+            return false;
+        }
+        final byte[] x = a.getBytes(StandardCharsets.UTF_8);
+        final byte[] y = b.getBytes(StandardCharsets.UTF_8);
+        final int len = Math.max(x.length, y.length);
+        final byte[] xp = new byte[len];
+        final byte[] yp = new byte[len];
+        System.arraycopy(x, 0, xp, 0, x.length);
+        System.arraycopy(y, 0, yp, 0, y.length);
+        return MessageDigest.isEqual(xp, yp) && x.length == y.length;
     }
 
     private final class SseHandler implements HttpHandler {
